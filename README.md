@@ -1,4 +1,4 @@
-# Bhoomi v2
+# Bhoomi 
 
 **SIH26131** · Government of Maharashtra · early detection and management of crop
 diseases and pest infestations.
