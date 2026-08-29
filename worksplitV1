@@ -1,0 +1,152 @@
+# Bhoomi v2 — Work Split by Tier
+
+**PS:** SIH26131 · Early detection and management of crop diseases and pest infestations
+**Basis:** `Bhoomi_SIH26131_Feature_Set_v2.pdf` — 15 features, four tiers
+**Repo:** new, clean. Nothing ported without a named reason.
+
+---
+
+## Ownership at a glance
+
+| # | Feature | Tier | Primary | Support |
+|---|---|---|---|---|
+| 1 | Farm persistent memory | 0 | Shreekumar | Thaariha (read shape) |
+| 2 | Confidence gate | 0 | **Thaariha** | Suchit (top-k contract) |
+| 3 | Image-based symptom ID | 1 | **Suchit** | — |
+| 4 | The Doubt Doctor | 1 | Thaariha (logic) | Tharun (UI), Suchit (top-k) |
+| 5 | Weather / season / soil risk | 2 | Shreekumar | Thaariha (inspection tasks) |
+| 6 | Nearby-farm spread alerts | 2 | Shreekumar | Tharun (alert card) |
+| 7 | Grounded advisory + IPM ladder | 3 | **Thaariha** | Shruthi (read-back) |
+| 8 | Pesticide label check (OCR) | 3 | Suchit (extract) | Shreekumar (lookup), Thaariha (verdict) |
+| 9 | Voice-first STS | 3 | **Shruthi** | Tharun (capture/playback) |
+| 10 | Closed-loop follow-up | 3 | Shreekumar | Tharun (UI) |
+| 11 | Farm health (thin) | 3 | Thaariha | Tharun (trend arrow) |
+| 12 | Expert validation | 4 | Thaariha (bundle) | Santheesh (portal) |
+| 13 | Referral and helpline | 4 | Tharun | Shreekumar (contact data) |
+| 14 | Confirmation loop | 4 | Shreekumar | Thaariha (prior adjust) |
+| 15 | Officials dashboard | 4 | **Santheesh** | Shreekumar (aggregates) |
+
+Bold = the person's headline deliverable, the thing they get judged on.
+
+---
+
+## Per person
+
+### Suchit — Vision model
+
+**Owns:** feature 3 outright, the extraction half of feature 8.
+
+- Bounded label set: paddy — blast, brown spot, bacterial leaf blight, yellow stem borer, brown planthopper. No expansion, ever, without a team decision.
+- Labels are **pest species, not damage type**. Two pests producing similar damage must remain two labels; collapsing them makes the advisory untreatable and removes the Doubt Doctor's reason to exist.
+- Output contract, frozen at hour 2 and not renegotiated: ranked top-3 `[{label, confidence}]` plus an out-of-scope signal. Thaariha's gate consumes this and nothing else.
+- Training data must include damage-sign images, not only clean insect shots. Damage is what farmers actually photograph.
+- **Hard rule:** no hash-based or otherwise fake similarity path. If the real model isn't ready, ship a stub that is loudly and visibly a stub in the UI. A model that returns confident nonsense on arbitrary input is the single fastest way to lose the demo.
+- Feature 8's OCR: extract active ingredient, concentration, formulation. Return an extraction confidence. Below threshold, return nothing and let the app ask for a better photo — do not return a best guess.
+
+### Shreekumar — Core backend
+
+**Owns:** features 1, 5, 6, 10, 14, plus the lookup half of 8.
+
+- Feature 1 is first and blocks four others. Schema: Farm, Problem, Observation, FollowUp, Diagnosis, Confirmation, Alert. Geolocation on Farm from day one — feature 6 and feature 15 are both dead without it. PostGIS enabled at setup, not retrofitted.
+- Feature 5: weather pull, risk scoring per target, alert issue. `inspection_tasks[]` is **non-nullable** — an alert cannot be written to the DB without at least one task. Enforce at the schema level, not in application code.
+- Feature 6: radius query on confirmed diagnoses, fan out to same-crop neighbours. PostGIS makes this a query, not a job.
+- Feature 8 lookup: the `registered_use` table (active ingredient × crop × target × PHI × re-entry) and the endpoint that queries it. If the ingredient isn't in the table, return not-found. Never infer.
+- Feature 14: confirmation writes update hotspot counts and the per-region/crop/stage prior. Keep the prior adjustment simple and inspectable — a count-based Bayesian nudge, not a learned anything.
+
+### Shruthi — Voice pipeline (Marathi and Hindi first)
+
+**Owns:** feature 9.
+
+- Marathi first, Hindi second, given this is a Maharashtra PS. Tamil only if hours allow.
+- Covers: onboarding read-back (crop, growth stage, region), the Doubt Doctor question and its yes/no answer, and advisory read-out.
+- **The known trap:** the embedder must not strip non-Latin script. Devanagari that gets regexed away produces a zero vector, which produces a degenerate similarity, which produces fabricated advice that looks fine. Translate before embed, and write a test that asserts a Marathi query and its English equivalent retrieve overlapping documents.
+- Consequential values are confirmed back before they're saved. Non-negotiable, same as v1.
+- The Doubt Doctor question is the highest-value voice surface in the build — it's the moment a farmer who can't read is being asked to do something physical. Get that one right before the advisory read-out.
+
+### Tharun — App and frontend lead
+
+**Owns:** the Flutter farmer app end to end, feature 13.
+
+- Diagnosis flow: capture → confidence chip at the top, colour-coded → below-gate shows ranked alternatives and escalation status, **never advice**.
+- Doubt Doctor screen: two possibilities side by side with their visual signatures, one question, Yes / No / Can't tell. "Can't tell" escalates. This screen is the demo's centrepiece — build it before the advisory screen.
+- Advisory screen: "what to avoid" first and visually loudest, IPM ladder below it, chemical option collapsed by default with PHI and re-entry period shown when expanded.
+- Label check screen: camera → verdict. Verdict copy is fixed strings supplied by Thaariha, not composed in the app. A green result reads "no objection found — follow the printed label", never "safe to use".
+- Alert card: non-dismissible until the farmer taps inspected-nothing / inspected-found / remind-tomorrow. Inspection tasks rendered as a checklist.
+- Feature 13: contact routing screen — nearest KVK, extension office, lab. Static data, one tap to call.
+- Delegate to Santheesh early and specifically, not "help me with the app."
+
+### Santheesh — App apprentice, and owner of the officials dashboard
+
+**Owns:** feature 15, plus the agronomist portal screens for feature 12.
+
+This is a real assignment, not shadow work. Features 12 and 15 are both **web** surfaces, which means they're separable from Tharun's Flutter workstream and can be built in parallel without merge conflicts.
+
+- Feature 15: hotspot map, outbreak counts by region and crop, confirmation queue, confirmed-versus-corrected accuracy. React + Leaflet. The PS asks for this in as many words, so it is not optional.
+- Feature 12 portal: one-screen case detail — farm context, problem, both photos, ranked hypotheses with confidences, the Doubt Doctor answer, treatments tried, follow-up trend, all above the fold. Three buttons: confirm, correct, request info.
+- Target: an agronomist completes a review in under three minutes. Walk it yourself with a stopwatch before you call it done.
+- Pair with Tharun on the app in whatever hours remain, but the dashboard is yours and nobody else is building it.
+
+### Thaariha — Reasoning and intelligence layer
+
+**Owns:** features 2, 4, 7, 11, 12's bundle, and the verdict logic in 8. This is the largest surface in the split.
+
+- **Feature 2 is the spine of the spine.** Three bands: above gate → compose; top-2 gap below margin and both above floor → Doubt Doctor; below floor or out-of-scope → escalate. One function, one place, returns exactly one outcome. Unit tests for all three bands before anything downstream is wired.
+- The gate object goes to the client: confidence, threshold, reason code, ranked alternatives. The farmer sees why the system is unsure.
+- Feature 4 logic: given two close candidates, select the discriminating cue from the corpus and render a yes/no question. If the answer doesn't discriminate cleanly, escalate — do not pick the higher-confidence label as a tiebreak.
+- Feature 7: retrieval, relevance threshold, no-fabrication fallback, citations. The five-point structure with "what to avoid" third and the IPM ladder as **structured fields**, not prose — cultural, biological, chemical, in that order, chemical carrying dosage/PHI/re-entry.
+- Feature 8 verdict logic: given extracted ingredient + diagnosis + crop + growth stage, produce a verdict from the lookup result. Veto-only vocabulary. Write the fixed verdict strings and hand them to Tharun.
+- Feature 12 bundle: build the population logic from scratch. The previous implementation returned placeholders on live requests, and porting it will reproduce that.
+- Feature 11: one qualitative sentence and a trend arrow. Resist building a scoring engine. This is the first thing cut.
+
+---
+
+## Sequencing and hard dependencies
+
+```
+Shreekumar: schema (F1) ──┬──> everything
+                          │
+Suchit: top-k contract ───┴──> Thaariha: gate (F2) ──┬──> F4 Doubt Doctor
+                                                      ├──> F7 advisory
+                                                      └──> F12 escalation
+Corpus + distinguishing_cues ─────────────────────────┴──> F4, F7 (hard block)
+registered_use table ─────────────────────────────────────> F8 (hard block)
+```
+
+Three contracts freeze at hour 2 and are not reopened:
+
+1. **Suchit → Thaariha:** top-3 ranked labels with confidences, plus out-of-scope flag.
+2. **Shreekumar → everyone:** Farm/Problem/Observation schema with geolocation.
+3. **Thaariha → Tharun/Santheesh:** gate object shape and the fixed verdict strings.
+
+Everything else can move. These three cannot, because four people build against them.
+
+---
+
+## Two gaps this split does not cover
+
+**Corpus authoring has no owner.** Features 4 and 7 are both hard-blocked on it, and it's writing work rather than code — 15–20 ICAR-sourced docs, dated and cited, each carrying structured `distinguishing_cues` with the pest or disease it discriminates from. Nobody in the six is assigned to it. Suggestion: Shruthi and Thaariha split it in the first six hours, since Shruthi's voice work is blocked on the app existing anyway and Thaariha is the one who'll suffer if the corpus is thin.
+
+**The registered-use table has no owner.** Feature 8 is unbuildable without it — active ingredient, crop, registered target, dosage range, PHI, re-entry period, sourced from CIB&RC and state package-of-practices. Even twenty rows covering the common paddy products is enough to demo. Suggestion: Shreekumar authors it alongside the schema, since he owns the lookup anyway. Assign at hour 0 or it will be discovered missing at hour 20.
+
+---
+
+## Checkpoints
+
+| Checkpoint | Hour | Check | If it fails |
+|---|---|---|---|
+| A | 2–6 | Has every name pushed a commit today? | Reassign that block immediately. Do not wait. |
+| B | 10 | Does diagnose → gate → advise → follow-up → escalate run end to end on seed data? | All tier 2/3/4 work pauses. Everyone on the core loop. |
+| C | 16 | Does the corpus have real content with distinguishing_cues, and does the registered-use table exist? | Hand-write both. Feature 4 and feature 8 both die without them. |
+| D | 24 | Is the officials dashboard visibly working, even thin? | Keep the map, drop the analytics. |
+
+Checkpoint A deserves a note. Three of the six names — Shreekumar, Tharun and Thaariha — were at zero or near-zero commits in the last audit, and this split hands them the core backend, the app, and the intelligence layer. That's not a reason to reassign now; people take on more when the work is theirs and the scope is clear. It is a reason to run checkpoint A on time and act on it the same hour, because the three highest-consequence tracks are also the three with the least track record.
+
+## Hard freeze
+
+Hour 29: nothing new merges. 29–32 bug fixes and seed data only. 32–36 two timed rehearsals — if the second doesn't run clean, that's the version you demo.
+
+## Cut order
+
+Farm health (11) → helpline screen (13) → nearby-farm alerts (6) → dashboard analytics, keep the map (15) → voice output, fall back to text with a TTS button (9).
+
+**Never cut:** the confidence gate, the gate object, the Doubt Doctor, "what to avoid" ordering, the IPM ladder with PHI, the label check's veto-not-endorsement rule, mandatory inspection tasks on alerts, and the core diagnose → advise → follow-up → escalate loop.
