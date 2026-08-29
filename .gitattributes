@@ -1,0 +1,7 @@
+# Normalise line endings so a mixed Windows/macOS/Linux team does not produce
+# whole-file diffs on every commit.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
