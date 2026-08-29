@@ -13,8 +13,9 @@ Two categories:
 
 - **Part A — four tables the build cannot proceed without.** Agreed with
   Shreekumar as required before Phase 1's ORM lands.
-- **Part B — further gaps found while transcribing §5.** Not yet built. These
-  need a decision before anyone creates them.
+- **Part B — further gaps found while transcribing §5.** B1, B2 and B3 were
+  accepted by Shreekumar and land in migration `0002_initial_schema`. B4 and B5
+  belong to other owners and are flagged only. B6 is a watch item.
 
 ---
 
@@ -121,9 +122,13 @@ when the aggregate *is* the confirmation rows rather than a projection of them.
 
 ## Part B — further gaps found, awaiting a decision
 
-These were found while transcribing §5 against the contract. **None has been
-created.** Each is a field the API contract returns or accepts that §5 has
-nowhere to store.
+These were found while transcribing §5 against the contract. Each is a field the
+API contract returns or accepts that §5 has nowhere to store.
+
+**B1, B2 and B3 are accepted** and are being built in `0002_initial_schema`. They
+remain listed here because §5 is frozen and does not contain them — this document
+is the record the team ratifies. B4 and B5 are not mine to decide and are not
+built.
 
 ### B1 · `Alert.reason` — blocks F5's alert card
 
@@ -140,7 +145,7 @@ This is the sentence that tells a farmer *why* they are being asked to walk thei
 field. Recomputing it on read means storing the weather window that produced it,
 which is strictly more state than storing the sentence.
 
-**Recommendation: add `reason text NOT NULL`.**
+**ACCEPTED** — `reason text NOT NULL`, in `0002_initial_schema`.
 
 ### B2 · `RegisteredUse.pesticide_class` — blocks the `WRONG_CLASS` verdict
 
@@ -157,7 +162,7 @@ Worth noting: `backend/seed/registered_use.csv` already carries a
 `pesticide_class` column, because the seed specification included it. The seed
 file and §5 currently disagree.
 
-**Recommendation: add `pesticide_class text NOT NULL`.**
+**ACCEPTED** — `pesticide_class text NOT NULL`, in `0002_initial_schema`.
 
 ### B3 · `Confirmation.treatment` — silently discarded today
 
@@ -171,7 +176,7 @@ file and §5 currently disagree.
 contract's own example: `treatment` is what the agronomist instructed, `notes` is
 commentary. Merging them loses the instruction the farmer is supposed to act on.
 
-**Recommendation: add `treatment text`.**
+**ACCEPTED** — `treatment text`, in `0002_initial_schema`.
 
 ### B4 · Label signatures for the Doubt Doctor — no home
 
@@ -219,11 +224,11 @@ not discovered later as a surprise.**
 | A2 | `OtpRequest` | required | API_CONTRACT §2 `request_id` |
 | A3 | `Asset` | required | API_CONTRACT §3; §5's own `*_asset_id` |
 | A4 | `LabelPrior` | required | DESIGN §11 step 3 |
-| B1 | `Alert.reason` | proposed | API_CONTRACT §10 |
-| B2 | `RegisteredUse.pesticide_class` | proposed | DESIGN §9 `WRONG_CLASS` |
-| B3 | `Confirmation.treatment` | proposed | API_CONTRACT §13 |
+| B1 | `Alert.reason` | **accepted, in 0002** | API_CONTRACT §10 |
+| B2 | `RegisteredUse.pesticide_class` | **accepted, in 0002** | DESIGN §9 `WRONG_CLASS` |
+| B3 | `Confirmation.treatment` | **accepted, in 0002** | API_CONTRACT §13 |
 | B4 | label signatures | flagged — Thaariha | API_CONTRACT §7 |
 | B5 | referrals | flagged — Tharun | API_CONTRACT §14 |
 | B6 | severity history | watch item | API_CONTRACT §11 |
 
-Nothing in Part B has been built.
+B4, B5 and B6 are not built and need their owners' decisions.
