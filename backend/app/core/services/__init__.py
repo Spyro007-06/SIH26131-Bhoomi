@@ -1,10 +1,15 @@
 """core/ services — business logic behind the routers.
 
-OWNER: Shreekumar.
+OWNER: Shreekumar, every module.
 
-Planned, per docs/DESIGN.md §10 and §11:
-    risk.py          Phase 3  Open-Meteo pull, favourability scoring, issue_alerts()
-    spread.py        Phase 4  PostGIS radius fan-out, propagate(confirmation)
-    confirmation.py  Phase 4  hotspot counters, the capped prior, accuracy aggregates
-    lookup.py        Phase 2  registered_use lookup for F8
+Structure only. No implementations yet.
+
+    risk.py            F5   docs/DESIGN.md §10
+    spread.py          F6   docs/DESIGN.md §10
+    followup.py        F10  docs/API_CONTRACT.md §11
+    confirmation.py    F14  docs/DESIGN.md §11
+    prior.py           F14  docs/DESIGN.md §11
+    registered_use.py  F8   docs/DESIGN.md §9
+    aggregates.py      F15  docs/API_CONTRACT.md §15
+    escalation.py      F12  docs/API_CONTRACT.md §12
 """
