@@ -62,8 +62,8 @@ async def lifespan(_: FastAPI):
     )
     if settings.vision_model == "stub":
         log.warning(
-            "VISION_MODEL=stub — every TopK carries is_stub=true and clients MUST "
-            "render a stub banner. docs/DESIGN.md §12."
+            "VISION_MODEL=stub - every TopK carries is_stub=true and clients MUST "
+            "render a stub banner. See docs/DESIGN.md section 12."
         )
     yield
     await dispose_engine()
