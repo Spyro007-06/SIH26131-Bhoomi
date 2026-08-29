@@ -1,0 +1,74 @@
+# CODEOWNERS — review routing for Bhoomi v2
+#
+# ---------------------------------------------------------------------------
+# HANDLES ARE PLACEHOLDERS. Replace every @TODO-* below with a real GitHub
+# username before this file does anything. Until then GitHub shows "Unknown
+# owner" against these rules and routes nothing — which is the point: an
+# obviously-broken entry nags, a plausible-but-wrong handle silently sends
+# someone else's review to a stranger.
+# ---------------------------------------------------------------------------
+#
+# Ownership follows worksplitV1 (the "Owns:" lines) and docs/DESIGN.md §3, which
+# agree. Note that worksplitV1's section *titles* and its Owns: lines disagree
+# after commit b5b18a6 — Tharun is titled "apprentice" while owning the Flutter
+# app end to end, and Santheesh is titled "Frontend Lead" while owning the
+# portal. The Owns: lines are what this file follows; Santheesh is added as a
+# second owner on app/ because both documents put him there in support
+# ("Santheesh support" in DESIGN §3, "Delegate to Santheesh early" and "Pair
+# with Tharun on the app" in worksplitV1).
+#
+# Last match wins in CODEOWNERS, so the file runs general to specific.
+
+# --- Default ---------------------------------------------------------------
+*                               @Spyro007-06
+
+# --- Top-level directories -------------------------------------------------
+/docs/                          @Spyro007-06
+/.github/                       @Spyro007-06
+/CLAUDE.md                      @Spyro007-06
+/README.md                      @Spyro007-06
+/CODEOWNERS                     @Spyro007-06
+/worksplitV1                    @Spyro007-06
+
+/app/                           @TODO-tharun @TODO-santheesh
+/portal/                        @TODO-santheesh
+/backend/                       @Spyro007-06
+
+# --- backend/app/ subpackages ----------------------------------------------
+
+# FROZEN at hour 2. A change here needs a team decision, not a pull request.
+# Routed to everyone so nobody can land one quietly.
+/backend/app/contracts/         @Spyro007-06 @TODO-thaariha @TODO-suchit @TODO-shruthi @TODO-tharun @TODO-santheesh
+
+/backend/app/core/              @Spyro007-06
+/backend/app/vision/            @TODO-suchit
+/backend/app/intelligence/      @TODO-thaariha
+/backend/app/voice/             @TODO-shruthi
+
+# App foundation
+/backend/app/main.py            @Spyro007-06
+/backend/app/config.py          @Spyro007-06
+/backend/app/db.py              @Spyro007-06
+/backend/app/deps.py            @Spyro007-06
+/backend/app/errors.py          @Spyro007-06
+
+# --- Routers whose owner is not the owner of core/ -------------------------
+# Everything else under core/routers/ falls to the /backend/app/core/ rule.
+/backend/app/core/routers/diagnose.py    @TODO-thaariha @TODO-suchit @Spyro007-06
+/backend/app/core/routers/clarify.py     @TODO-thaariha
+/backend/app/core/routers/advisory.py    @TODO-thaariha
+/backend/app/core/routers/cases.py       @TODO-thaariha
+/backend/app/core/routers/labelcheck.py  @TODO-suchit @Spyro007-06 @TODO-thaariha
+/backend/app/core/routers/referrals.py   @TODO-tharun
+/backend/app/core/routers/officials.py   @TODO-santheesh @Spyro007-06
+
+# --- Backend supporting trees ----------------------------------------------
+/backend/tests/                 @Spyro007-06
+/backend/alembic/               @Spyro007-06
+/backend/scripts/               @Spyro007-06
+/backend/seed/                  @Spyro007-06
+
+# Unowned in the work split (DESIGN §14, PRD §10). Routed to me so the review
+# lands somewhere, but these need a real owner assigned, not a reviewer.
+/backend/seed/registered_use.csv    @Spyro007-06
+/backend/seed/corpus/               @Spyro007-06

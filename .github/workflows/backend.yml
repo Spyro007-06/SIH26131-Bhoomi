@@ -1,0 +1,47 @@
+name: backend
+
+# Filtered to backend/** so a Flutter or portal commit does not run the Python
+# suite. The workflow file itself is included, otherwise a change to CI cannot
+# test itself.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          # 3.11 is the target runtime, not a floor. The pins in pyproject.toml
+          # do not all have wheels on newer interpreters.
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Ruff
+        run: ruff check app tests alembic
+
+      - name: Pytest
+        # No services. The Phase 0 suite is deliberately DB-free; when
+        # database-backed tests arrive they bring a postgres service with them.
+        run: pytest -q

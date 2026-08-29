@@ -42,8 +42,11 @@ Modules talk through typed functions, not by reaching into each other's tables.
 | `backend/app/intelligence/` | Thaariha | `decide()`, `compose()`, `verdict()`, `compile_bundle()` |
 | `backend/app/voice/` | Shruthi | `transcribe()`, `synthesize()`, `to_embedding_text()` |
 | `backend/app/` root modules: `main.py` `config.py` `db.py` `deps.py` `errors.py` | Shreekumar | app foundation |
+| `app/` (repo root) | Tharun (Santheesh support) | Flutter farmer app |
+| `portal/` | Santheesh | agronomist portal F12, officials dashboard F15 |
 
-Do not edit a module you do not own without telling its owner. If you need
+Review routing is in `CODEOWNERS`. Do not edit a module you do not own
+without telling its owner. If you need
 something from another module, ask for a function, not a table.
 
 **`backend/app/core/` is the only package that touches the database.** `intelligence/`
@@ -105,6 +108,10 @@ Get-NetTCPConnection -LocalPort 8000 -State Listen | ForEach-Object { Get-Proces
 
 On Linux/macOS: `lsof -i :8000` then `ps -o pid,lstart,cmd -p <pid>`.
 
+The pull request template makes the pasted response a required field. A PR with
+no HTTP surface — a migration, a README, a scaffold commit — says so and pastes
+whatever does verify it.
+
 ### 5. The stub must be visibly a stub
 
 `docs/DESIGN.md` §12, `docs/PRD.md` §4: a stub that returns confident output on
@@ -129,6 +136,20 @@ property if you touch it.
   endorsement phrasing. The vocabulary itself makes endorsement impossible.
   This is a review checklist item, not a style preference.
 - Only **confirmed** diagnoses drive spread alerts and hotspot points.
+
+---
+
+### 7. Structure-only modules stay structure-only
+
+`backend/app/core/routers/` and `backend/app/core/services/` are headers: a
+docstring naming the owner, the feature and the specifying docs section, and
+nothing else. Do not add a placeholder class, a stub route or a "just to get
+something working" model to a module you do not own — its owner has to delete it
+before they can start, which is worse than an empty file.
+
+`backend/tests/test_structure.py` enforces this by AST: one top-level statement
+per module, and it must be the docstring. When you implement a module you own,
+drop it from that test's coverage in the same commit.
 
 ---
 
@@ -168,7 +189,7 @@ backend/
     errors.py        error envelope + the stable code enum
     deps.py          auth dependency, role guard
     contracts/       THE THREE FROZEN CONTRACTS
-    core/            Shreekumar — models, schemas/, routers/, services/
+    core/            Shreekumar — models.py, schemas/, routers/, services/
     vision/          Suchit
     intelligence/    Thaariha
     voice/           Shruthi

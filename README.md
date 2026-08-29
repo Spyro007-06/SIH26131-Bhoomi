@@ -1,4 +1,4 @@
-# Bhoomi v2 — backend
+# Bhoomi v2
 
 **SIH26131** · Government of Maharashtra · early detection and management of crop
 diseases and pest infestations.
@@ -9,43 +9,69 @@ retrieved sources, in the ambiguous band it asks the farmer one distinguishing
 question, and below the floor it sends the case to a human. Pesticide verdicts
 are a table lookup, never a model output.
 
-Specifications live in `docs/` and are frozen:
+## The three stacks
 
-- [`docs/PRD.md`](docs/PRD.md) — what and why
+```
+backend/    Python · FastAPI · Postgres+PostGIS+pgvector    the API
+app/        Flutter · Android                               farmer app
+portal/     React · Vite · Tailwind · Leaflet               agronomist + officials
+docs/       frozen specifications, shared by all three
+```
+
+> **Name collision, on purpose.** Root `app/` is the **Flutter** app.
+> `backend/app/` is the **Python** package. Both names come from frozen docs —
+> `docs/DESIGN.md` §3 calls the Flutter module `app/`, and the Phase 0 layout
+> calls the Python package `app/` — so the prefix disambiguates rather than a
+> rename. Scope repo-wide greps to one stack.
+
+## Ownership
+
+From `docs/DESIGN.md` §3 and `worksplitV1`. Review routing is in
+[`CODEOWNERS`](CODEOWNERS).
+
+| Directory | Owner | Delivers |
+|---|---|---|
+| `backend/app/core/` | Shreekumar | schema, CRUD, risk engine, alerts, spread, follow-up, confirmation |
+| `backend/app/vision/` | Suchit | classifier, OCR extraction |
+| `backend/app/intelligence/` | Thaariha | gate, Doubt Doctor, RAG, verdicts, case bundle |
+| `backend/app/voice/` | Shruthi | ASR, TTS, translate-before-embed |
+| `backend/app/contracts/` | team — **frozen** | C1, C2, C3 and every wire enum |
+| `app/` | Tharun (Santheesh support) | Flutter farmer app |
+| `portal/` | Santheesh | agronomist portal (F12), officials dashboard (F15) |
+
+Modules talk through typed functions, not by reaching into each other's tables.
+`backend/app/core/` is the only package that touches the database.
+
+## Specifications — frozen
+
+- [`docs/PRD.md`](docs/PRD.md) — what and why, the fifteen features, the demo scenario
 - [`docs/DESIGN.md`](docs/DESIGN.md) — architecture, data model, the three algorithms
-- [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) — wire format
+- [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) — wire format, enums, error codes, invariants
 
-Contributors: read [`CLAUDE.md`](CLAUDE.md) first. It carries module ownership and
+Contributors read [`CLAUDE.md`](CLAUDE.md) first: it carries module ownership and
 the rules that are not negotiable.
 
 ---
 
-## Quick start
+## Running each stack
+
+### backend/
 
 Requires Docker and **Python 3.11**.
-
-All backend commands run from `backend/`.
 
 ```bash
 cd backend
 docker compose up -d
-```
-
-Brings up Postgres 16 with PostGIS and pgvector, MinIO, and a sidecar that
-creates the `bhoomi-assets` bucket. The sidecar shows as `exited (0)` when it has
-done its job — that is success, not a crash.
-
-```bash
-python -m venv .venv
-.venv/Scripts/pip install -e ".[dev]"     # Windows
-# .venv/bin/pip install -e ".[dev]"       # Linux / macOS
-
+python -m venv .venv && .venv/Scripts/pip install -e ".[dev]"   # Windows
+# python -m venv .venv && .venv/bin/pip install -e ".[dev]"     # Linux / macOS
 cp .env.example .env
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Then:
+`docker compose up -d` brings up Postgres 16 with PostGIS and pgvector, MinIO,
+and a sidecar that creates the `bhoomi-assets` bucket. The sidecar shows as
+`exited (0)` when it has done its job — that is success, not a crash.
 
 ```bash
 curl localhost:8000/api/v1/health
@@ -70,35 +96,34 @@ pytest
 ruff check app tests alembic
 ```
 
+### app/
+
+Not scaffolded yet — the tree is directories and a README. See
+[`app/README.md`](app/README.md).
+
+```bash
+cd app && flutter create . --project-name bhoomi
+```
+
+### portal/
+
+Not scaffolded yet. See [`portal/README.md`](portal/README.md).
+
+```bash
+npm create vite@latest portal -- --template react-ts
+```
+
 ---
 
-## Layout
+## Verification standard
 
-```
-backend/           Python API          Shreekumar
-app/               Flutter farmer app  Tharun
-portal/            React portal        Santheesh
-docs/              frozen specs, shared by all three
+`docs/DESIGN.md` §13, and the one required field on every pull request:
 
-backend/app/contracts/     the three frozen contracts + wire enums
-backend/app/core/          schema, CRUD, risk engine, alerts, spread, follow-up
-backend/app/vision/        classifier + OCR
-backend/app/intelligence/  gate, Doubt Doctor, RAG, verdicts, case bundles
-backend/app/voice/         ASR, TTS, translate-before-embed
-```
-
-Root `app/` is the Flutter app; `backend/app/` is the Python package. Both names
-come from `docs/DESIGN.md` §3 and the Phase 0 layout, and the docs are frozen.
-
-Ownership per module is in [`CLAUDE.md`](CLAUDE.md).
-
-## Feature flags
-
-`VISION_MODEL=real|stub` · `ASR_PROVIDER=live|stub` · `LLM_ENABLED=true|false`
-
-With `VISION_MODEL=stub` every `TopK` carries `is_stub: true` and clients must
-show a stub banner. The stub returns a fixed distribution that never reads the
-image and cannot reach the advise band on any gate path.
+> A feature is verified when a live HTTP response is pasted showing the expected
+> output. Import success, build success, and "I ran it" are not verification.
+> Before trusting any curl result, confirm which process is answering on the port
+> and when it started; a stale server from a previous session has previously made
+> working fixes appear broken for hours.
 
 ## Licence
 

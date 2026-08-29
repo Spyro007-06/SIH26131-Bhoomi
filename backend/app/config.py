@@ -54,8 +54,12 @@ SPREAD_RADIUS_M = 2000
 open; 2 km is the working default and is overridable per deployment only by
 editing this line, not by environment."""
 
-FOLLOWUP_DUE_DAYS = 5
-"""Days after an advisory before the follow-up check-in falls due."""
+FOLLOWUP_DUE_DAYS = 4
+"""Days after an advisory before the follow-up check-in falls due.
+
+Four, not five, to match the demo scenario: docs/PRD.md §6 step 8 is "Day 4: got
+worse, with a new photo. Severity promotes, auto-escalation fires."
+"""
 
 PRIOR_MAX_BIAS = 0.05
 """Cap on the additive bias the confirmation prior may apply to a vision
