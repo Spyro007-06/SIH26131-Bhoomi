@@ -1,0 +1,57 @@
+[project]
+name = "bhoomi-v2"
+version = "2.0.0"
+description = "Bhoomi v2 backend — SIH26131 early detection and management of crop diseases and pest infestations"
+readme = "README.md"
+requires-python = ">=3.11"
+
+# Every version is pinned. Target runtime is Python 3.11 (see docker-compose.yml
+# and CLAUDE.md); >=3.11 is declared so the pins install on a developer machine
+# with a newer interpreter, not because a newer interpreter is supported.
+dependencies = [
+  "fastapi==0.115.6",
+  "uvicorn[standard]==0.34.0",
+  "pydantic==2.10.4",
+  "pydantic-settings==2.7.0",
+  "sqlalchemy==2.0.36",
+  "asyncpg==0.30.0",
+  "psycopg[binary]==3.2.3",
+  "greenlet==3.1.1",
+  "alembic==1.14.0",
+  "geoalchemy2==0.16.0",
+  "pgvector==0.3.6",
+  "boto3==1.35.90",
+  "pyjwt==2.10.1",
+  "passlib==1.7.4",
+  "bcrypt==4.2.1",
+  "apscheduler==3.11.0",
+  "httpx==0.28.1",
+  "python-multipart==0.0.20",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.3.4",
+  "pytest-asyncio==0.25.0",
+  "anyio==4.7.0",
+  "ruff==0.8.4",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = ["error::DeprecationWarning:app.*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
