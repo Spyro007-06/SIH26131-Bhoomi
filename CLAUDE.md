@@ -36,17 +36,17 @@ Modules talk through typed functions, not by reaching into each other's tables.
 
 | Path | Owner | Exposes |
 |---|---|---|
-| `app/contracts/` | **team — frozen** | C1, C2, C3 and every wire enum |
-| `app/core/` | Shreekumar | ORM models, CRUD, risk engine, alerts, spread, follow-up, confirmation |
-| `app/vision/` | Suchit | `classify(image) -> TopK`, `extract_label(image) -> LabelExtract` |
-| `app/intelligence/` | Thaariha | `decide()`, `compose()`, `verdict()`, `compile_bundle()` |
-| `app/voice/` | Shruthi | `transcribe()`, `synthesize()`, `to_embedding_text()` |
-| `app/main.py` `config.py` `db.py` `deps.py` `errors.py` | Shreekumar | app foundation |
+| `backend/app/contracts/` | **team — frozen** | C1, C2, C3 and every wire enum |
+| `backend/app/core/` | Shreekumar | ORM models, CRUD, risk engine, alerts, spread, follow-up, confirmation |
+| `backend/app/vision/` | Suchit | `classify(image) -> TopK`, `extract_label(image) -> LabelExtract` |
+| `backend/app/intelligence/` | Thaariha | `decide()`, `compose()`, `verdict()`, `compile_bundle()` |
+| `backend/app/voice/` | Shruthi | `transcribe()`, `synthesize()`, `to_embedding_text()` |
+| `backend/app/` root modules: `main.py` `config.py` `db.py` `deps.py` `errors.py` | Shreekumar | app foundation |
 
 Do not edit a module you do not own without telling its owner. If you need
 something from another module, ask for a function, not a table.
 
-**`app/core/` is the only package that touches the database.** `intelligence/`
+**`backend/app/core/` is the only package that touches the database.** `intelligence/`
 never queries directly — `core/` reads the rows and hands it typed objects
 (`docs/DESIGN.md` §3).
 
@@ -54,18 +54,18 @@ never queries directly — `core/` reads the rows and hands it typed objects
 
 ## The rules that are not negotiable
 
-### 1. `app/contracts/` is frozen
+### 1. `backend/app/contracts/` is frozen
 
 Frozen at hour 2. Four workstreams and two clients build against these shapes.
 Reopening one costs more than living with an imperfect shape. If something in
 there is wrong, raise it with the team — do not edit it in a pull request.
 
-- **C1** `contracts/vision.py` — `Prediction`, `TopK` · vision → intelligence
-- **C2** `contracts/farm.py` — `Farm`, `GeoPoint` · core → everyone
-- **C3** `contracts/gate.py` — `GateDecision`, the six verdict strings · intelligence → clients
-- `contracts/enums.py` — every wire enum, exact string values from API_CONTRACT §1
+- **C1** `backend/app/contracts/vision.py` — `Prediction`, `TopK` · vision → intelligence
+- **C2** `backend/app/contracts/farm.py` — `Farm`, `GeoPoint` · core → everyone
+- **C3** `backend/app/contracts/gate.py` — `GateDecision`, the six verdict strings · intelligence → clients
+- `backend/app/contracts/enums.py` — every wire enum, exact string values from API_CONTRACT §1
 
-### 2. Constants live only in `app/config.py`
+### 2. Constants live only in `backend/app/config.py`
 
 `docs/DESIGN.md` §6, verbatim: *"Constants live here and nowhere else. A
 threshold literal appearing in a second file is a bug."*
@@ -74,8 +74,9 @@ threshold literal appearing in a second file is a bug."*
 `SPREAD_RADIUS_M`, `FOLLOWUP_DUE_DAYS`, `PRIOR_MAX_BIAS`. Import them. Do not
 re-declare one locally, and do not inline the number.
 
-`tests/test_config.py::test_thresholds_are_declared_only_in_config` walks the AST
-of every module under `app/` and fails if one is bound outside `config.py`.
+`backend/tests/test_config.py::test_thresholds_are_declared_only_in_config` walks
+the AST of every module under `backend/app/` and fails if one is bound outside
+`config.py`.
 
 The gate thresholds are **module constants, not settings fields** — the gate must
 not be tunable by whoever controls the environment at demo time. Only deployment
@@ -84,7 +85,8 @@ wiring and the three feature flags read from env.
 ### 3. One error envelope
 
 `docs/API_CONTRACT.md` §0. Raise `BhoomiError` (or a subclass) from
-`app/errors.py`; the handler registered in `app/main.py` renders it. No endpoint
+`backend/app/errors.py`; the handler registered in `backend/app/main.py` renders
+it. No endpoint
 hand-rolls an error body. Adding a code to `ErrorCode` is a deliberate act.
 
 ### 4. Verification — `docs/DESIGN.md` §13
@@ -130,40 +132,72 @@ property if you touch it.
 
 ---
 
-## Layout
+## Layout — three stacks
 
 ```
-app/
-  main.py          app factory, /api/v1 mount, health
-  config.py        EVERY tunable constant, and nothing else has any
-  db.py            async engine, Base, session dependency
-  errors.py        error envelope + the stable code enum
-  deps.py          auth dependency, role guard
-  contracts/       THE THREE FROZEN CONTRACTS
-  core/            Shreekumar — models, schemas, routers/, services/
-  vision/          Suchit
-  intelligence/    Thaariha
-  voice/           Shruthi
-alembic/versions/  migrations
-docs/              frozen specs — read, do not edit
-tests/  seed/  scripts/
+backend/           Python API          Shreekumar
+app/               Flutter farmer app  Tharun
+portal/            React portal        Santheesh
+docs/              frozen specs — read, do not edit. Shared by all three.
+```
+
+### The name collision — read this before you grep
+
+**`app/` at repo root is the Flutter app. `backend/app/` is the Python package.**
+
+Both names come from `docs/DESIGN.md` §3, which calls the Flutter module `app/`,
+and from the Phase 0 layout, which calls the Python package `app/`. The docs are
+frozen, so both names stay and the prefix disambiguates them.
+
+Consequences worth internalising:
+
+- `from app.config import ...` in Python always means `backend/app/`. Python never
+  sees the Flutter directory.
+- A repo-wide `grep -rn "app/"` will hit both. Scope your searches to a stack.
+- CODEOWNERS routes `/app/` to Tharun and `/backend/app/` to the backend owners.
+  A path pattern that forgets the prefix routes reviews to the wrong person.
+
+### Inside `backend/`
+
+```
+backend/
+  app/
+    main.py          app factory, /api/v1 mount, health
+    config.py        EVERY tunable constant, and nothing else has any
+    db.py            async engine, Base, session dependency
+    errors.py        error envelope + the stable code enum
+    deps.py          auth dependency, role guard
+    contracts/       THE THREE FROZEN CONTRACTS
+    core/            Shreekumar — models, schemas/, routers/, services/
+    vision/          Suchit
+    intelligence/    Thaariha
+    voice/           Shruthi
+  alembic/versions/  migrations
+  tests/  seed/  scripts/
 ```
 
 ---
 
 ## Running it
 
+Every backend command runs from `backend/`, not from the repo root.
+
 ```bash
+cd backend
 docker compose up -d
 python -m venv .venv && .venv/bin/pip install -e ".[dev]"   # Scripts\ on Windows
 cp .env.example .env
 alembic upgrade head
 uvicorn app.main:app --reload
 pytest
+ruff check app tests alembic
 ```
 
 `docker compose up -d` leaves `bhoomi-minio-bucket` in state `exited (0)`. That
 is the bucket sidecar finishing successfully, not a crash.
+
+`app/` and `portal/` are scaffolded by their owners with their own tools. See
+`app/README.md` and `portal/README.md`.
 
 ---
 

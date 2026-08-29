@@ -24,7 +24,10 @@ the rules that are not negotiable.
 
 Requires Docker and **Python 3.11**.
 
+All backend commands run from `backend/`.
+
 ```bash
+cd backend
 docker compose up -d
 ```
 
@@ -72,12 +75,20 @@ ruff check app tests alembic
 ## Layout
 
 ```
-app/contracts/     the three frozen contracts + wire enums
-app/core/          schema, CRUD, risk engine, alerts, spread, follow-up
-app/vision/        classifier + OCR
-app/intelligence/  gate, Doubt Doctor, RAG, verdicts, case bundles
-app/voice/         ASR, TTS, translate-before-embed
+backend/           Python API          Shreekumar
+app/               Flutter farmer app  Tharun
+portal/            React portal        Santheesh
+docs/              frozen specs, shared by all three
+
+backend/app/contracts/     the three frozen contracts + wire enums
+backend/app/core/          schema, CRUD, risk engine, alerts, spread, follow-up
+backend/app/vision/        classifier + OCR
+backend/app/intelligence/  gate, Doubt Doctor, RAG, verdicts, case bundles
+backend/app/voice/         ASR, TTS, translate-before-embed
 ```
+
+Root `app/` is the Flutter app; `backend/app/` is the Python package. Both names
+come from `docs/DESIGN.md` §3 and the Phase 0 layout, and the docs are frozen.
 
 Ownership per module is in [`CLAUDE.md`](CLAUDE.md).
 
