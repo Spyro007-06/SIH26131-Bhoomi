@@ -34,6 +34,8 @@ IMPLEMENTED = {
     "schemas/auth.py",
     "schemas/assets.py",
     "schemas/farms.py",
+    # Phase 2 (F8 lookup half + case-file reads).
+    "services/registered_use.py",
 }
 
 
