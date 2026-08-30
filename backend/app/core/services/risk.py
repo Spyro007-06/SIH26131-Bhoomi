@@ -40,11 +40,11 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import RISK_ALERT_MIN_LEVEL, RISK_LEVELS
+from app.config import MAX_ALERTS_PER_FARM_PER_DAY, RISK_ALERT_MIN_LEVEL, RISK_LEVELS
 from app.contracts.enums import AlertTrigger, Crop, GrowthStage, TargetLabel
 from app.core.models import Alert, Farm, Problem
 from app.core.weather import WeatherCache, WeatherWindow
@@ -321,6 +321,10 @@ def score_farm_target(
             "window for this target"
         )
 
+    # `high` requires BOTH a susceptible stage AND a history bump. The stage
+    # check above is a hard precondition — anything reaching this line already
+    # matched — so the bump below is the second half of that conjunction, not an
+    # alternative route to it. There is no path to `high` on history alone.
     level = "moderate"
     history_clause = ""
     if entry.history_bump and has_history:
@@ -353,6 +357,7 @@ class RunReport:
     issued: int = 0
     skipped_duplicate: int = 0
     below_threshold: int = 0
+    suppressed_by_cap: int = 0
     no_tasks: int = 0
     weather_calls: int = 0
     errors: list[str] = field(default_factory=list)
@@ -364,6 +369,7 @@ class RunReport:
             f"  alerts issued       {self.issued}",
             f"  skipped, duplicate  {self.skipped_duplicate}",
             f"  below threshold     {self.below_threshold}",
+            f"  suppressed, cap     {self.suppressed_by_cap}",
             f"  skipped, no tasks   {self.no_tasks}",
             f"  weather HTTP calls  {self.weather_calls}",
         ]
@@ -417,6 +423,10 @@ async def issue_alerts(session: AsyncSession, today: date | None = None) -> RunR
             }
             history_values = {h.value if hasattr(h, "value") else str(h) for h in history}
 
+            # Score everything first, then rank and cap. Issuing inside the
+            # scoring loop would let registry order decide which two targets a
+            # farmer sees, which is arbitrary.
+            candidates: list[tuple[RiskTarget, Score]] = []
             for entry in entries:
                 report.scored += 1
                 score = score_farm_target(
@@ -425,7 +435,46 @@ async def issue_alerts(session: AsyncSession, today: date | None = None) -> RunR
                 if not score.fired or not _meets_threshold(score.level):
                     report.below_threshold += 1
                     continue
+                candidates.append((entry, score))
 
+            # Ranked by risk level, then by whether this farm has seen the target
+            # before. A high-risk target the farmer has already had is the one
+            # worth their walk across the field.
+            candidates.sort(
+                key=lambda pair: (
+                    RISK_LEVELS.index(pair[1].level),
+                    bool(pair[1].detail.get("history_bump")),
+                ),
+                reverse=True,
+            )
+
+            # Alerts already issued to this farm today count against the cap,
+            # including F6 spread alerts — the farmer sees one list of cards, not
+            # one per subsystem.
+            already_today = int(
+                await session.scalar(
+                    select(func.count())
+                    .select_from(Alert)
+                    .where(
+                        Alert.farm_id == farm.id,
+                        text(
+                            "(alert.issued_at AT TIME ZONE 'UTC')::date "
+                            "= (now() AT TIME ZONE 'UTC')::date"
+                        ),
+                    )
+                )
+                or 0
+            )
+            budget = max(0, MAX_ALERTS_PER_FARM_PER_DAY - already_today)
+
+            if len(candidates) > budget:
+                # Suppressed, not lost: tomorrow's run re-evaluates every target
+                # from scratch, so a target held back today reappears if it is
+                # still favourable and still ranks.
+                report.suppressed_by_cap += len(candidates) - budget
+                candidates = candidates[:budget]
+
+            for entry, score in candidates:
                 target_tasks = tasks.get(entry.target, [])
                 if len(target_tasks) < MIN_TASKS_PER_TARGET:
                     # Unreachable if load_inspection_tasks did its job; kept so a

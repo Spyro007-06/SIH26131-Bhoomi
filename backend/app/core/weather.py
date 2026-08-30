@@ -51,27 +51,36 @@ class DayWeather:
     temp_min: float | None
     temp_max: float | None
 
+    @property
+    def temp_mean(self) -> float | None:
+        """Midpoint of the daily range. None when either end is missing."""
+        if self.temp_min is None or self.temp_max is None:
+            return None
+        return (self.temp_min + self.temp_max) / 2
+
     def satisfies(
         self, humidity_min: float, temp_min: float, temp_max: float
     ) -> bool:
         """Was this day favourable under the given band?
 
-        The temperature test is an OVERLAP, not containment: the day counts if
-        any part of its min-max range falls inside the rule's band. A crop
-        experiences the whole daily range, and fungal infection happens during
-        the hours of leaf wetness rather than at the daily mean, so requiring
-        the entire day inside the band would miss real infection windows.
+        The temperature test is the daily MEAN inside the band, which is what
+        favourability models actually use.
+
+        It was an overlap test — the day counted if any part of its min-max
+        range touched the band. In monsoon Maharashtra almost every day overlaps
+        22-30C, so the test passed everywhere and carried no information: the
+        job fired on 14 of 15 farm-target pairs. A rule that is true of every
+        day is not a rule.
 
         A day with a missing reading is NOT favourable. Treating None as a pass
         would let a data gap manufacture a consecutive-day run.
         """
-        if self.humidity_max is None or self.temp_min is None or self.temp_max is None:
+        if self.humidity_max is None:
             return False
-        return (
-            self.humidity_max >= humidity_min
-            and self.temp_max >= temp_min
-            and self.temp_min <= temp_max
-        )
+        mean = self.temp_mean
+        if mean is None:
+            return False
+        return self.humidity_max >= humidity_min and temp_min <= mean <= temp_max
 
 
 @dataclass

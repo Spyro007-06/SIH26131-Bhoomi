@@ -64,6 +64,18 @@ A module constant, not a settings field: an environment that can lower this can
 flood every farmer with low-confidence alerts, and an alert nobody trusts is
 worse than no alert. docs/PRD.md section 5."""
 
+MAX_ALERTS_PER_FARM_PER_DAY = 2
+"""Backstop cap on how many risk alerts one farm can receive in a day.
+
+Alert cards are non-dismissible until answered (docs/API_CONTRACT.md §10), and
+five non-dismissible cards is a product nobody opens twice. Suppressed targets
+are re-evaluated tomorrow, so nothing is lost — only deferred.
+
+This caps the F5 risk job ONLY. F6 spread alerts bypass it: a confirmed case
+1.5 km away is strictly stronger information than a humidity band, and Phase 4
+went to some trouble to stop the daily-uniqueness index suppressing exactly that
+alert. Capping it here would reintroduce the same failure by another route."""
+
 WEATHER_PAST_DAYS = 7
 """Trailing days requested from Open-Meteo alongside the forecast.
 

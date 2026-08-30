@@ -7,9 +7,14 @@
       "humidity_min": 90,
       "temp_min": 22,
       "temp_max": 30,
-      "consecutive_days": 4
+      "consecutive_days": 6
     },
-    "susceptible_stages": ["nursery", "tillering", "vegetative", "booting"],
+    "susceptible_stages": [
+      "nursery",
+      "tillering",
+      "vegetative",
+      "booting"
+    ],
     "history_bump": true,
     "note": "Leaf blast favours long leaf-wetness at moderate temperature. docs/PRD.md section 6 uses this rule as the demo trigger."
   },
@@ -21,9 +26,14 @@
       "humidity_min": 85,
       "temp_min": 24,
       "temp_max": 32,
-      "consecutive_days": 3
+      "consecutive_days": 6
     },
-    "susceptible_stages": ["tillering", "vegetative", "flowering", "maturity"],
+    "susceptible_stages": [
+      "tillering",
+      "vegetative",
+      "flowering",
+      "maturity"
+    ],
     "history_bump": true,
     "note": "Associated with stressed and nutrient-poor crops, so the history bump matters more here than for blast."
   },
@@ -35,9 +45,13 @@
       "humidity_min": 88,
       "temp_min": 25,
       "temp_max": 34,
-      "consecutive_days": 2
+      "consecutive_days": 6
     },
-    "susceptible_stages": ["tillering", "vegetative", "booting"],
+    "susceptible_stages": [
+      "tillering",
+      "vegetative",
+      "booting"
+    ],
     "history_bump": true,
     "note": "Spreads on wind-driven rain; a short wet window is enough."
   },
@@ -49,7 +63,11 @@
       "das_min": 25,
       "das_max": 55
     },
-    "susceptible_stages": ["tillering", "vegetative", "booting"],
+    "susceptible_stages": [
+      "tillering",
+      "vegetative",
+      "booting"
+    ],
     "history_bump": true,
     "note": "Dead-heart damage tracks crop age rather than the weather window, which is why this entry is phenology-driven."
   },
@@ -61,13 +79,17 @@
       "humidity_min": 80,
       "temp_min": 25,
       "temp_max": 33,
-      "consecutive_days": 5
+      "consecutive_days": 6
     },
     "phenology_rule": {
       "das_min": 40,
       "das_max": 90
     },
-    "susceptible_stages": ["tillering", "booting", "flowering"],
+    "susceptible_stages": [
+      "tillering",
+      "booting",
+      "flowering"
+    ],
     "history_bump": true,
     "note": "Declares both drivers. Hopper burn needs a humid canopy AND a crop old enough to have one, so both rules must be satisfied."
   }
