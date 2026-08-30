@@ -61,6 +61,15 @@ Four, not five, to match the demo scenario: docs/PRD.md §6 step 8 is "Day 4: go
 worse, with a new photo. Severity promotes, auto-escalation fires."
 """
 
+OTP_LENGTH = 6
+"""Digits in a one-time code. docs/API_CONTRACT.md §2."""
+
+OTP_MAX_ATTEMPTS = 5
+"""Verification attempts allowed against one OtpRequest before it is dead.
+
+A module constant rather than a settings field: an environment that can raise
+this can turn the verify endpoint back into a brute-force oracle."""
+
 PRIOR_MAX_BIAS = 0.05
 """Cap on the additive bias the confirmation prior may apply to a vision
 confidence before the gate sees it. docs/DESIGN.md §11: the prior must never be
@@ -125,6 +134,13 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 720
     refresh_token_expire_days: int = 30
     otp_expire_seconds: int = 300
+
+    dev_fixed_otp: str | None = None
+    """Local-only escape hatch so the demo does not need an SMS provider.
+
+    Applies ONLY when app_env == "local" AND this is set. Unset means codes are
+    always generated, in every environment — see core/security.py, which refuses
+    to apply it rather than falling back to a default."""
 
     # --- Feature flags, docs/DESIGN.md §12 ---
     vision_model: Literal["real", "stub"] = "stub"

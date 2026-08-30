@@ -1,12 +1,16 @@
 """Structure-only modules stay structure-only.
 
-The interstitial task created router, service and schema modules as headers: a
-docstring naming the owner, the feature and the specifying docs section, and
-nothing else. This file is the mechanical check that they still are that.
+Router, service and schema modules start as headers: a docstring naming the
+owner, the feature and the specifying docs section, and nothing else. This file
+is the mechanical check that the ones still unbuilt remain that way.
 
 It exists because the failure mode is quiet. A placeholder class or a stub route
 added "just to get something working" looks like progress and has to be deleted
 by the module's real owner before they can start.
+
+IMPLEMENTED is a ledger of built surface. It should grow as phases land, and the
+structure-only list shrinks to match — when you implement a module you own, move
+it here in the same commit rather than deleting the check.
 """
 
 from __future__ import annotations
@@ -21,11 +25,26 @@ CORE = pathlib.Path(__file__).resolve().parents[1] / "app" / "core"
 
 STRUCTURE_ONLY_DIRS = [CORE / "routers", CORE / "services", CORE / "schemas"]
 
+# Built and no longer structure-only. Phase 1 (F1 spine): the three endpoint
+# groups Shreekumar owns, and their request/response models.
+IMPLEMENTED = {
+    "routers/auth.py",
+    "routers/assets.py",
+    "routers/farms.py",
+    "schemas/auth.py",
+    "schemas/assets.py",
+    "schemas/farms.py",
+}
+
+
+def _rel(path: pathlib.Path) -> str:
+    return f"{path.parent.name}/{path.name}"
+
 
 def _structure_only_files() -> list[pathlib.Path]:
     found: list[pathlib.Path] = []
     for directory in STRUCTURE_ONLY_DIRS:
-        found.extend(sorted(directory.glob("*.py")))
+        found.extend(p for p in sorted(directory.glob("*.py")) if _rel(p) not in IMPLEMENTED)
     return found
 
 
@@ -38,6 +57,9 @@ def _module_name(path: pathlib.Path) -> str:
 
 
 ALL_FILES = _structure_only_files()
+IMPLEMENTED_FILES = [
+    CORE / rel for rel in sorted(IMPLEMENTED) if (CORE / rel).exists()
+]
 
 
 def test_the_expected_modules_exist() -> None:
@@ -74,6 +96,14 @@ def test_the_expected_modules_exist() -> None:
     }
 
 
+def test_every_implemented_module_is_actually_present() -> None:
+    """The ledger must not drift from the tree. A name listed as implemented
+    that no longer exists means the exclusion below is silently covering
+    nothing."""
+    missing = sorted(rel for rel in IMPLEMENTED if not (CORE / rel).exists())
+    assert not missing, f"IMPLEMENTED lists modules that do not exist: {missing}"
+
+
 @pytest.mark.parametrize("path", ALL_FILES, ids=_module_name)
 def test_module_is_importable(path: pathlib.Path) -> None:
     assert importlib.import_module(_module_name(path)) is not None
@@ -92,8 +122,8 @@ def test_module_contains_nothing_but_its_docstring(path: pathlib.Path) -> None:
     assert len(tree.body) == 1, (
         f"{path.name} has {len(tree.body)} top-level statements; structure-only "
         "modules contain their docstring and nothing else. If you are ready to "
-        "implement this module, delete its entry from STRUCTURE_ONLY_DIRS "
-        "coverage in this test in the same commit."
+        f"implement this module, add {_rel(path)!r} to IMPLEMENTED in this file "
+        "in the same commit."
     )
     node = tree.body[0]
     assert isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant), (
@@ -102,10 +132,10 @@ def test_module_contains_nothing_but_its_docstring(path: pathlib.Path) -> None:
     assert isinstance(node.value.value, str)
 
 
-@pytest.mark.parametrize("path", ALL_FILES, ids=_module_name)
+@pytest.mark.parametrize("path", ALL_FILES + IMPLEMENTED_FILES, ids=_module_name)
 def test_module_names_an_owner_and_a_docs_section(path: pathlib.Path) -> None:
-    """Every header carries who owns it and what specifies it. A module with
-    neither is a directory nobody can commit into with confidence."""
+    """Every module carries who owns it and what specifies it — implemented ones
+    too. A module with neither is a file nobody can safely change."""
     doc = ast.get_docstring(ast.parse(path.read_text(encoding="utf-8"))) or ""
 
     assert "OWNER:" in doc, f"{path.name} does not name an owner"

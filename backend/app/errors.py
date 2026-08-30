@@ -17,6 +17,7 @@ and the handler registered in app/main.py renders the envelope. Adding a code to
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import FastAPI, Request, status
@@ -128,6 +129,25 @@ def register_exception_handlers(app: FastAPI) -> None:
                 ErrorCode.VALIDATION_FAILED,
                 "Request could not be validated.",
                 {"errors": exc.errors()},
+            ),
+        )
+
+    @app.exception_handler(Exception)
+    async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
+        """Last resort, so an unexpected failure still speaks the envelope.
+
+        Without this, Starlette answers with plain-text "Internal Server Error"
+        and a client that parses every response as the §0 shape gets a decode
+        error instead of a code it can branch on. The traceback is logged in
+        full; the body deliberately carries no detail, since an exception
+        message can contain a connection string or a row.
+        """
+        logging.getLogger("bhoomi.errors").exception("unhandled error: %s", exc)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=envelope(
+                ErrorCode.VALIDATION_FAILED,
+                "Something went wrong on our side.",
             ),
         )
 
