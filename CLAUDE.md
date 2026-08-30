@@ -217,6 +217,28 @@ ruff check app tests alembic
 `docker compose up -d` leaves `bhoomi-minio-bucket` in state `exited (0)`. That
 is the bucket sidecar finishing successfully, not a crash.
 
+### Machine note — techpark-9 has no Docker
+
+**The compose stack above is the canonical setup and stays that way.** If you
+have Docker, use it; nothing in `docker-compose.yml` or
+`backend/docker/postgres/Dockerfile` has been changed for the exception below.
+
+On **techpark-9** Docker cannot be installed — no sudo, blocked indefinitely. That
+machine verifies against a **Supabase** Postgres instead, configured entirely in
+`backend/.env` (gitignored), which nobody else needs to change:
+
+- Connect through the **Session pooler** (`aws-0-<region>.pooler.supabase.com:5432`,
+  user `postgres.<project-ref>`). The direct `db.<ref>.supabase.co` host is
+  **AAAA-only** and does not resolve on an IPv4-only machine.
+- If the password contains a URL-reserved character, percent-encode it. `@`
+  becomes `%40`, otherwise the URL splits at the wrong `@`.
+- That deployment is **PostgreSQL 17** with PostGIS 3.3 and pgvector 0.8, against
+  the pinned `postgis/postgis:16-3.4` everywhere else. Schema verified on 17 is
+  not automatically verified on 16 — worth a second run by someone with Docker
+  before the freeze.
+- Supabase installs `postgis` and `vector` into `public`, not `extensions`, so
+  `alembic/env.py` filters PostGIS's catalog tables out of autogenerate.
+
 `app/` and `portal/` are scaffolded by their owners with their own tools. See
 `app/README.md` and `portal/README.md`.
 
