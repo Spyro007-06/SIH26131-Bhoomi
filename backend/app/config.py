@@ -98,6 +98,14 @@ OTP_MAX_ATTEMPTS = 5
 A module constant rather than a settings field: an environment that can raise
 this can turn the verify endpoint back into a brute-force oracle."""
 
+PRIOR_FULL_CONFIDENCE_COUNT = 10
+"""Net confirmations that earn the full PRIOR_MAX_BIAS nudge.
+
+Ten gets the whole nudge, five gets half, and a label corrected as often as it
+is confirmed gets nothing. Linear and readable off a screen on purpose —
+docs/DESIGN.md §11 warns that dressing this up as learning invites a question
+with no good answer on stage."""
+
 PRIOR_MAX_BIAS = 0.05
 """Cap on the additive bias the confirmation prior may apply to a vision
 confidence before the gate sees it. docs/DESIGN.md §11: the prior must never be

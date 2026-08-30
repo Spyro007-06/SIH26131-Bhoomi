@@ -46,6 +46,21 @@ IMPLEMENTED = {
     "services/risk.py",
     "services/followup.py",
     "services/escalation.py",
+    # Phase 4 (F6 spread, F14 confirmation + prior, F15 data half).
+    #
+    # routers/cases.py is PARTLY implemented: POST /cases/{id}/confirm and
+    # GET /agronomist/case-queue are Shreekumar's and are built. GET /cases/{id}
+    # — the bundle — and POST /cases/{id}/request-info remain Thaariha's F12 and
+    # are NOT implemented; they are absent from the router rather than stubbed,
+    # so they 404 rather than returning a plausible empty bundle.
+    "routers/cases.py",
+    "routers/officials.py",
+    "schemas/cases.py",
+    "schemas/officials.py",
+    "services/spread.py",
+    "services/confirmation.py",
+    "services/prior.py",
+    "services/aggregates.py",
 }
 
 

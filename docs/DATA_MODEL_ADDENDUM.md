@@ -19,6 +19,8 @@ Two categories:
   to another owner and is flagged only. B6 is a watch item.
 - **Part C — a team decision taken after Phase 1.** `Farm.sowing_date`, in
   migration `0003_farm_sowing_date`.
+- **Part D — an ownership reassignment,** not a data-model change. Recorded
+  here because it is the document the team reviews.
 
 ---
 
@@ -269,6 +271,57 @@ column is forward-compatible with that decision; it does not presuppose it.
 
 ---
 
+## Part D — `POST /cases/{id}/confirm` and the case queue move to core
+
+**Status:** decided by Shreekumar, Phase 4. Not a schema change; recorded here
+because this is the file the team reads.
+
+`docs/API_CONTRACT.md` §16 assigns all of §12 and §13 to Thaariha. Two of those
+endpoints have moved:
+
+| Endpoint | §16 says | Now | Why |
+|---|---|---|---|
+| `POST /cases/{id}/confirm` | Thaariha | **Shreekumar** | a core write; see below |
+| `GET /agronomist/case-queue` | Thaariha | **Shreekumar** | a read over Case rows |
+| `GET /cases/{id}` | Thaariha | **Thaariha** | bundle compilation, unchanged |
+| `POST /cases/{id}/request-info` | Thaariha | **Thaariha** | unchanged |
+
+### The reasoning
+
+Read §13's request body: a verdict, an optional corrected label, a treatment
+string and notes. There is no inference in that path. The endpoint writes a
+`Confirmation` row and returns `spread_alerts_issued`.
+
+Its four downstream effects are all `core/` features:
+
+1. resolve the `Problem` — F1, the case file
+2. move the `LabelPrior` counters — F14, `services/prior.py`
+3. fan out spread alerts — F6, `services/spread.py`, PostGIS
+4. feed the officials aggregates — F15, `services/aggregates.py`
+
+All four touch the database, and `docs/DESIGN.md` §3 is explicit that
+`intelligence/` never queries it directly. Leaving confirm with Thaariha would
+mean either she reaches into four of my tables, or I expose four functions she
+calls in sequence and the transaction boundary sits in her module. Neither is
+better than the endpoint living where its effects live.
+
+**What stays hers is the part with reasoning in it.** `GET /cases/{id}` compiles
+the bundle: it decides what an agronomist needs to see and in what shape, which
+is judgement, and `docs/API_CONTRACT.md` §12's no-placeholder rule is a
+guarantee about that judgement. It is untouched, still unimplemented, and
+returns 404 rather than a plausible empty bundle.
+
+### What this is not
+
+It is not a claim on F12. The feature is split at the seam between "write a row
+and apply its consequences" and "decide what to show a human", and the second
+half is the larger and more interesting one.
+
+If the team disagrees, moving confirm back is a file move: `services/` keeps the
+four effects as callable functions either way.
+
+---
+
 ## Summary
 
 | # | Table / column | Status | Forced by |
@@ -284,5 +337,6 @@ column is forward-compatible with that decision; it does not presuppose it.
 | B5 | referrals | flagged — Tharun | API_CONTRACT §14 |
 | B6 | severity history | watch item | API_CONTRACT §11 |
 | C  | `Farm.sowing_date` | **accepted, in 0003** | F5 phenology branch, DESIGN §10 |
+| D  | confirm + case-queue -> core | **decided, Phase 4** | ownership, not schema |
 
 B4, B5 and B6 are not built and need their owners' decisions.

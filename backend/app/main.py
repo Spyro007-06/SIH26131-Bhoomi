@@ -15,7 +15,16 @@ from fastapi import APIRouter, FastAPI
 
 from app import config
 from app.config import settings
-from app.core.routers import alerts, assets, auth, farms, followups, problems
+from app.core.routers import (
+    alerts,
+    assets,
+    auth,
+    cases,
+    farms,
+    followups,
+    officials,
+    problems,
+)
 from app.db import dispose_engine
 from app.errors import register_exception_handlers
 from app.scheduler import shutdown_scheduler, start_scheduler
@@ -94,6 +103,8 @@ def create_app() -> FastAPI:
     api.include_router(problems.router)
     api.include_router(alerts.router)
     api.include_router(followups.router)
+    api.include_router(cases.router)
+    api.include_router(officials.router)
     # Phase 2+: problems, timeline. Phase 3+: alerts, followups. Each router
     # module is included here as its owner implements it.
     app.include_router(api)
