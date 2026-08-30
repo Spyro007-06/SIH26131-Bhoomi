@@ -125,29 +125,42 @@ async def accuracy(
 ) -> list[AccuracyRow]:
     """Confirmed vs corrected per label over a window.
 
-    Grouped on the MODEL's label, which for a corrected row is what the label was
-    before the agronomist changed it. Grouping on the current Problem.label would
-    credit every correction to the label it was corrected TO, and the chart would
-    show a model that is never wrong.
+    Grouped on `Confirmation.model_label` — what the model actually predicted,
+    frozen at confirm time by migration 0006.
 
-    Confirmation.corrected_label is that pre-correction anchor: on a corrected
-    row it holds the truth and Problem.label now equals it, so the model's
-    original guess is only recoverable from... nothing, once Problem.label is
-    overwritten. So this groups by verdict against the CURRENT label and counts
-    corrections against it, which is the honest reading available from the
-    schema: "of the cases finally labelled X, how many did the model get right
-    first time".
+    This previously grouped on `Problem.label`, which on a correction has already
+    been overwritten with the corrected label. A case where the model said blast
+    and the agronomist corrected it to brown_spot was reported as a correction
+    against BROWN_SPOT: the label the model never predicted carried the penalty,
+    and the label it got wrong looked clean. F15's headline metric read the
+    inverse of the truth.
+
+    The question this answers is "of the times the model said X, how often was it
+    right". A correction therefore counts against the model's label ONLY. It does
+    not add a confirmation to the corrected label, because the model never
+    predicted that label and crediting it there would inflate its accuracy with a
+    case it had no part in.
+
+    `LabelPrior` records both facts — the model was wrong about X and the truth
+    was Y — because the prior is a record of what has been seen in a place. This
+    view is a record of model performance. They are different questions and it is
+    correct that they count differently.
+
+    Rows with a NULL model_label are EXCLUDED, not bucketed. Those are
+    confirmations on problems that never had a diagnosis (escalated from a
+    follow-up rather than a photo) or that migration 0006 refused to guess. A
+    case the model never saw is not evidence about the model.
     """
     statement = (
         select(
-            Problem.label,
+            Confirmation.model_label,
             Confirmation.verdict,
             func.count(Confirmation.id),
         )
         .select_from(Confirmation)
         .join(Problem, Problem.id == Confirmation.problem_id)
-        .where(Problem.label.is_not(None))
-        .group_by(Problem.label, Confirmation.verdict)
+        .where(Confirmation.model_label.is_not(None))
+        .group_by(Confirmation.model_label, Confirmation.verdict)
     )
     if date_from:
         statement = statement.where(func.date(Confirmation.created_at) >= date_from)

@@ -21,6 +21,8 @@ Two categories:
   migration `0003_farm_sowing_date`.
 - **Part D — an ownership reassignment,** not a data-model change. Recorded
   here because it is the document the team reviews.
+- **Part E — `Confirmation.model_label`,** in migration
+  `0006_confirmation_model_label`. Fixes an inverted F15 metric.
 
 ---
 
@@ -322,6 +324,108 @@ four effects as callable functions either way.
 
 ---
 
+## Part E — `Confirmation.model_label`
+
+**Status:** built. Migration `0006_confirmation_model_label`.
+
+```
+ALTER TABLE confirmation ADD COLUMN model_label target_label NULL;
+```
+
+### The bug it fixes
+
+`GET /officials/accuracy` grouped on `Problem.label`. On a correction that
+column has **already been overwritten** with the corrected label by the time the
+aggregate runs — `services/confirmation.py` sets it so the case file says what
+the problem actually was, which is right.
+
+The consequence was that F15's headline metric reported the inverse of the
+truth:
+
+| The model said | Agronomist said | Reported as |
+|---|---|---|
+| blast | brown_spot (corrected) | a correction against **brown_spot** |
+
+The label the model got wrong (`blast`) looked clean. The label it was corrected
+to (`brown_spot`) carried the penalty for a prediction it was never part of. An
+official reading "which targets does the model struggle with" got the answer
+backwards.
+
+### Why a column and not a derivation
+
+The model's guess is **not recoverable after the fact**. Once `Problem.label` is
+overwritten there is nothing left in the schema that holds it —
+`Confirmation.corrected_label` holds the truth, not the guess.
+
+So it is recorded at the one moment it is still known. This is the same
+reasoning as `Alert.reason` in Part B1: *freeze what was true when the event
+happened rather than reconstructing it later.* A reconstruction that cannot be
+performed is not a trade-off, it is a gap.
+
+### Where the value comes from
+
+Written at confirm time from the `Diagnosis` that was current when the case was
+escalated — the most recent diagnosis created at or before `Case.created_at`,
+taking `topk.predictions[0].label`.
+
+Nullable, because two cases genuinely have no model prediction:
+
+- a problem escalated from a **follow-up** rather than a photo never had one
+- the backfill refused to guess (below)
+
+### The backfill refuses to guess
+
+Migration 0006 backfills only where the answer is unambiguous: a problem with
+**exactly one** `Diagnosis` row. A problem with several has no single answer —
+the confirmation could relate to any of them — and one with none never had a
+prediction. Both are left NULL and **counted in the migration's output**.
+
+On the current database that reported:
+
+```
+rows total                   2
+backfilled                   1
+left NULL, no diagnosis      1
+left NULL, >1 diagnosis      0
+left NULL, label not in enum 0
+```
+
+A guessed value inside an accuracy metric is worse than a gap. A gap is visible;
+a guess is not.
+
+### Accuracy and the prior count differently, on purpose
+
+| | Question it answers | On a blast→brown_spot correction |
+|---|---|---|
+| `LabelPrior` | what has been seen in this place | blast `corrected+1` **and** brown_spot `confirmed+1` |
+| `/officials/accuracy` | how good is the model | blast `corrected+1`, brown_spot **untouched** |
+
+Both facts are real, and the prior needs both. The accuracy view is a record of
+model performance: crediting `brown_spot` with a confirmation there would
+inflate its accuracy with a case the model had no part in. Rows with a NULL
+`model_label` are excluded from that view entirely — a case the model never saw
+is not evidence about the model.
+
+---
+
+## Note — `Case.queue_position` is not authoritative
+
+`Case.queue_position` is written once, at escalation, and is **stale the moment
+anything ahead of it resolves**. Nothing recomputes the stored column.
+
+`GET /agronomist/case-queue` therefore computes position from the live ordering
+(`ORDER BY created_at`, enumerated) and ignores the stored value. The column is
+kept because `docs/API_CONTRACT.md` §12 returns a `queue_position` on the
+escalation response itself, where it is correct at the instant it is issued.
+
+Treat the stored column as a historical record of where the case entered the
+queue, not as its current place in it. This is the same class of decision as not
+storing `days_after_sowing` (Part C) and not maintaining a hotspot counter
+(Part A) — a derived value that nothing refreshes decays into a lie, and the
+recomputation is cheap.
+
+---
+
 ## Summary
 
 | # | Table / column | Status | Forced by |
@@ -338,5 +442,6 @@ four effects as callable functions either way.
 | B6 | severity history | watch item | API_CONTRACT §11 |
 | C  | `Farm.sowing_date` | **accepted, in 0003** | F5 phenology branch, DESIGN §10 |
 | D  | confirm + case-queue -> core | **decided, Phase 4** | ownership, not schema |
+| E  | `Confirmation.model_label` | **built, in 0006** | F15 accuracy reported the inverse |
 
 B4, B5 and B6 are not built and need their owners' decisions.

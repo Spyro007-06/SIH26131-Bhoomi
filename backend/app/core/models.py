@@ -679,6 +679,20 @@ class Confirmation(Base):
     corrected_label: Mapped[TargetLabel | None] = mapped_column(
         pg_enum(TargetLabel, "target_label")
     )
+    model_label: Mapped[TargetLabel | None] = mapped_column(
+        pg_enum(TargetLabel, "target_label")
+    )
+    """What the model actually said, frozen at confirm time.
+
+    Read from the Diagnosis that was current when the case was escalated. Not
+    reconstructed later: on a correction, Problem.label is overwritten with the
+    corrected label, so the model's guess stops being recoverable the moment the
+    verdict lands. Same reasoning as Alert.reason — record what was true at the
+    moment rather than trying to derive it afterwards.
+
+    Nullable because a problem may have no diagnosis (escalated from a follow-up
+    rather than a photo), and because the backfill in migration 0006 refuses to
+    guess where a problem has more than one."""
     treatment: Mapped[str | None] = mapped_column(Text)
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(

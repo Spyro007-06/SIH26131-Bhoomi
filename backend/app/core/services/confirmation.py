@@ -33,10 +33,11 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.contracts.enums import CaseStatus, ConfirmationVerdict, ProblemStatus, TargetLabel
-from app.core.models import Case, Confirmation, Farm, Problem
+from app.core.models import Case, Confirmation, Diagnosis, Farm, Problem
 from app.core.services import prior as prior_service
 from app.core.services.spread import SpreadReport, propagate
 
@@ -49,6 +50,41 @@ class ConfirmationResult:
     spread: SpreadReport
     label_before: str | None
     label_after: str | None
+    model_label: str | None
+
+
+async def model_label_at_escalation(
+    session: AsyncSession, problem_id, escalated_at
+) -> str | None:
+    """What the model said, from the Diagnosis current when the case was opened.
+
+    Read here rather than derived later: on a correction Problem.label is
+    overwritten with the corrected label, so the model's guess stops being
+    recoverable the moment the verdict lands. Same reasoning as Alert.reason.
+
+    Returns None when the problem has no diagnosis at all — a problem escalated
+    from a follow-up rather than a photo never had a model prediction, and NULL
+    says that truthfully. /officials/accuracy excludes those rows rather than
+    attributing them to a guessed label.
+    """
+    diagnosis = (
+        await session.execute(
+            select(Diagnosis)
+            .where(
+                Diagnosis.problem_id == problem_id,
+                Diagnosis.created_at <= escalated_at,
+            )
+            .order_by(Diagnosis.created_at.desc())
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    if diagnosis is None:
+        return None
+
+    predictions = (diagnosis.topk or {}).get("predictions") or []
+    if not predictions:
+        return None
+    return predictions[0].get("label")
 
 
 async def confirm_case(
@@ -69,6 +105,7 @@ async def confirm_case(
         raise ValueError(f"problem {problem.id} points at a farm that does not exist")
 
     label_before = problem.label.value if problem.label else None
+    model_label = await model_label_at_escalation(session, problem.id, case.created_at)
 
     # 1. The Confirmation row. The CHECK on this table refuses a `corrected`
     #    verdict with no corrected_label — a correction that does not say what
@@ -79,6 +116,7 @@ async def confirm_case(
         agronomist_id=agronomist_id,
         verdict=verdict,
         corrected_label=corrected_label,
+        model_label=model_label,
         treatment=treatment,
         notes=notes,
     )
@@ -106,7 +144,10 @@ async def confirm_case(
         region=farm.region,
         crop=crop,
         growth_stage=stage,
-        model_label=label_before,
+        # The diagnosis-derived label where there is one; Problem.label as it
+        # stood before the overwrite otherwise. Both describe what was believed
+        # before the agronomist looked.
+        model_label=model_label or label_before,
         corrected_label=(
             corrected_label.value
             if verdict == ConfirmationVerdict.CORRECTED and corrected_label
@@ -133,4 +174,5 @@ async def confirm_case(
         spread=spread,
         label_before=label_before,
         label_after=label_after,
+        model_label=model_label,
     )
