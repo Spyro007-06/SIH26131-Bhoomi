@@ -39,7 +39,6 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 
-from app.config import FOLLOWUP_DUE_DAYS
 from app.contracts.enums import (
     AlertTrigger,
     AssetKind,
@@ -57,11 +56,11 @@ from app.core.models import (
     Asset,
     Diagnosis,
     Farm,
-    FollowUp,
     Observation,
     Problem,
     User,
 )
+from app.core.services.followup import schedule_for
 from app.db import SessionLocal, dispose_engine
 
 FARM_A_PHONE = "+919820000001"
@@ -129,18 +128,29 @@ async def seed_case_file() -> None:
         now = datetime.now(UTC)
         opened = now - timedelta(days=2)
 
-        leaf_photo = Asset(
-            kind=AssetKind.IMAGE, content_type="image/jpeg",
-            object_key=f"image/fixture-leaf-{farm.id}.jpg",
-            farm_id=farm.id, uploaded_at=opened, byte_size=248_311,
-        )
-        underside_photo = Asset(
-            kind=AssetKind.IMAGE, content_type="image/jpeg",
-            object_key=f"image/fixture-underside-{farm.id}.jpg",
-            farm_id=farm.id, uploaded_at=opened + timedelta(minutes=6), byte_size=201_774,
-        )
-        session.add_all([leaf_photo, underside_photo])
-        await session.flush()
+        async def fixture_asset(slug: str, at, size: int) -> Asset:
+            """Reuse the row if it is already there.
+
+            object_key is UNIQUE, so re-running after a partial reset must match
+            on it rather than insert. Idempotency has to survive the case where
+            some tables were cleared and others were not.
+            """
+            key = f"image/fixture-{slug}-{farm.id}.jpg"
+            found = (
+                await session.execute(select(Asset).where(Asset.object_key == key))
+            ).scalars().first()
+            if found is not None:
+                return found
+            asset = Asset(
+                kind=AssetKind.IMAGE, content_type="image/jpeg", object_key=key,
+                farm_id=farm.id, uploaded_at=at, byte_size=size,
+            )
+            session.add(asset)
+            await session.flush()
+            return asset
+
+        leaf_photo = await fixture_asset("leaf", opened, 248_311)
+        await fixture_asset("underside", opened + timedelta(minutes=6), 201_774)
 
         problem = Problem(
             farm_id=farm.id,
@@ -193,13 +203,12 @@ async def seed_case_file() -> None:
         )
 
         # Unanswered on purpose, so F10 has something due to render.
-        session.add(
-            FollowUp(
-                problem_id=problem.id,
-                due_at=opened + timedelta(days=FOLLOWUP_DUE_DAYS),
-                created_at=opened + timedelta(minutes=8),
-            )
-        )
+        #
+        # Created via services/followup.schedule_for() rather than by hand: that
+        # is the function F7's advisory composition will call when it lands
+        # (Thaariha, app/intelligence/rag.py), and routing the seed through it
+        # means the seeded row and the real row are produced the same way.
+        await schedule_for(session, problem.id, from_time=opened)
 
         # inspection_tasks is non-empty because the CHECK constraint refuses an
         # empty array — docs/DESIGN.md §5.
@@ -227,7 +236,7 @@ async def seed_case_file() -> None:
         print("  rows       1 diagnosis (clarify, AMBIGUOUS, is_stub=true)")
         print("             1 doubt_doctor observation, answer=yes")
         print("             1 advisory, 3 ladder rungs, chemical last, 1 citation")
-        print(f"             1 follow-up due in {FOLLOWUP_DUE_DAYS} days, unanswered")
+        print("             1 follow-up, unanswered, via services/followup.schedule_for")
         print("             1 weather alert, 2 inspection tasks, outcome null")
         print("             2 image assets")
         print("\n  Farms B and C stay bare on purpose: F6's fan-out in Phase 4 needs a")

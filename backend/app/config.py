@@ -54,6 +54,34 @@ SPREAD_RADIUS_M = 2000
 open; 2 km is the working default and is overridable per deployment only by
 editing this line, not by environment."""
 
+RISK_LEVELS = ("low", "moderate", "high")
+"""Ordered, lowest first. Index position is the comparison."""
+
+RISK_ALERT_MIN_LEVEL = "moderate"
+"""Score at or above this level issues an Alert. Below it, nothing is written.
+
+A module constant, not a settings field: an environment that can lower this can
+flood every farmer with low-confidence alerts, and an alert nobody trusts is
+worse than no alert. docs/PRD.md section 5."""
+
+WEATHER_PAST_DAYS = 7
+"""Trailing days requested from Open-Meteo alongside the forecast.
+
+The favourability rules need a multi-day window ("humidity above 90% for 4
+consecutive nights"). That looks like it needs a stored weather history; it does
+not, because Open-Meteo's past_days returns the trailing week in the same call.
+A weather-observation table would be state someone has to keep fresh, and a gap
+in it silently weakens every rule that reads it."""
+
+WEATHER_TIMEOUT_SECONDS = 15
+
+CASE_ETA_MINUTES_PER_POSITION = 15
+"""Minutes of expected wait per place in the agronomist queue.
+
+docs/API_CONTRACT.md §12 returns eta_minutes on escalation. A crude linear
+estimate, stated as such: the alternative is either no ETA at all, or a
+model of agronomist throughput this build has no data to fit."""
+
 FOLLOWUP_DUE_DAYS = 4
 """Days after an advisory before the follow-up check-in falls due.
 
@@ -141,6 +169,11 @@ class Settings(BaseSettings):
     Applies ONLY when app_env == "local" AND this is set. Unset means codes are
     always generated, in every environment — see core/security.py, which refuses
     to apply it rather than falling back to a default."""
+
+    scheduler_enabled: bool = False
+    """Off by default so running the API locally does not fire live jobs
+    against shared data. The risk sweep is idempotent by database constraint,
+    so enabling it on more than one replica is safe."""
 
     # --- Feature flags, docs/DESIGN.md §12 ---
     vision_model: Literal["real", "stub"] = "stub"

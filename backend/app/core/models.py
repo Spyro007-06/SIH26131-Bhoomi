@@ -600,6 +600,19 @@ class Alert(Base):
             name="ck_alert_inspection_tasks_non_empty",
         ),
         Index("ix_alert_farm_outcome", "farm_id", "outcome"),
+        # One alert per farm per target per day, enforced by a unique index on
+        # an expression (created by hand in migration 0004 — see the note there
+        # about immutability). A scheduled job that runs twice must not stack
+        # duplicates, and a SELECT-then-INSERT guard would still race two
+        # concurrent runs. Declared here for documentation; the DDL lives in the
+        # migration because Index() cannot express the AT TIME ZONE cast.
+        Index(
+            "uq_alert_farm_target_day",
+            "farm_id",
+            "target",
+            text("(issued_at AT TIME ZONE 'UTC')::date"),
+            unique=True,
+        ),
     )
 
 
@@ -624,7 +637,16 @@ class Case(Base):
     )
     queue_position: Mapped[int | None] = mapped_column(Integer)
     eta_minutes: Mapped[int | None] = mapped_column(Integer)
-    bundle: Mapped[dict | None] = mapped_column(JSONB)
+    bundle: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
+    """NULL until Thaariha's F12 compiles it. docs/API_CONTRACT.md §12.
+
+    none_as_null=True is load-bearing. SQLAlchemy's JSON types default to
+    none_as_null=False, which serialises Python None into JSONB `null` — the
+    JSON value, not SQL NULL. The column then reads as NOT NULL, `bundle IS
+    NULL` is false for every uncompiled case, and a portal asking "has this
+    bundle been compiled yet?" gets yes for all of them and renders a null.
+    This is the only nullable JSONB column in the schema; every other one is
+    NOT NULL, so the trap has exactly one place to bite."""
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMPTZ, nullable=False, server_default=func.now()
     )

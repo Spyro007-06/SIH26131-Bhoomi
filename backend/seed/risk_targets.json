@@ -1,0 +1,74 @@
+[
+  {
+    "target": "blast",
+    "crop": "paddy",
+    "driver": "weather",
+    "weather_rule": {
+      "humidity_min": 90,
+      "temp_min": 22,
+      "temp_max": 30,
+      "consecutive_days": 4
+    },
+    "susceptible_stages": ["nursery", "tillering", "vegetative", "booting"],
+    "history_bump": true,
+    "note": "Leaf blast favours long leaf-wetness at moderate temperature. docs/PRD.md section 6 uses this rule as the demo trigger."
+  },
+  {
+    "target": "brown_spot",
+    "crop": "paddy",
+    "driver": "weather",
+    "weather_rule": {
+      "humidity_min": 85,
+      "temp_min": 24,
+      "temp_max": 32,
+      "consecutive_days": 3
+    },
+    "susceptible_stages": ["tillering", "vegetative", "flowering", "maturity"],
+    "history_bump": true,
+    "note": "Associated with stressed and nutrient-poor crops, so the history bump matters more here than for blast."
+  },
+  {
+    "target": "bacterial_leaf_blight",
+    "crop": "paddy",
+    "driver": "weather",
+    "weather_rule": {
+      "humidity_min": 88,
+      "temp_min": 25,
+      "temp_max": 34,
+      "consecutive_days": 2
+    },
+    "susceptible_stages": ["tillering", "vegetative", "booting"],
+    "history_bump": true,
+    "note": "Spreads on wind-driven rain; a short wet window is enough."
+  },
+  {
+    "target": "yellow_stem_borer",
+    "crop": "paddy",
+    "driver": "phenology",
+    "phenology_rule": {
+      "das_min": 25,
+      "das_max": 55
+    },
+    "susceptible_stages": ["tillering", "vegetative", "booting"],
+    "history_bump": true,
+    "note": "Dead-heart damage tracks crop age rather than the weather window, which is why this entry is phenology-driven."
+  },
+  {
+    "target": "brown_planthopper",
+    "crop": "paddy",
+    "driver": "weather+phenology",
+    "weather_rule": {
+      "humidity_min": 80,
+      "temp_min": 25,
+      "temp_max": 33,
+      "consecutive_days": 5
+    },
+    "phenology_rule": {
+      "das_min": 40,
+      "das_max": 90
+    },
+    "susceptible_stages": ["tillering", "booting", "flowering"],
+    "history_bump": true,
+    "note": "Declares both drivers. Hopper burn needs a humid canopy AND a crop old enough to have one, so both rules must be satisfied."
+  }
+]

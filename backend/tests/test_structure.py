@@ -38,6 +38,14 @@ IMPLEMENTED = {
     "services/registered_use.py",
     "routers/problems.py",
     "schemas/problems.py",
+    # Phase 3 (F5 risk + alerts, F10 follow-up).
+    "routers/alerts.py",
+    "routers/followups.py",
+    "schemas/alerts.py",
+    "schemas/followups.py",
+    "services/risk.py",
+    "services/followup.py",
+    "services/escalation.py",
 }
 
 

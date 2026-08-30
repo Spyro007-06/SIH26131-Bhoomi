@@ -15,9 +15,10 @@ from fastapi import APIRouter, FastAPI
 
 from app import config
 from app.config import settings
-from app.core.routers import assets, auth, farms, problems
+from app.core.routers import alerts, assets, auth, farms, followups, problems
 from app.db import dispose_engine
 from app.errors import register_exception_handlers
+from app.scheduler import shutdown_scheduler, start_scheduler
 
 logging.basicConfig(level=settings.log_level)
 log = logging.getLogger("bhoomi")
@@ -66,7 +67,9 @@ async def lifespan(_: FastAPI):
             "VISION_MODEL=stub - every TopK carries is_stub=true and clients MUST "
             "render a stub banner. See docs/DESIGN.md section 12."
         )
+    start_scheduler()
     yield
+    shutdown_scheduler()
     await dispose_engine()
 
 
@@ -89,6 +92,8 @@ def create_app() -> FastAPI:
     api.include_router(assets.router)
     api.include_router(farms.router)
     api.include_router(problems.router)
+    api.include_router(alerts.router)
+    api.include_router(followups.router)
     # Phase 2+: problems, timeline. Phase 3+: alerts, followups. Each router
     # module is included here as its owner implements it.
     app.include_router(api)
