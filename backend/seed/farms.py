@@ -37,6 +37,7 @@ A and B are both paddy, so a confirmation at A must fan out to exactly B.
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import select, text
 
@@ -51,6 +52,34 @@ FARMERS = [
     ("+919820000002", "Sunita Deshmukh"),
     ("+919820000003", "Bhaskar Jadhav"),
 ]
+
+# --- sowing dates ------------------------------------------------------------
+#
+# Nullable in the schema, but seeded here because the Phase 3 phenology branch
+# needs farms whose days-after-sowing is consistent with their growth_stage.
+# days_after_sowing is NEVER stored — it is derived on read, because a stored
+# integer is wrong the next morning and nothing refreshes it.
+#
+# Kharif paddy in Nashik, transplanted. Approximate days after sowing per stage
+# (ICAR package of practices, rounded to the stage midpoint):
+#
+#     nursery      0 - 25      tillering   40 - 65
+#     vegetative  25 - 40      booting     65 - 85
+#
+# So, counting backwards from the day this seed runs:
+#
+#     A  tillering   -> DAS 52  -> sowing_date = today - 52 days
+#     B  tillering   -> DAS 48  -> sowing_date = today - 48 days
+#     C  vegetative  -> DAS 33  -> sowing_date = today - 33 days
+#
+# A and B are four days apart on purpose: same stage, not identical phenology,
+# so a stage-boundary bug in F5 shows up as one firing and not the other.
+DAYS_AFTER_SOWING = {"A Gangapur": 52, "B Anandvalli": 48, "C Ozar": 33}
+
+
+def _sowing_date(label: str) -> date:
+    return (datetime.now(UTC) - timedelta(days=DAYS_AFTER_SOWING[label])).date()
+
 
 # (label, phone, variety, growth_stage, region, lat, lng)
 FARMS = [
@@ -122,11 +151,13 @@ async def seed() -> None:
                 farm = Farm(
                     farmer_id=farmer.id, crop=Crop.PADDY, variety=variety,
                     growth_stage=stage, region=region, location=wkt,
+                    sowing_date=_sowing_date(label),
                 )
                 session.add(farm)
             else:
                 farm.variety, farm.growth_stage, farm.region = variety, stage, region
                 farm.location = wkt
+                farm.sowing_date = _sowing_date(label)
             await session.flush()
             created.append((label, farm))
 
@@ -148,6 +179,14 @@ async def seed() -> None:
                 )
                 inside = "YES" if metres <= SPREAD_RADIUS_M else "no"
                 print(f"{la} - {lb:14s} {metres:10.0f}  {inside}")
+
+        print(f"\n{'farm':16s} {'sowing_date':12s} {'DAS':>4s}  growth_stage")
+        print("-" * 55)
+        for label, farm in created:
+            print(
+                f"{label:16s} {farm.sowing_date!s:12s} "
+                f"{DAYS_AFTER_SOWING[label]:4d}  {farm.growth_stage.value}"
+            )
 
         print(f"\n{len(created)} farms, {len(FARMERS)} farmers, {len(STAFF)} staff.")
         print(f"Staff sign in with password: {STAFF_PASSWORD}")

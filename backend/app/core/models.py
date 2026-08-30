@@ -35,7 +35,7 @@ them in application code means someone bypasses them at hour 25.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from geoalchemy2 import Geography
 from pgvector.sqlalchemy import Vector
@@ -296,6 +296,13 @@ class Farm(Base):
         pg_enum(GrowthStage, "growth_stage"), nullable=False
     )
     region: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    sowing_date: Mapped[date | None] = mapped_column(Date)
+    """Addendum Part C. Nullable: existing seed rows predate the column and a
+    sowing date is not something to invent.
+
+    days_after_sowing is deliberately NOT stored. It is derived on read — a
+    stored integer is wrong the next morning and nothing in this system would
+    refresh it. The F5 phenology branch (Phase 3) computes it from here."""
     location: Mapped[object] = mapped_column(
         # spatial_index=False on purpose. geoalchemy2 otherwise attaches a
         # create-index listener to any table holding this column, which fires

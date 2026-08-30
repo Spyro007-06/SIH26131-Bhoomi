@@ -14,8 +14,11 @@ Two categories:
 - **Part A — four tables the build cannot proceed without.** Agreed with
   Shreekumar as required before Phase 1's ORM lands.
 - **Part B — further gaps found while transcribing §5.** B1, B2 and B3 were
-  accepted by Shreekumar and land in migration `0002_initial_schema`. B4 and B5
-  belong to other owners and are flagged only. B6 is a watch item.
+  accepted by Shreekumar and land in migration `0002_initial_schema`. B4 was
+  subsequently accepted too and became the `label_reference` table. B5 belongs
+  to another owner and is flagged only. B6 is a watch item.
+- **Part C — a team decision taken after Phase 1.** `Farm.sowing_date`, in
+  migration `0003_farm_sowing_date`.
 
 ---
 
@@ -216,6 +219,56 @@ not discovered later as a surprise.**
 
 ---
 
+## Part C — `Farm.sowing_date`
+
+**Status:** team decision, taken after Phase 1. Built in migration
+`0003_farm_sowing_date`.
+
+```
+ALTER TABLE farm ADD COLUMN sowing_date DATE NULL;
+```
+
+**Forced by:** an incoming phenology branch in the F5 risk engine
+(`docs/DESIGN.md` §10). Weather-driven favourability scoring stays as specified
+for the fungal targets, but some targets fire on crop age rather than on
+humidity and temperature:
+
+- **shoot fly** — within roughly 30 days of emergence
+- **pink bollworm** — at boll formation
+
+Neither is a function of the weather window. Both are a function of how old the
+crop is, which the frozen §5 model has no way to express: `growth_stage` is a
+coarse six-value enum and does not distinguish day 26 from day 34.
+
+**Nullable on purpose.** The three seeded farms predate the column, and a sowing
+date is not something to invent — the same reasoning that leaves `health` null
+in the farm summary rather than fabricating a sentence. Seed rows have since
+been given plausible dates consistent with their `growth_stage`, with the
+arithmetic stated in `backend/seed/farms.py`.
+
+### What is deliberately NOT stored
+
+**`days_after_sowing`.** It is derived on read from `sowing_date`.
+
+A stored integer is wrong the next morning, and there is no job in this system
+that would refresh it. A column that silently decays into a lie is worse than a
+join, and the derivation is a subtraction.
+
+This is the same argument as the hotspot counter in Part A: a maintained
+denormalisation can drift from its source; a query cannot.
+
+### Not built here
+
+The phenology branch itself is Phase 3. Part C is only the column it needs.
+
+The two targets named above are also **not in the frozen `target_label` enum**,
+which is bounded to five paddy targets (`docs/API_CONTRACT.md` §1), and
+`crop` is bounded to `paddy`. Acting on shoot fly or pink bollworm would require
+expanding both enums, which is a team decision that has not been made. The
+column is forward-compatible with that decision; it does not presuppose it.
+
+---
+
 ## Summary
 
 | # | Table / column | Status | Forced by |
@@ -227,8 +280,9 @@ not discovered later as a surprise.**
 | B1 | `Alert.reason` | **accepted, in 0002** | API_CONTRACT §10 |
 | B2 | `RegisteredUse.pesticide_class` | **accepted, in 0002** | DESIGN §9 `WRONG_CLASS` |
 | B3 | `Confirmation.treatment` | **accepted, in 0002** | API_CONTRACT §13 |
-| B4 | label signatures | flagged — Thaariha | API_CONTRACT §7 |
+| B4 | label signatures | **accepted, `label_reference` in 0002** | API_CONTRACT §7 |
 | B5 | referrals | flagged — Tharun | API_CONTRACT §14 |
 | B6 | severity history | watch item | API_CONTRACT §11 |
+| C  | `Farm.sowing_date` | **accepted, in 0003** | F5 phenology branch, DESIGN §10 |
 
 B4, B5 and B6 are not built and need their owners' decisions.

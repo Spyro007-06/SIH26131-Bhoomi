@@ -36,6 +36,8 @@ IMPLEMENTED = {
     "schemas/farms.py",
     # Phase 2 (F8 lookup half + case-file reads).
     "services/registered_use.py",
+    "routers/problems.py",
+    "schemas/problems.py",
 }
 
 

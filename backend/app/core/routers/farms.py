@@ -55,6 +55,7 @@ def _as_farm_out(farm: Farm) -> FarmOut:
         variety=farm.variety,
         growth_stage=farm.growth_stage,
         region=farm.region,
+        sowing_date=farm.sowing_date,
         location=_to_geopoint(farm.location),
         created_at=farm.created_at,
     )
@@ -89,6 +90,7 @@ async def create_farm(
         variety=payload.variety,
         growth_stage=payload.growth_stage,
         region=payload.region,
+        sowing_date=payload.sowing_date,
         location=_point_wkt(payload.location),
     )
     session.add(farm)

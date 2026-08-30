@@ -9,7 +9,7 @@ redeclared here — contract C2 is the farm shape and it is frozen.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -26,6 +26,14 @@ class FarmCreate(BaseModel):
     variety: str | None = Field(default=None, max_length=120)
     growth_stage: GrowthStage
     region: str = Field(min_length=1, max_length=120)
+    sowing_date: date | None = Field(
+        default=None,
+        description=(
+            "Optional. The F5 phenology branch derives days-after-sowing from "
+            "this on read; nothing stores that integer, because it would be "
+            "wrong the next morning."
+        ),
+    )
     location: GeoPoint
 
 
@@ -40,6 +48,7 @@ class FarmUpdate(BaseModel):
     variety: str | None = Field(default=None, max_length=120)
     growth_stage: GrowthStage | None = None
     region: str | None = Field(default=None, min_length=1, max_length=120)
+    sowing_date: date | None = None
 
 
 class FarmSummaryOut(BaseModel):
@@ -60,6 +69,7 @@ class FarmOut(BaseModel):
     variety: str | None
     growth_stage: GrowthStage
     region: str
+    sowing_date: date | None
     location: GeoPoint
     created_at: datetime
 
