@@ -1,6 +1,17 @@
 # seed/corpus/
 
-**Both files in this directory are hard blockers with no owner.** `docs/DESIGN.md`
+**Phase 4 status:** `distinguishing_cues.json` has its first real entry (`blast`
+/ `brown_spot`) and `documents.json` (new, this phase -- no loader script exists
+for either file yet, that's the next owner's job) has three sourced chunks for
+`blast`. Everything else named below is still `[]` / unauthored: the other
+paddy targets (`bacterial_leaf_blight`, `yellow_stem_borer`,
+`brown_planthopper`) have no cue and no corpus content yet, and cotton /
+soybean / jowar cannot be authored at all against the current schema --
+`CorpusDoc.crop` and `DistinguishingCue.answer_yes_implies` are native Postgres
+enums bound to the frozen `Crop` / `TargetLabel` (paddy, 5 labels), same wall
+Phase 3 hit on `registered_use.csv`.
+
+**These files were hard blockers with no owner.** `docs/DESIGN.md`
 §14 flags them and `docs/PRD.md` §10 repeats it:
 
 > Two blocking inputs have no owner in the current split — the corpus cues and
@@ -42,6 +53,16 @@ normalisation step that drops Devanagari produces a zero vector, a degenerate
 similarity score that sails past the relevance threshold, and confident
 fabricated advice. This has bitten this codebase before.
 
+### `documents.json` (Phase 4, new)
+
+Pre-load staging for `CorpusDoc`, same idea as `distinguishing_cues.json`: a
+JSON array of objects using the field names in the table above minus
+`embedding` (generated at load time, not authored). No loader script exists
+yet -- whoever writes `scripts/load_corpus.py` should follow
+`scripts/load_registered_use.py`'s validate-and-refuse shape: a row missing
+`source` or `reviewed_on` is not auditable and does not belong in a table an
+advisory gets composed and cited from.
+
 ## DistinguishingCue
 
 `docs/DESIGN.md` §5 and §7. One row per pair of labels the classifier confuses.
@@ -69,9 +90,14 @@ Design rules that constrain how these are written, from `docs/DESIGN.md` §7:
   a gap to paper over with a lower-quality cue.
 
 The highest-value pair to author first is `blast` / `brown_spot`: it is the
-ambiguous pair in the demo scenario, `docs/PRD.md` §6.
+ambiguous pair in the demo scenario, `docs/PRD.md` §6. Done, Phase 4: the
+`blast`/`brown_spot` entry's `doc_id` is `null` in the JSON (no row exists to
+point at yet, since there's no loader) but is authored from `documents.json`'s
+"Rice Blast (Magnaporthe oryzae) -- Symptoms and Identification" entry --
+whoever writes the loader should set `doc_id` to that row's id once both files
+are loaded, in id-assignment order (`documents.json` first).
 
 ## Format
 
 `distinguishing_cues.json` is a JSON array of objects using the field names
-above. It currently contains `[]`.
+above.
