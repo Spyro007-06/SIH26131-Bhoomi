@@ -46,6 +46,30 @@ ASR_FLOOR = 0.60
 """Below this ASR confidence parsed_intent is omitted and the client re-prompts."""
 
 # ---------------------------------------------------------------------------
+# Voice provider model pins — Sarvam. docs/DESIGN.md §1, §8.
+# Module constants, not settings, for the same reason the thresholds are: they
+# carry a guarantee. The §13 test "a Marathi query and its English equivalent
+# retrieve overlapping docs" is only reproducible if the translator is
+# deterministic — one pinned model, formal register. An environment that could
+# swap the model or switch to a colloquial mode at demo time could break that
+# test silently. The API KEY is the only voice secret; it lives in Settings
+# below because it is deployment wiring, not a guarantee.
+# ---------------------------------------------------------------------------
+
+SARVAM_STT_MODEL = "saaras:v3"
+"""Sarvam speech-to-text. transcribe mode → native-script text + confidence."""
+
+SARVAM_TTS_MODEL = "bulbul:v3"
+"""Sarvam text-to-speech for spoken_summary playback."""
+
+SARVAM_TRANSLATE_MODEL = "mayura:v1"
+"""Sarvam translation for to_embedding_text(). Marathi/Hindi → English."""
+
+SARVAM_TRANSLATE_MODE = "formal"
+"""Deterministic register. Colloquial/code-mixed modes vary phrasing run to run,
+which is exactly the wrong property for a reproducible retrieval test."""
+
+# ---------------------------------------------------------------------------
 # Spread, follow-up and the confirmation prior — docs/DESIGN.md §10, §11.
 # ---------------------------------------------------------------------------
 
@@ -199,6 +223,12 @@ class Settings(BaseSettings):
     vision_model: Literal["real", "stub"] = "stub"
     asr_provider: Literal["live", "stub"] = "stub"
     llm_enabled: bool = False
+
+    # --- Voice provider (Sarvam) ---
+    # asr_provider (above) is the pipeline switch: stub → no Sarvam call on ASR,
+    # TTS or translate; live → all three call Sarvam and this key is required.
+    # Model versions are module constants above, deliberately not env-tunable.
+    sarvamai_api_key: str | None = None
 
     # --- Weather, F5 ---
     open_meteo_base_url: str = "https://api.open-meteo.com/v1/forecast"

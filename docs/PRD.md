@@ -150,7 +150,7 @@ Two rules, both non-negotiable:
 Low OCR confidence does not guess: it requests a clearer photo or falls back to spoken/typed product name.
 
 **F9 · Voice-first multilingual interaction.**
-Speech in, speech out. Marathi first, Hindi second, Tamil if hours allow. Covers onboarding (crop, growth stage, region), the Doubt Doctor question and answer, and advisory read-out. Consequential values are read back for confirmation before being saved.
+Speech in, speech out. Marathi first, Hindi second, Tamil if hours allow. Covers onboarding (crop, growth stage, region), the Doubt Doctor question and answer, and advisory read-out. Consequential values are read back for confirmation before being saved. Spoken output may be phrased in the farmer's local wording; the F8 pesticide-verdict strings are the one exception, read verbatim and never re-phrased.
 
 **Requirement:** the embedding path must not strip non-Latin script. Devanagari removed by a regex produces a zero vector, a degenerate similarity, and silently fabricated advice. Translate before embed, and test that a Marathi query and its English equivalent retrieve overlapping documents.
 

@@ -58,6 +58,8 @@ Bold = the person's headline deliverable, the thing they get judged on.
 **Owns:** feature 9.
 
 - Marathi first, Hindi second, given this is a Maharashtra PS. Tamil only if hours allow.
+
+- Provider: Sarvam — Saaras (STT), Bulbul (TTS), Mayura (translate-before-embed). One vendor, one key. Embedder stays BGE-m3 (Thaariha's). A regional dialect *voice* is out of scope for the build but feasible later via Bulbul cloning — keep the TTS provider swappable behind `synthesize()` so it drops in without touching callers.
 - Covers: onboarding read-back (crop, growth stage, region), the Doubt Doctor question and its yes/no answer, and advisory read-out.
 - **The known trap:** the embedder must not strip non-Latin script. Devanagari that gets regexed away produces a zero vector, which produces a degenerate similarity, which produces fabricated advice that looks fine. Translate before embed, and write a test that asserts a Marathi query and its English equivalent retrieve overlapping documents.
 - Consequential values are confirmed back before they're saved. Non-negotiable, same as v1.
