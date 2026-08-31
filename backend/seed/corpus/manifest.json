@@ -1,0 +1,217 @@
+{
+  "_note": "One row per (doc_id, target) pair. Two files per crop cover two targets each -- ingest that file's chunks once per target. TARGET NAMES CORRECTED to the v3 namespaced target_label enum. source_dated is null on every row and MUST be filled by the author before ingestion -- the loader refuses a row without it. Several `source` values are generic placeholders and will also be refused; they need a specific document or publication a reader can find.",
+  "DOSAGE_VERIFICATION_NEEDED": "Chemical-management dosage/PHI/re-entry figures in these 5 files are standard ICAR/state package-of-practices figures from training knowledge, written to satisfy validator.py's dosage-required rule and give the demo a real ladder. They are NOT re-checked against a live CIB&RC registration table. Verify before this corpus is used for anything beyond demo -- this is exactly the gap F8's registered-use table exists to catch on the label-check side, but F7's advisory corpus has no equivalent runtime check.",
+  "rows": [
+    {
+      "doc_id": "cotton_bollworm_complex_v1",
+      "target": "cotton_american_bollworm",
+      "crop": "cotton",
+      "title": "Cotton Bollworm Complex — American Bollworm & Pink Bollworm",
+      "source": "ICAR-CICR cotton field guides",
+      "reviewed_on": "2026-08-31",
+      "source_file": "cotton/cotton_bollworm_complex_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "cotton_bollworm_complex_v1",
+      "target": "cotton_pink_bollworm",
+      "crop": "cotton",
+      "title": "Cotton Bollworm Complex — American Bollworm & Pink Bollworm",
+      "source": "ICAR-CICR cotton field guides",
+      "reviewed_on": "2026-08-31",
+      "source_file": "cotton/cotton_bollworm_complex_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "cotton_sap_suckers_v1",
+      "target": "cotton_whitefly",
+      "crop": "cotton",
+      "title": "Cotton Sap Suckers — Whitefly & Thrips",
+      "source": "Agricultural crop-protection references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "cotton/cotton_sap_suckers_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "cotton_sap_suckers_v1",
+      "target": "cotton_thrips",
+      "crop": "cotton",
+      "title": "Cotton Sap Suckers — Whitefly & Thrips",
+      "source": "Agricultural crop-protection references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "cotton/cotton_sap_suckers_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "cotton_leaf_curl_v1",
+      "target": "cotton_leaf_curl_virus",
+      "crop": "cotton",
+      "title": "Cotton Leaf Curl Virus (CLCuV)",
+      "source": "Cotton disease field guides",
+      "reviewed_on": "2026-08-31",
+      "source_file": "cotton/cotton_leaf_curl_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "cotton_bacterial_blight_v1",
+      "target": "cotton_bacterial_blight",
+      "crop": "cotton",
+      "title": "Cotton Bacterial Blight (Xanthomonas citri pv. malvacearum)",
+      "source": "UGA Cotton bacterial blight field reference",
+      "reviewed_on": "2026-08-31",
+      "source_file": "cotton/cotton_bacterial_blight_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "cotton_fusarium_wilt_v1",
+      "target": "cotton_fusarium_wilt",
+      "crop": "cotton",
+      "title": "Cotton Fusarium Wilt (Fusarium oxysporum f. sp. vasinfectum)",
+      "source": "Cotton disease field guides",
+      "reviewed_on": "2026-08-31",
+      "source_file": "cotton/cotton_fusarium_wilt_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "soybean_stem_borers_v1",
+      "target": "soybean_stem_fly",
+      "crop": "soybean",
+      "title": "Soybean Stem Borers — Stem Fly & Girdle Beetle",
+      "source": "ICAR soybean pest references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "soybean/soybean_stem_borers_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "soybean_stem_borers_v1",
+      "target": "soybean_girdle_beetle",
+      "crop": "soybean",
+      "title": "Soybean Stem Borers — Stem Fly & Girdle Beetle",
+      "source": "ICAR soybean pest references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "soybean/soybean_stem_borers_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "soybean_defoliating_caterpillars_v1",
+      "target": "soybean_defoliating_caterpillars",
+      "crop": "soybean",
+      "title": "Soybean Defoliating Caterpillars",
+      "source": "ICAR soybean pest references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "soybean/soybean_defoliating_caterpillars_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "soybean_leaf_spot_diseases_v1",
+      "target": "soybean_anthracnose",
+      "crop": "soybean",
+      "title": "Soybean Leaf Spot Diseases — Anthracnose/Pod Blight & Alternaria Leaf Spot",
+      "source": "Soybean disease references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "soybean/soybean_leaf_spot_diseases_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "soybean_leaf_spot_diseases_v1",
+      "target": "soybean_alternaria_leaf_spot",
+      "crop": "soybean",
+      "title": "Soybean Leaf Spot Diseases — Anthracnose/Pod Blight & Alternaria Leaf Spot",
+      "source": "Soybean disease references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "soybean/soybean_leaf_spot_diseases_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "soybean_yellow_mosaic_v1",
+      "target": "soybean_yellow_mosaic_virus",
+      "crop": "soybean",
+      "title": "Soybean Yellow Mosaic Virus (YMV)",
+      "source": "ICAR-Indian Institute of Soybean Research",
+      "reviewed_on": "2026-08-31",
+      "source_file": "soybean/soybean_yellow_mosaic_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "soybean_bacterial_blight_v1",
+      "target": "soybean_bacterial_blight",
+      "crop": "soybean",
+      "title": "Soybean Bacterial Blight (Pseudomonas savastanoi pv. glycinea)",
+      "source": "SoyNet soybean disease dataset/reference",
+      "reviewed_on": "2026-08-31",
+      "source_file": "soybean/soybean_bacterial_blight_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "jowar_pest_guide_v1",
+      "target": "jowar_shoot_fly",
+      "crop": "jowar",
+      "title": "Jowar Dead Heart Complex — Shoot Fly & Stem Borer",
+      "source": "ICAR sorghum pest references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "jowar/jowar_pest_guide_v1.md",
+      "note": "doc_id matches the existing jowar_shoot_fly_vs_stem_borer cue reference in tests/test_doubt_doctor.py and resolver.py's age-rule pair -- do not rename without updating both.",
+      "source_dated": null
+    },
+    {
+      "doc_id": "jowar_pest_guide_v1",
+      "target": "jowar_stem_borer",
+      "crop": "jowar",
+      "title": "Jowar Dead Heart Complex — Shoot Fly & Stem Borer",
+      "source": "ICAR sorghum pest references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "jowar/jowar_pest_guide_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "jowar_shoot_bug_v1",
+      "target": "jowar_shoot_bug",
+      "crop": "jowar",
+      "title": "Jowar Shoot Bug",
+      "source": "ICAR sorghum pest references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "jowar/jowar_shoot_bug_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "jowar_anthracnose_v1",
+      "target": "jowar_anthracnose",
+      "crop": "jowar",
+      "title": "Jowar Anthracnose",
+      "source": "Plantix sorghum anthracnose field reference",
+      "reviewed_on": "2026-08-31",
+      "source_file": "jowar/jowar_anthracnose_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "jowar_panicle_grain_diseases_v1",
+      "target": "jowar_grain_mold",
+      "crop": "jowar",
+      "title": "Jowar Panicle & Grain Diseases — Grain Mold & Smut",
+      "source": "Sorghum disease references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "jowar/jowar_panicle_grain_diseases_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "jowar_panicle_grain_diseases_v1",
+      "target": "jowar_smut",
+      "crop": "jowar",
+      "title": "Jowar Panicle & Grain Diseases — Grain Mold & Smut",
+      "source": "Sorghum disease references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "jowar/jowar_panicle_grain_diseases_v1.md",
+      "source_dated": null
+    },
+    {
+      "doc_id": "jowar_downy_mildew_v1",
+      "target": "jowar_downy_mildew",
+      "crop": "jowar",
+      "title": "Jowar Downy Mildew",
+      "source": "Sorghum disease references",
+      "reviewed_on": "2026-08-31",
+      "source_file": "jowar/jowar_downy_mildew_v1.md",
+      "source_dated": null
+    }
+  ]
+}
