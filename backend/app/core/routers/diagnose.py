@@ -21,11 +21,11 @@ Specified by: docs/API_CONTRACT.md §6, docs/DESIGN.md §6.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Header, status
+from fastapi import APIRouter, Header
 
 from app.config import settings
 from app.contracts.vision import Prediction, TopK
-from app.errors import Forbidden, ValidationFailed
+from app.errors import FixturesDisabled, ValidationFailed
 
 # _stub_topk, not classify(): the no-header path must return the stub without
 # handing invented bytes to a classifier. Reaching into Suchit's module for the
@@ -55,9 +55,9 @@ router = APIRouter(tags=["diagnose"])
 _FIXTURES: dict[str, TopK] = {
     "confident": TopK(  # advise band: top-1 at or above GATE, clear by MARGIN
         predictions=[
-            Prediction(label="blast", confidence=0.85),
-            Prediction(label="brown_spot", confidence=0.10),
-            Prediction(label="bacterial_leaf_blight", confidence=0.05),
+            Prediction(label="paddy_blast", confidence=0.85),
+            Prediction(label="paddy_brown_spot", confidence=0.10),
+            Prediction(label="paddy_bacterial_leaf_blight", confidence=0.05),
         ],
         out_of_scope=False,
         model_version=STUB_MODEL_VERSION,
@@ -66,9 +66,9 @@ _FIXTURES: dict[str, TopK] = {
     "torn": TopK(  # Doubt Doctor band: blast vs brown_spot, both above FLOOR,
         # gap under MARGIN
         predictions=[
-            Prediction(label="blast", confidence=0.50),
-            Prediction(label="brown_spot", confidence=0.46),
-            Prediction(label="bacterial_leaf_blight", confidence=0.04),
+            Prediction(label="paddy_blast", confidence=0.50),
+            Prediction(label="paddy_brown_spot", confidence=0.46),
+            Prediction(label="paddy_bacterial_leaf_blight", confidence=0.04),
         ],
         out_of_scope=False,
         model_version=STUB_MODEL_VERSION,
@@ -76,9 +76,9 @@ _FIXTURES: dict[str, TopK] = {
     ),
     "low_confidence": TopK(  # escalate band: top-1 below FLOOR
         predictions=[
-            Prediction(label="blast", confidence=0.38),
-            Prediction(label="brown_spot", confidence=0.33),
-            Prediction(label="bacterial_leaf_blight", confidence=0.29),
+            Prediction(label="paddy_blast", confidence=0.38),
+            Prediction(label="paddy_brown_spot", confidence=0.33),
+            Prediction(label="paddy_bacterial_leaf_blight", confidence=0.29),
         ],
         out_of_scope=False,
         model_version=STUB_MODEL_VERSION,
@@ -86,9 +86,9 @@ _FIXTURES: dict[str, TopK] = {
     ),
     "out_of_scope": TopK(  # nothing in the bounded set fits: flat, low, flag set
         predictions=[
-            Prediction(label="blast", confidence=0.36),
-            Prediction(label="brown_spot", confidence=0.33),
-            Prediction(label="bacterial_leaf_blight", confidence=0.31),
+            Prediction(label="paddy_blast", confidence=0.36),
+            Prediction(label="paddy_brown_spot", confidence=0.33),
+            Prediction(label="paddy_bacterial_leaf_blight", confidence=0.31),
         ],
         out_of_scope=True,
         model_version=STUB_MODEL_VERSION,
@@ -106,11 +106,12 @@ async def classify_vision_fixture(
     No header returns the inert stub distribution, unchanged, in every mode.
     That is the one path here that does not name a fixture.
 
-    A fixture name is refused outright when VISION_MODEL=real. On a machine with
+    A fixture name is refused with FIXTURES_DISABLED when VISION_MODEL=real.
+    Not FORBIDDEN: the caller's identity is irrelevant to it. On a machine with
     the model loaded, a stray header left in a client must not quietly stand in
     for inference -- that is a silent stub by another route (docs/DESIGN.md §12).
 
-    An unrecognised name is a 400 rather than a fall-through. Falling through
+    An unrecognised name is a 422 rather than a fall-through. Falling through
     handed back the stub's near-uniform distribution, which reads as a broken
     gate rather than as a typo in the header.
     """
@@ -118,7 +119,7 @@ async def classify_vision_fixture(
         return _stub_topk()
 
     if settings.vision_model == "real":
-        raise Forbidden(
+        raise FixturesDisabled(
             "Vision fixtures are not served when VISION_MODEL=real. Drop the "
             "X-Vision-Fixture header, or run with VISION_MODEL=stub.",
             details={"vision_model": settings.vision_model},
@@ -128,7 +129,6 @@ async def classify_vision_fixture(
         raise ValidationFailed(
             f"Unknown X-Vision-Fixture value {x_vision_fixture!r}.",
             details={"known_fixtures": sorted(_FIXTURES)},
-            status_code=status.HTTP_400_BAD_REQUEST,
         )
 
     return _FIXTURES[x_vision_fixture]

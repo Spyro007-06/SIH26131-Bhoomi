@@ -18,31 +18,31 @@
     "producing an alert the CHECK constraint rejects later."
   ],
 
-  "blast": [
+  "paddy_blast": [
     "Walk a diagonal line across the field and check the upper leaves of ten plants, today.",
     "Look for spindle-shaped spots with grey centres and brown edges. Photograph any spot with a grey centre.",
     "Check the node just below the panicle on five plants - a blackened node means the infection has moved past the leaves and needs an expert now."
   ],
 
-  "brown_spot": [
+  "paddy_brown_spot": [
     "Check the oldest, lowest leaves on ten plants today - brown spot starts on older leaves, not new growth.",
     "Look for oval brown spots the size of a sesame seed, each with a yellow halo. Photograph one leaf held flat against your palm.",
     "Note whether the affected plants are in a patch or scattered. A patch usually means a soil or water problem, not a spreading disease."
   ],
 
-  "bacterial_leaf_blight": [
+  "paddy_bacterial_leaf_blight": [
     "Check leaf tips and edges on ten plants along the bund, early in the morning while dew is still on the crop.",
     "Look for yellow-to-straw coloured streaks running down from the leaf tip along the edge. Photograph a whole affected leaf, tip included.",
     "Cut one affected leaf across and hold the cut end in a clear glass of water for five minutes - a cloudy white ooze means bacterial blight rather than a fungus."
   ],
 
-  "yellow_stem_borer": [
+  "paddy_yellow_stem_borer": [
     "Part the canopy and photograph the base of ten stems across the field this week.",
     "Pull gently on any central shoot that looks dry or yellow. If it lifts out easily it is a dead heart - count how many out of the ten plants you checked.",
     "Check for small white egg masses on the upper leaf surface near the tip, and photograph any you find without removing them."
   ],
 
-  "brown_planthopper": [
+  "paddy_brown_planthopper": [
     "Part the canopy on ten plants and look at the stem base just above the water line, in the afternoon when hoppers are active.",
     "Tap the base of the plant sharply over the water and photograph anything that falls onto the surface - hoppers float.",
     "Walk the middle of the field, not only the edges. Hopper burn starts as a circular patch of drying plants in the interior and is easy to miss from the bund."

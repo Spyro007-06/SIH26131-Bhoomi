@@ -106,7 +106,7 @@ class TargetLabel(StrEnum):
     JOWAR_DOWNY_MILDEW = "jowar_downy_mildew"
 
     @property
-    def crop(self) -> "Crop":
+    def crop(self) -> Crop:
         """The crop this target belongs to, read off the namespace prefix.
 
         Derived rather than stored: the prefix IS the crop, and a second source

@@ -28,24 +28,24 @@ ENDPOINT = f"{settings.api_prefix}/vision/classify"
 # what teammates curl against, so changing one should fail here first.
 EXPECTED: dict[str, list[tuple[str, float]]] = {
     "confident": [
-        ("blast", 0.85),
-        ("brown_spot", 0.10),
-        ("bacterial_leaf_blight", 0.05),
+        ("paddy_blast", 0.85),
+        ("paddy_brown_spot", 0.10),
+        ("paddy_bacterial_leaf_blight", 0.05),
     ],
     "torn": [
-        ("blast", 0.50),
-        ("brown_spot", 0.46),
-        ("bacterial_leaf_blight", 0.04),
+        ("paddy_blast", 0.50),
+        ("paddy_brown_spot", 0.46),
+        ("paddy_bacterial_leaf_blight", 0.04),
     ],
     "low_confidence": [
-        ("blast", 0.38),
-        ("brown_spot", 0.33),
-        ("bacterial_leaf_blight", 0.29),
+        ("paddy_blast", 0.38),
+        ("paddy_brown_spot", 0.33),
+        ("paddy_bacterial_leaf_blight", 0.29),
     ],
     "out_of_scope": [
-        ("blast", 0.36),
-        ("brown_spot", 0.33),
-        ("bacterial_leaf_blight", 0.31),
+        ("paddy_blast", 0.36),
+        ("paddy_brown_spot", 0.33),
+        ("paddy_bacterial_leaf_blight", 0.31),
     ],
 }
 
@@ -110,15 +110,31 @@ def test_every_fixture_label_is_in_the_bounded_set() -> None:
     assert not offenders, f"labels outside TargetLabel: {offenders}"
 
 
-def test_every_fixture_distribution_sums_to_one() -> None:
-    """A softmax over the bounded set sums to 1.0; a fixture that does not is not
-    an output the real model could ever produce."""
+def test_every_fixture_distribution_sums_to_at_most_one() -> None:
+    """A TopK is the top THREE of a softmax, so it sums to AT MOST 1.0.
+
+    Changed from == 1.0 in v3. With five classes the top-3 held nearly all the
+    mass and equality was almost true; with 26 it is simply wrong — the other 23
+    classes hold the remainder, and a fixture forced to sum to exactly 1.0 would
+    be asserting the model is certain the answer is in the top three.
+
+    The lower bound is what actually protects the gate: top-1 plus top-2 cannot
+    exceed 1.0 either, or MARGIN comparisons stop meaning anything.
+    """
     offenders = {
         name: total
         for name, topk in _FIXTURES.items()
-        if (total := sum(p.confidence for p in topk.predictions)) != pytest.approx(1.0)
+        if (total := sum(p.confidence for p in topk.predictions)) > 1.0 + 1e-9
     }
-    assert not offenders, f"distributions that do not sum to 1.0: {offenders}"
+    assert not offenders, f"distributions summing above 1.0: {offenders}"
+
+
+def test_every_fixture_is_descending_and_bounded() -> None:
+    """Each confidence is a probability and the order is the contract's."""
+    for name, topk in _FIXTURES.items():
+        confidences = [p.confidence for p in topk.predictions]
+        assert confidences == sorted(confidences, reverse=True), name
+        assert all(0.0 <= c <= 1.0 for c in confidences), name
 
 
 # ---------------------------------------------------------------------------
@@ -169,16 +185,23 @@ def test_fixtures_are_refused_when_the_real_model_is_loaded(
 
     response = client.post(ENDPOINT, headers={"X-Vision-Fixture": "confident"})
 
-    assert response.status_code == 403
-    assert response.json()["error"]["code"] == "FORBIDDEN"
+    # v3: FIXTURES_DISABLED / 409, not FORBIDDEN / 403. The caller's identity is
+    # irrelevant here — with VISION_MODEL=real nobody may pull a fixture and with
+    # stub everybody may. It is a server configuration state, so the code says so.
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "FIXTURES_DISABLED"
 
 
-def test_unrecognised_fixture_name_is_a_400(client: TestClient) -> None:
+def test_unrecognised_fixture_name_is_a_422(client: TestClient) -> None:
     """A typo'd header used to fall through to the stub's near-uniform
-    distribution, which looks like a gate bug rather than a bad request."""
+    distribution, which looks like a gate bug rather than a bad request.
+
+    v3: 422, not 400. VALIDATION_FAILED returned both depending on the call
+    site, so a client switching on `code` could not predict the status — which
+    is most of what a stable envelope is for. One code, one status."""
     response = client.post(ENDPOINT, headers={"X-Vision-Fixture": "cofident"})
 
-    assert response.status_code == 400
+    assert response.status_code == 422
     error = response.json()["error"]
     assert error["code"] == "VALIDATION_FAILED"
     assert error["details"]["known_fixtures"] == sorted(_FIXTURES)

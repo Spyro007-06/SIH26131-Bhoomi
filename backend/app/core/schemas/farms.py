@@ -2,7 +2,7 @@
 
 OWNER: Shreekumar.
 
-`GeoPoint`, `Crop` and `GrowthStage` come from app/contracts/ and are not
+`GeoPoint` and `Crop` come from app/contracts/ and are not
 redeclared here — contract C2 is the farm shape and it is frozen.
 """
 
@@ -13,7 +13,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
-from app.contracts.enums import Crop, GrowthStage
+from app.contracts.enums import Crop, GrowthStageKey
 from app.contracts.farm import GeoPoint
 
 
@@ -23,8 +23,10 @@ class FarmCreate(BaseModel):
     error envelope, not a null column."""
 
     crop: Crop = Crop.PADDY
+    """Defaults to paddy for v2 clients that predate the four-crop scope. A
+    client sending no crop gets the crop the whole v2 product was."""
     variety: str | None = Field(default=None, max_length=120)
-    growth_stage: GrowthStage
+    growth_stage: GrowthStageKey
     region: str = Field(min_length=1, max_length=120)
     sowing_date: date | None = Field(
         default=None,
@@ -46,7 +48,7 @@ class FarmUpdate(BaseModel):
     """
 
     variety: str | None = Field(default=None, max_length=120)
-    growth_stage: GrowthStage | None = None
+    growth_stage: GrowthStageKey | None = None
     region: str | None = Field(default=None, min_length=1, max_length=120)
     sowing_date: date | None = None
 
@@ -56,7 +58,7 @@ class FarmSummaryOut(BaseModel):
 
     id: uuid.UUID
     crop: Crop
-    growth_stage: GrowthStage
+    growth_stage: GrowthStageKey
     region: str
 
 
@@ -67,7 +69,7 @@ class FarmOut(BaseModel):
     farmer_id: uuid.UUID
     crop: Crop
     variety: str | None
-    growth_stage: GrowthStage
+    growth_stage: GrowthStageKey
     region: str
     sowing_date: date | None
     location: GeoPoint

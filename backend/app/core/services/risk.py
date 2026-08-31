@@ -45,7 +45,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import MAX_ALERTS_PER_FARM_PER_DAY, RISK_ALERT_MIN_LEVEL, RISK_LEVELS
-from app.contracts.enums import AlertTrigger, Crop, GrowthStage, TargetLabel
+from app.contracts.enums import AlertTrigger, Crop, TargetLabel
 from app.core.models import Alert, Farm, Problem
 from app.core.weather import WeatherCache, WeatherWindow
 
@@ -105,9 +105,12 @@ def _validate_entry(raw: dict, index: int, errors: list[str]) -> RiskTarget | No
         errors.append(f"{where}: driver {driver!r} is not one of {sorted(VALID_DRIVERS)}")
 
     stages = raw.get("susceptible_stages") or []
-    unknown = [s for s in stages if s not in {g.value for g in GrowthStage}]
-    if unknown:
-        errors.append(f"{where}: unknown growth stages {unknown}")
+    # Stage keys are NOT validated here any more. They live in the `growth_stage`
+    # table keyed (crop, stage_key), so the authoritative check needs a database
+    # session and belongs at load time against real rows —
+    # validate_registry_stages() below, called by the loader script. Validating
+    # against a stale in-process copy of the vocabulary would be worse than not
+    # validating: it would reject a stage someone had just added.
     if not stages:
         errors.append(f"{where}: susceptible_stages is empty - the entry can never fire")
 
@@ -128,6 +131,34 @@ def _validate_entry(raw: dict, index: int, errors: list[str]) -> RiskTarget | No
         weather_rule=raw.get("weather_rule"),
         phenology_rule=raw.get("phenology_rule"),
     )
+
+
+async def validate_registry_stages(session, registry: list[RiskTarget]) -> list[str]:
+    """Check every entry's susceptible_stages against the growth_stage table.
+
+    Separate from load_registry because it needs a session and load_registry is
+    called from synchronous code and from tests with no database. Returns the
+    problems rather than raising, so a caller can report all of them at once.
+    """
+    from sqlalchemy import select
+
+    from app.core.models import GrowthStage as GrowthStageRow
+
+    known: dict[str, set[str]] = {}
+    for row in (await session.execute(select(GrowthStageRow))).scalars().all():
+        crop = row.crop.value if hasattr(row.crop, "value") else str(row.crop)
+        known.setdefault(crop, set()).add(row.stage_key)
+
+    problems: list[str] = []
+    for entry in registry:
+        valid = known.get(entry.crop, set())
+        unknown = [s for s in entry.susceptible_stages if s not in valid]
+        if unknown:
+            problems.append(
+                f"{entry.target}: stage(s) {unknown} are not in growth_stage for "
+                f"crop {entry.crop!r} (known: {sorted(valid) or 'none'})"
+            )
+    return problems
 
 
 def load_registry(path: pathlib.Path | None = None) -> list[RiskTarget]:

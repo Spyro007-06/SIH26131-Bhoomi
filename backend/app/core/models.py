@@ -41,7 +41,6 @@ from geoalchemy2 import Geography
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     ARRAY,
-    ForeignKeyConstraint,
     BigInteger,
     Boolean,
     CheckConstraint,
@@ -49,6 +48,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     Numeric,
