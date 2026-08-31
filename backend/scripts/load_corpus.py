@@ -135,9 +135,10 @@ from datetime import date, datetime
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 from sqlalchemy import delete  # noqa: E402
+from sqlalchemy.dialects.postgresql import insert as pg_insert  # noqa: E402
 
 from app.contracts.enums import Crop, TargetLabel  # noqa: E402
-from app.core.models import CorpusDoc  # noqa: E402
+from app.core.models import CorpusDoc, CorpusDocument  # noqa: E402
 from app.db import SessionLocal, dispose_engine  # noqa: E402
 
 CORPUS_DIR = pathlib.Path(__file__).resolve().parents[1] / "seed" / "corpus"
@@ -495,6 +496,17 @@ async def load(dry_run: bool = False) -> int:
     written = 0
     if not dry_run:
         async with SessionLocal() as session:
+            # One stable corpus_document row per doc_id, upserted before any
+            # chunk touches corpus_doc for it and never deleted on reload --
+            # this is what lets distinguishing_cue.doc_id survive a reload.
+            # See migration 0010 / CorpusDocument's docstring.
+            doc_ids = {doc_id for doc_id, _ in by_pair}
+            if doc_ids:
+                stmt = pg_insert(CorpusDocument).values(
+                    [{"doc_id": doc_id} for doc_id in doc_ids]
+                ).on_conflict_do_nothing(index_elements=["doc_id"])
+                await session.execute(stmt)
+
             for (doc_id, target), chunks in by_pair.items():
                 await session.execute(
                     delete(CorpusDoc).where(

@@ -25,9 +25,10 @@ from load_corpus import (  # noqa: E402
     _parse_date,
     _validate_row,
 )
+from sqlalchemy import delete, select  # noqa: E402
 
 from app.contracts.enums import TargetLabel  # noqa: E402
-from app.core.models import CorpusDoc  # noqa: E402
+from app.core.models import CorpusDoc, CorpusDocument, DistinguishingCue  # noqa: E402
 from app.core.services.corpus import authoritative_chunks, chunks_for  # noqa: E402
 
 # ===========================================================================
@@ -174,6 +175,9 @@ def test_source_dated_must_parse() -> None:
 
 
 async def _seed_chunk(session, *, target, crop, title, authoritative) -> None:
+    if await session.get(CorpusDocument, "probe-doc") is None:
+        session.add(CorpusDocument(doc_id="probe-doc"))
+        await session.flush()
     session.add(
         CorpusDoc(
             doc_id="probe-doc", title=title, source="TNAU Agritech Portal (https://example.test)",
@@ -213,3 +217,67 @@ async def test_authoritative_chunks_is_empty_when_only_chemical_content_exists(
     )
     safe_only = await authoritative_chunks(db_session, "soybean", "soybean_anthracnose")
     assert safe_only == []
+
+
+# ===========================================================================
+# Migration 0010 — a cue survives the reload that regenerates every chunk id
+# ===========================================================================
+
+
+async def test_a_corpus_reload_leaves_existing_cues_resolvable(db_session) -> None:
+    """The bug migration 0010 fixes: distinguishing_cue.doc_id used to FK to
+    corpus_doc.id, the per-chunk surrogate key the loader's delete-then-
+    reinsert idempotency regenerates on every reload -- orphaning every cue,
+    not just the first. doc_id now FKs to corpus_document, which the loader
+    upserts once and never deletes. Simulate a reload -- delete and reinsert
+    every chunk for a (doc_id, target) pair, same as load_corpus.py does --
+    and confirm a cue authored against the stable doc_id still resolves."""
+    doc_id = "probe-doc-reload"
+    db_session.add(CorpusDocument(doc_id=doc_id))
+    await db_session.flush()
+
+    db_session.add(
+        CorpusDoc(
+            doc_id=doc_id, title="Symptoms",
+            source="TNAU Agritech Portal (https://example.test)",
+            target="cotton_american_bollworm", crop="cotton", content="body v1",
+        )
+    )
+    await db_session.flush()
+
+    cue = DistinguishingCue(
+        cue_text="Rosetted flowers before boll damage",
+        question_text="Do you see rosetted flowers before the bolls are damaged?",
+        discriminates=["cotton_american_bollworm", "cotton_pink_bollworm"],
+        answer_yes_implies="cotton_american_bollworm",
+        doc_id=doc_id,
+    )
+    db_session.add(cue)
+    await db_session.flush()
+
+    # The reload itself: delete every chunk for (doc_id, target) and reinsert
+    # with a brand new surrogate id. corpus_document -- and the cue -- are
+    # never touched.
+    await db_session.execute(
+        delete(CorpusDoc).where(
+            CorpusDoc.doc_id == doc_id, CorpusDoc.target == "cotton_american_bollworm"
+        )
+    )
+    db_session.add(
+        CorpusDoc(
+            doc_id=doc_id, title="Symptoms",
+            source="TNAU Agritech Portal (https://example.test)",
+            target="cotton_american_bollworm", crop="cotton",
+            content="body v2 after reload",
+        )
+    )
+    await db_session.flush()
+
+    await db_session.refresh(cue)
+    assert cue.doc_id == doc_id
+
+    resolved = (
+        await db_session.execute(select(CorpusDoc).where(CorpusDoc.doc_id == cue.doc_id))
+    ).scalars().all()
+    assert len(resolved) == 1
+    assert resolved[0].content == "body v2 after reload"

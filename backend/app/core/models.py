@@ -2,7 +2,7 @@
 
 OWNER: Shreekumar.
 
-Eighteen tables:
+Nineteen tables:
 
   Thirteen from docs/DESIGN.md §5, transcribed with the exact column names in
   that section: farm, problem, diagnosis, observation, advisory, label_check,
@@ -14,6 +14,10 @@ Eighteen tables:
 
   One added in v3: label_reference — the per-label signature and reference
   image that docs/API_CONTRACT.md §7 returns for Doubt Doctor candidates.
+
+  One added in migration 0010: corpus_document — the stable per-document
+  identity that corpus_doc.doc_id and distinguishing_cue.doc_id both FK to,
+  fixing a dangling-pointer bug (see the class docstring below).
 
 Three columns added in v3: alert.reason,
 registered_use.pesticide_class, confirmation.treatment.
@@ -764,6 +768,30 @@ class Confirmation(Base):
     )
 
 
+class CorpusDocument(Base):
+    """docs/DESIGN.md §5, §7 (v3 addendum). One stable row per manifest
+    doc_id — added in migration 0010.
+
+    corpus_doc.doc_id (the manifest slug) is not itself unique: it repeats
+    across every section-chunk of a document and again across a two-target
+    file's second target, so it cannot be an FK target directly. This table
+    is the thing that IS unique per document. The loader upserts a row here
+    once, before it ever deletes/reinserts corpus_doc chunks for that
+    document, and never deletes it on reload.
+
+    This exists to fix a dangling-pointer bug: distinguishing_cue.doc_id used
+    to FK to corpus_doc.id, the per-chunk surrogate key that migration 0009's
+    delete-then-reinsert idempotency regenerates on every corpus reload —
+    orphaning every cue, not just the first one authored, and F4 escalates
+    silently rather than erroring on a missing cue. corpus_doc.doc_id and
+    distinguishing_cue.doc_id both FK to this table now, so a cue's reference
+    survives every future reload of the chunks underneath it."""
+
+    __tablename__ = "corpus_document"
+
+    doc_id: Mapped[str] = mapped_column(Text, primary_key=True)
+
+
 class CorpusDoc(Base):
     """docs/DESIGN.md §5 and §8. Retrieval filters by crop and target, so a
     chunk missing either is invisible to the pipeline.
@@ -782,7 +810,8 @@ class CorpusDoc(Base):
     reinsert per (doc_id, target) rather than a per-chunk upsert, because
     section chunking can change the chunk count between runs — there is no
     stable per-chunk key to upsert against, but the (doc_id, target) group is
-    stable.
+    stable. Since migration 0010, doc_id also FKs to corpus_document —
+    see that class for why.
 
     authoritative is false on a chunk sourced from a document's Chemical
     Management section. Every delivered document carries one, written from
@@ -797,7 +826,9 @@ class CorpusDoc(Base):
     __tablename__ = "corpus_doc"
 
     id: Mapped[uuid.UUID] = _uuid_pk()
-    doc_id: Mapped[str] = mapped_column(Text, nullable=False)
+    doc_id: Mapped[str] = mapped_column(
+        Text, ForeignKey("corpus_document.doc_id"), nullable=False
+    )
     title: Mapped[str] = mapped_column(Text, nullable=False)
     source: Mapped[str] = mapped_column(Text, nullable=False)
     reviewed_on: Mapped[datetime | None] = mapped_column(Date)
@@ -823,7 +854,14 @@ class DistinguishingCue(Base):
 
     Cues are retrieved, not generated: question_text is authored alongside the
     corpus. An LLM composing a differential diagnostic question at runtime is
-    exactly the fabrication risk the product exists to avoid."""
+    exactly the fabrication risk the product exists to avoid.
+
+    doc_id FKs to corpus_document (migration 0010), the manifest's stable
+    per-document slug — not corpus_doc.id, the per-chunk surrogate key that
+    gets regenerated on every corpus reload. See CorpusDocument's docstring
+    for why: a cue pointing at a chunk id orphans on the next reload, not
+    just the first one, and F4 escalates silently rather than erroring on a
+    missing cue."""
 
     __tablename__ = "distinguishing_cue"
 
@@ -834,8 +872,8 @@ class DistinguishingCue(Base):
     answer_yes_implies: Mapped[TargetLabel] = mapped_column(
         pg_enum(TargetLabel, "target_label"), nullable=False
     )
-    doc_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("corpus_doc.id", ondelete="SET NULL")
+    doc_id: Mapped[str | None] = mapped_column(
+        Text, ForeignKey("corpus_document.doc_id", ondelete="SET NULL")
     )
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMPTZ, nullable=False, server_default=func.now()
