@@ -77,10 +77,16 @@ def test_factory_returns_live_when_selected(monkeypatch, factory, live_type) -> 
     assert isinstance(factory(), live_type)
 
 
-def test_live_providers_raise_without_calling_sarvam() -> None:
+def test_live_stt_and_tts_entrypoints_are_blocked_on_a_core_helper() -> None:
+    """Neither makes a network call: both raise before touching httpx, because
+    each needs a core capability that does not exist yet (asset-bytes read for
+    STT, bytes-write/presign for TTS). See providers.py's Live* docstrings.
+
+    LiveTranslator is NOT asserted here — S3 wired it for real (it needs
+    neither), so calling it here would hit the live network. See
+    test_voice_live_providers.py for its (mocked) coverage.
+    """
     with pytest.raises(NotImplementedError, match="live Sarvam call"):
         LiveSpeechToText().transcribe("a_1", "mr-IN", "query")
     with pytest.raises(NotImplementedError, match="live Sarvam call"):
         LiveTextToSpeech().synthesize("hello", "mr-IN")
-    with pytest.raises(NotImplementedError, match="live Sarvam call"):
-        LiveTranslator().translate("hello", "en-IN")

@@ -42,6 +42,12 @@ class ErrorCode(StrEnum):
     OCR_UNREADABLE = "OCR_UNREADABLE"
     PRODUCT_NOT_IN_RECORDS = "PRODUCT_NOT_IN_RECORDS"
     AGRONOMIST_UNAVAILABLE = "AGRONOMIST_UNAVAILABLE"
+    VOICE_PROVIDER_UNAVAILABLE = "VOICE_PROVIDER_UNAVAILABLE"
+    """Added S3 (voice/providers.py): a Sarvam HTTP call failed (non-200 or a
+    transport error). Distinct from AGRONOMIST_UNAVAILABLE, which carries a
+    specific escalation meaning clients may branch on — this is an unrelated
+    upstream-provider failure. docs/API_CONTRACT.md §0's stable-codes list
+    needs the same addition; flagged for whoever owns that doc edit."""
 
 
 # Default HTTP status per code. A code may override per-raise, but the default
@@ -58,6 +64,7 @@ DEFAULT_STATUS: dict[ErrorCode, int] = {
     ErrorCode.OCR_UNREADABLE: status.HTTP_200_OK,
     ErrorCode.PRODUCT_NOT_IN_RECORDS: status.HTTP_200_OK,
     ErrorCode.AGRONOMIST_UNAVAILABLE: status.HTTP_503_SERVICE_UNAVAILABLE,
+    ErrorCode.VOICE_PROVIDER_UNAVAILABLE: status.HTTP_503_SERVICE_UNAVAILABLE,
 }
 # The gate outcomes default to 200 deliberately. "I am not confident, here is an
 # expert" is a successful, designed response — not an HTTP failure. They appear

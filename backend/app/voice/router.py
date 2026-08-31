@@ -41,7 +41,17 @@ class ParsedIntentOut(BaseModel):
 
 class TranscribeOut(BaseModel):
     text: str
-    confidence: float = Field(ge=0.0, le=1.0)
+    confidence: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Omitted (via response_model_exclude_none) when the provider "
+            "reports none — live Sarvam Saaras never does. Never a "
+            "fabricated sentinel. docs/API_CONTRACT.md §4 shows this as "
+            "always-numeric; live mode is a deliberate, flagged deviation."
+        ),
+    )
     lang: Lang
     parsed_intent: ParsedIntentOut | None = None
     needs_confirmation: bool
@@ -72,7 +82,8 @@ async def transcribe_voice(
 
     Below `config.ASR_FLOOR`, `parsed_intent` is omitted from the response
     entirely (not `null`) — `response_model_exclude_none` renders that;
-    app.voice.asr.transcribe() decides it.
+    app.voice.asr.transcribe() decides it. `confidence` is omitted the same
+    way when the provider reports none (live Sarvam Saaras never does).
     """
     result = transcribe(str(payload.asset_id), payload.lang, payload.context)
     parsed_intent = (
