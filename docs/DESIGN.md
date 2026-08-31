@@ -1,10 +1,25 @@
-# Bhoomi v2 — Design Document
+# Bhoomi v3 — Design Document
 
 **PS:** SIH26131 · Early detection and management of crop diseases and pest infestations
-**Status:** v2.0 · frozen for the build
-**Companions:** `Bhoomi_v2_PRD.md` (what and why), `Bhoomi_v2_API_Contract.md` (wire format)
+**Status:** v3.0 · frozen for the build
+**Companions:** `PRD.md` (what and why), `API_CONTRACT.md` (wire format)
 
 This document covers structure: stack, modules, data model, the three algorithms that carry the product, and the contracts that freeze at hour 2.
+
+---
+
+## Changelog — v2 to v3
+
+| Change | Why |
+|---|---|
+| Four crops, 26 targets, namespaced by crop | Scope. The prefix makes a wrong-crop match unrepresentable rather than merely filtered. |
+| `target_tier`: diagnosable / inspection | 12 of the 26 cannot be settled by a photograph. Routing them through the gate would produce a confident answer about something the image never contained. |
+| Growth stages: enum to per-crop table (§5) | The v2 enum was paddy-specific, so the phenology branch could not express "pink bollworm at boll formation". |
+| Ten tables and columns folded in from the addendum (§5) | `app_user`, `otp_request`, `asset`, `label_prior`, `label_reference`, `growth_stage`, `alert.reason`, `registered_use.pesticide_class`, `confirmation.treatment`, `confirmation.model_label`, `farm.sowing_date`. |
+| Chemical rungs resolve against `registered_use` at composition time (§8) | The one path in the system that produced a pesticide recommendation with no runtime check on it. |
+
+The gate constants, the gate algorithm and the frozen contract shapes are
+**unchanged**. Scope grew; the principles did not move.
 
 ---
 
@@ -126,9 +141,56 @@ Verdict strings for F8 are fixed constants owned by `intelligence/` and rendered
 
 ## 5. Data model
 
+The v3 model is nineteen tables. Everything the v2 document did not name — and
+everything the data-model addendum carried from Phase 1 to Phase 4 — is folded in
+here. The addendum is deleted.
+
 ```
-Farm(id, farmer_id, crop, variety, growth_stage, region,
+-- Identity and storage. None of these were in the v2 document, and three were
+-- forced by v2's own dangling references: Farm.farmer_id, Case.assigned_to and
+-- the three *_asset_id columns all pointed at nothing.
+
+User(id, role, phone?, email?, password_hash?, name, created_at)
+    -- CHECK: a farmer has phone and no password; an agronomist or official has
+    -- email and a password. A farmer row with a password bypasses OTP; an
+    -- agronomist row without one cannot sign in. Both fail silently.
+
+OtpRequest(id, phone, code_hash, expires_at, consumed_at, attempts, created_at)
+    -- code_hash, not code. attempts and consumed_at cap and burn a code;
+    -- without them /auth/otp/verify is a brute-force oracle.
+
+Asset(id, kind, content_type, object_key, farm_id?, byte_size?, uploaded_at?,
+      created_at)
+    -- uploaded_at stays null until an upload is confirmed, so an abandoned
+    -- asset is distinguishable from a real photo.
+
+GrowthStage(crop, stage_key, display_name, display_order,
+            typical_das_min, typical_das_max, source)
+    -- composite PK (crop, stage_key). Replaces the v2 growth_stage enum, which
+    -- was paddy-specific. Phenology rules name a stage and read the day window
+    -- from here, so correcting a window is one row rather than every rule that
+    -- mentions the stage.
+
+LabelPrior(region, crop, growth_stage, label, confirmed_count, corrected_count,
+           updated_at)
+    -- composite PK on the four dimensions. §11 describes
+    -- prior[region][crop][stage][label] and never gave it a table. Counts only;
+    -- the cap that stops it crossing a gate band lives in config.py and in
+    -- core/services/prior.py.
+
+LabelReference(label, signature, image_asset_id?, created_at)
+    -- the per-label signature and reference image API_CONTRACT §7 returns for
+    -- Doubt Doctor candidates. DistinguishingCue holds what separates a PAIR,
+    -- not what a single label looks like.
+
+Farm(id, farmer_id, crop, variety, growth_stage, region, sowing_date?,
      location: geography(Point,4326), created_at)
+    -- FOREIGN KEY (crop, growth_stage) REFERENCES GrowthStage(crop, stage_key)
+    --   A farm cannot hold a stage belonging to another crop. Not filtered at
+    --   read time: not storable.
+    -- sowing_date is nullable, and days_after_sowing is NOT stored. It is
+    --   derived on read, because a stored integer is wrong the next morning and
+    --   nothing here would refresh it.
 
 Problem(id, farm_id, problem_type: disease|pest, label, severity,
         status: open|resolved, opened_at, resolved_at)
@@ -148,25 +210,50 @@ Advisory(id, problem_id, possible_issue, what_to_check, what_to_avoid,
 LabelCheck(id, problem_id, image_asset_id, extracted: jsonb,
            ocr_confidence, verdict_code, matched_row_id?, created_at)
 
-RegisteredUse(id, active_ingredient, crop, target, dosage_text,
+RegisteredUse(id, active_ingredient, crop, target, pesticide_class, dosage_text,
               phi_days, reentry_hours, source, last_verified)
+    -- pesticide_class is what makes WRONG_CLASS computable at all. §9 defines a
+    -- verdict reading "this is a fungicide, your problem is an insect pest";
+    -- without the column that is underivable from the table §9 says to look it
+    -- up in.
     -- F8's lookup table. CIB&RC + state PoP. Unowned; see work split.
 
 FollowUp(id, problem_id, due_at, response: improved|no_change|got_worse,
          image_asset_id?, responded_at)
 
 Alert(id, farm_id, trigger_type: weather|seasonal|spread|combined,
-      target, risk_level, inspection_tasks: jsonb NOT NULL,
+      target, risk_level, reason, inspection_tasks: jsonb NOT NULL,
       issued_at, outcome: nothing_found|found|snoozed|null)
     -- CHECK (jsonb_array_length(inspection_tasks) > 0)
+    -- UNIQUE (farm_id, target, (issued_at AT TIME ZONE 'UTC')::date)
+    --   One alert per farm per target per day, which is what makes the
+    --   scheduled risk job idempotent. A SELECT-then-INSERT guard would still
+    --   race two concurrent runs. date(timestamptz) is STABLE, not IMMUTABLE,
+    --   so the zone is fixed explicitly or the expression cannot be indexed.
+    -- reason is the sentence telling a farmer WHY to walk their field, frozen
+    --   at issue time: what was true when it fired, not what the weather is now.
 
 Case(id, problem_id, assigned_to, status: open|assigned|resolved,
      queue_position, eta_minutes, bundle: jsonb, created_at)
+    -- bundle is SQL NULL until F12 compiles it, and the column is declared
+    --   none_as_null. SQLAlchemy's default writes Python None as the JSON value
+    --   `null`, which reads as NOT NULL and answers "has this been compiled?"
+    --   with yes for every uncompiled case.
+    -- queue_position is correct when issued and NOT authoritative after: stale
+    --   the moment anything ahead of it resolves. The case-queue endpoint
+    --   recomputes from the live ordering.
 
 Confirmation(id, case_id, problem_id, agronomist_id,
-             verdict: confirmed|corrected, corrected_label?,
-             notes, created_at)
-    -- F14 reads from here
+             verdict: confirmed|corrected, corrected_label?, model_label?,
+             treatment?, notes, created_at)
+    -- F14 reads from here.
+    -- model_label is what the model actually predicted, frozen at confirm time
+    --   from the Diagnosis current when the case was escalated. Not derivable
+    --   afterwards: a correction overwrites Problem.label, so the guess stops
+    --   being recoverable the moment the verdict lands. /officials/accuracy
+    --   groups on THIS. Grouping on Problem.label reported the correction
+    --   against the label the model never predicted — the inverse of the truth.
+    -- treatment is what the agronomist instructed, distinct from notes.
 
 CorpusDoc(id, title, source, reviewed_on, target, crop,
           content, embedding: vector(1024))
@@ -221,7 +308,7 @@ Properties that must hold and must have tests:
 - No advisory composition happens before this returns `advise`.
 - Constants live here and nowhere else. A threshold literal appearing in a second file is a bug.
 
-Ordering note: the ambiguity check runs before the absolute-gate check. A model that is 0.68 on blast and 0.12 on brown spot is clear but slightly under the gate — that escalates. A model that is 0.58 and 0.49 is ambiguous — that goes to the Doubt Doctor even though neither clears the gate. Ambiguity is the more informative signal and is worth a question.
+Ordering note: the ambiguity check runs before the absolute-gate check. A model that is 0.68 on blast and 0.12 on brown spot is clear but slightly under the gate — that escalates. A model that is 0.50 and 0.46 is ambiguous — that goes to the Doubt Doctor even though neither clears the gate. Ambiguity is the more informative signal and is worth a question.
 
 ---
 
@@ -264,6 +351,28 @@ query (or resolved diagnosis)
   → validate: ladder ordered, chemical last, citations present
   → persist Advisory
 ```
+
+**A chemical rung must resolve against `registered_use` at COMPOSITION time,
+not only at label-check time.** F8 checks a product the farmer already owns and
+photographed; nothing checked a product this system itself recommended. That was
+the one path in the build producing a pesticide recommendation with no runtime
+check on it — the composer could name an ingredient, dose and PHI that the
+registered-use table would have rejected had a farmer photographed the bottle.
+
+So `compose()` looks up every chemical rung it is about to emit:
+
+```
+for rung in ladder where rung.tier == chemical:
+    rows = registered_use.lookup(rung.active_ingredient, crop)
+    no row for this crop+target      -> DROP the rung, do not ship it
+    phi_days > days_to_harvest       -> DROP the rung
+    dosage/phi/reentry missing       -> DROP the rung
+```
+
+A dropped rung is omitted entirely rather than shipped incomplete, which is the
+existing §8 rule about missing dosage applied one step earlier. An advisory whose
+chemical rung vanished is still a valid advisory — cultural and biological rungs
+stand on their own, and "we have nothing registered for this" is honest.
 
 The validation step is not optional. If the LLM returns a ladder with a chemical rung first, the response is rejected and recomposed, not shipped. Structural guarantees enforced only by prompt wording are not guarantees.
 

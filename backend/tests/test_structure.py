@@ -61,6 +61,11 @@ IMPLEMENTED = {
     "services/confirmation.py",
     "services/prior.py",
     "services/aggregates.py",
+    # Phase 1 exception (2026-08-31): POST /vision/classify only -- the fixture
+    # / test-mode endpoint for the vision stub. POST /farms/{id}/diagnose
+    # itself is NOT implemented; the gate it needs still raises
+    # NotImplementedError. See routers/diagnose.py's module docstring.
+    "routers/diagnose.py",
 }
 
 

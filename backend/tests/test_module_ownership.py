@@ -48,9 +48,9 @@ def test_module_exists_and_names_its_owner(name: str, owner: str) -> None:
 def _sample_topk() -> TopK:
     return TopK(
         predictions=[
-            Prediction(label="blast", confidence=0.9),
-            Prediction(label="brown_spot", confidence=0.06),
-            Prediction(label="bacterial_leaf_blight", confidence=0.04),
+            Prediction(label="paddy_blast", confidence=0.9),
+            Prediction(label="paddy_brown_spot", confidence=0.06),
+            Prediction(label="paddy_bacterial_leaf_blight", confidence=0.04),
         ],
         out_of_scope=False,
         model_version="test-1",
@@ -59,8 +59,8 @@ def _sample_topk() -> TopK:
 
 
 NOT_YET_IMPLEMENTED = [
-    ("app.intelligence.rag", "compose", ("q", "paddy", "blast", [])),
-    ("app.intelligence.verdict", "verdict", (None, "paddy", "blast", None, None)),
+    ("app.intelligence.rag", "compose", ("q", "paddy", "paddy_blast", [])),
+    ("app.intelligence.verdict", "verdict", (None, "paddy", "paddy_blast", None, None)),
     ("app.intelligence.bundle", "compile_bundle", (None, None, None, [], [], [], [])),
     ("app.vision.ocr", "extract_label", (b"x",)),
 ]
@@ -77,8 +77,10 @@ def test_unimplemented_entry_points_raise_loudly(
         func(*args)
 
 
-def test_gate_signature_exists_and_refuses() -> None:
+def test_gate_signature_exists_and_returns_a_decision() -> None:
+    """Phase 2 implements decide(); it no longer refuses. See test_gate.py for
+    the four-band coverage against Phase 1's fixtures."""
     from app.intelligence import decide
 
-    with pytest.raises(NotImplementedError):
-        decide(_sample_topk(), 0.8)
+    decision = decide(_sample_topk(), 0.8)
+    assert decision.outcome == "advise"

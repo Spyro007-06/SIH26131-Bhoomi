@@ -48,6 +48,14 @@ class ErrorCode(StrEnum):
     specific escalation meaning clients may branch on — this is an unrelated
     upstream-provider failure. docs/API_CONTRACT.md §0's stable-codes list
     needs the same addition; flagged for whoever owns that doc edit."""
+    FIXTURES_DISABLED = "FIXTURES_DISABLED"
+    """The server is configured so that test fixtures are not served.
+
+    Added in v3. The vision fixture endpoint was raising FORBIDDEN for this,
+    which says "your credentials do not permit this" — but the caller's identity
+    is irrelevant: with VISION_MODEL=real nobody may pull a fixture, and with
+    VISION_MODEL=stub everybody may. It is a server configuration state, so it
+    gets a code that says so and a 409 rather than a 403."""
 
 
 # Default HTTP status per code. A code may override per-raise, but the default
@@ -65,6 +73,10 @@ DEFAULT_STATUS: dict[ErrorCode, int] = {
     ErrorCode.PRODUCT_NOT_IN_RECORDS: status.HTTP_200_OK,
     ErrorCode.AGRONOMIST_UNAVAILABLE: status.HTTP_503_SERVICE_UNAVAILABLE,
     ErrorCode.VOICE_PROVIDER_UNAVAILABLE: status.HTTP_503_SERVICE_UNAVAILABLE,
+    # 409: the request conflicts with the server's current configuration, and
+    # will keep conflicting until that configuration changes. Not 403 (identity
+    # is irrelevant) and not 400 (the request is well formed).
+    ErrorCode.FIXTURES_DISABLED: status.HTTP_409_CONFLICT,
 }
 # The gate outcomes default to 200 deliberately. "I am not confident, here is an
 # expert" is a successful, designed response — not an HTTP failure. They appear
@@ -114,8 +126,25 @@ class NotFound(BhoomiError):
 
 
 class ValidationFailed(BhoomiError):
+    """One code, one status.
+
+    This used to be raised with an explicit status_code=400 at one call site and
+    at its 422 default everywhere else. A client switching on `code` could not
+    then predict the status, which is most of what a stable envelope is for.
+    422 is the default and callers do not override it — see
+    tests/test_errors.py::test_validation_failed_is_always_422.
+    """
+
     def __init__(self, message: str = "Request could not be validated.", **kw: Any) -> None:
+        kw.pop("status_code", None)
         super().__init__(ErrorCode.VALIDATION_FAILED, message, **kw)
+
+
+class FixturesDisabled(BhoomiError):
+    def __init__(
+        self, message: str = "Test fixtures are not served in this configuration.", **kw: Any
+    ) -> None:
+        super().__init__(ErrorCode.FIXTURES_DISABLED, message, **kw)
 
 
 def register_exception_handlers(app: FastAPI) -> None:

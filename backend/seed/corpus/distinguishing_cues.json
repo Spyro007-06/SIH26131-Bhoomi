@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "cue_text": "Blast lesions (Magnaporthe oryzae) are spindle-shaped -- pointed at both ends like a narrow eye or diamond -- with a grey-to-whitish centre and a dark brown margin. Brown spot lesions (Helminthosporium oryzae / Bipolaris oryzae) are cylindrical to oval, not pointed, dark brown, usually ringed by a yellow halo. Lesion shape is the more reliable single field to ask about: colour (grey centre vs. yellow halo) can be harder to judge under variable light and lesion age than the pointed-vs-rounded outline. Source: TNAU Agritech Portal, Crop Protection > Rice Diseases -- 'Blast: Magnaporthe oryzae' (agritech.tnau.ac.in/crop_protection/rice_diseases/rice_1.html) and 'Rice Brown Spot or Sesame Leaf Spot: Helminthosporium oryzae' (rice_2.html), accessed 2026-08-31. Corroborated by IRRI Rice Knowledge Bank, 'Blast (leaf and collar)' fact sheet: leaf blast lesions are 'elongated and pointed at each end,' brown spot lesions 'tend to be more round.'",
+    "question_text": "Look closely at one of the spots on the leaf. Is it pointed at both ends, like a narrow diamond or an eye shape, rather than round or oval?",
+    "discriminates": [
+      "paddy_blast",
+      "paddy_brown_spot"
+    ],
+    "answer_yes_implies": "paddy_blast",
+    "doc_id": null
+  }
+]

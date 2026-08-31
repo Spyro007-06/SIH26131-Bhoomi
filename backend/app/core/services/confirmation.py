@@ -133,11 +133,7 @@ async def confirm_case(
     await session.flush()
 
     # 3. The prior. Both counters move on a correction, on different rows.
-    stage = (
-        farm.growth_stage.value
-        if hasattr(farm.growth_stage, "value")
-        else str(farm.growth_stage)
-    )
+    stage = str(farm.growth_stage)
     crop = farm.crop.value if hasattr(farm.crop, "value") else str(farm.crop)
     await prior_service.record_confirmation(
         session,

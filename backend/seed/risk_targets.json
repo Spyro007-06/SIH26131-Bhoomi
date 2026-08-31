@@ -1,7 +1,8 @@
 [
   {
-    "target": "blast",
+    "target": "paddy_blast",
     "crop": "paddy",
+    "tier": "diagnosable",
     "driver": "weather",
     "weather_rule": {
       "humidity_min": 90,
@@ -9,18 +10,14 @@
       "temp_max": 30,
       "consecutive_days": 6
     },
-    "susceptible_stages": [
-      "nursery",
-      "tillering",
-      "vegetative",
-      "booting"
-    ],
+    "susceptible_stages": ["nursery", "tillering", "vegetative", "booting"],
     "history_bump": true,
-    "note": "Leaf blast favours long leaf-wetness at moderate temperature. docs/PRD.md section 6 uses this rule as the demo trigger."
+    "note": "Leaf blast favours long leaf-wetness at moderate temperature. docs/PRD.md section 6 uses this rule as the demo trigger. Tuned in Phase 3 (mean-in-band, 6 consecutive days) after the naive overlap test fired on 93% of farm-target pairs."
   },
   {
-    "target": "brown_spot",
+    "target": "paddy_brown_spot",
     "crop": "paddy",
+    "tier": "diagnosable",
     "driver": "weather",
     "weather_rule": {
       "humidity_min": 85,
@@ -28,18 +25,14 @@
       "temp_max": 32,
       "consecutive_days": 6
     },
-    "susceptible_stages": [
-      "tillering",
-      "vegetative",
-      "flowering",
-      "maturity"
-    ],
+    "susceptible_stages": ["tillering", "vegetative", "flowering", "maturity"],
     "history_bump": true,
     "note": "Associated with stressed and nutrient-poor crops, so the history bump matters more here than for blast."
   },
   {
-    "target": "bacterial_leaf_blight",
+    "target": "paddy_bacterial_leaf_blight",
     "crop": "paddy",
+    "tier": "diagnosable",
     "driver": "weather",
     "weather_rule": {
       "humidity_min": 88,
@@ -47,33 +40,24 @@
       "temp_max": 34,
       "consecutive_days": 6
     },
-    "susceptible_stages": [
-      "tillering",
-      "vegetative",
-      "booting"
-    ],
+    "susceptible_stages": ["tillering", "vegetative", "booting"],
     "history_bump": true,
     "note": "Spreads on wind-driven rain; a short wet window is enough."
   },
   {
-    "target": "yellow_stem_borer",
+    "target": "paddy_yellow_stem_borer",
     "crop": "paddy",
+    "tier": "inspection",
     "driver": "phenology",
-    "phenology_rule": {
-      "das_min": 25,
-      "das_max": 55
-    },
-    "susceptible_stages": [
-      "tillering",
-      "vegetative",
-      "booting"
-    ],
+    "phenology_rule": { "das_min": 25, "das_max": 55 },
+    "susceptible_stages": ["tillering", "vegetative", "booting"],
     "history_bump": true,
-    "note": "Dead-heart damage tracks crop age rather than the weather window, which is why this entry is phenology-driven."
+    "note": "Dead-heart damage tracks crop age rather than the weather window."
   },
   {
-    "target": "brown_planthopper",
+    "target": "paddy_brown_planthopper",
     "crop": "paddy",
+    "tier": "inspection",
     "driver": "weather+phenology",
     "weather_rule": {
       "humidity_min": 80,
@@ -81,16 +65,239 @@
       "temp_max": 33,
       "consecutive_days": 6
     },
-    "phenology_rule": {
-      "das_min": 40,
-      "das_max": 90
-    },
-    "susceptible_stages": [
-      "tillering",
-      "booting",
-      "flowering"
-    ],
+    "phenology_rule": { "das_min": 40, "das_max": 90 },
+    "susceptible_stages": ["tillering", "booting", "flowering"],
     "history_bump": true,
-    "note": "Declares both drivers. Hopper burn needs a humid canopy AND a crop old enough to have one, so both rules must be satisfied."
+    "note": "Declares both drivers. Hopper burn needs a humid canopy AND a crop old enough to have one."
+  },
+
+  {
+    "target": "cotton_american_bollworm",
+    "crop": "cotton",
+    "tier": "inspection",
+    "driver": "phenology",
+    "phenology_rule": { "das_min": 35, "das_max": 160 },
+    "susceptible_stages": ["squaring", "flowering", "boll_formation"],
+    "history_bump": true,
+    "note": "SOURCED (partial): TNAU (agritech.tnau.ac.in, cotton pest page 1) describes attack from 'early stages of square formation' through 'boll formation and maturation stage' -- larvae target shoots, buds, bracts and tender bolls throughout. No numeric weather band found; the phenology window is real but wide because the pest is polyphagous across most of the fruiting season."
+  },
+  {
+    "target": "cotton_pink_bollworm",
+    "crop": "cotton",
+    "tier": "inspection",
+    "driver": "phenology",
+    "phenology_rule": { "das_min": 70, "das_max": 140 },
+    "susceptible_stages": ["boll_formation"],
+    "history_bump": true,
+    "note": "SOURCED (partial): TNAU (cotton pest page 2) -- 'rosetted flowers', bore holes with excreta, 'attacked buds and immature bolls drop off' -- confirms the target attacks buds and immature bolls, i.e. the boll_formation window. This is the target the V2 brief named as needing boll_formation to exist; it now does (seed/growth_stages.py). No numeric weather band found for pink bollworm specifically."
+  },
+  {
+    "target": "cotton_whitefly",
+    "crop": "cotton",
+    "tier": "inspection",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING. TNAU (cotton pest page, search-derived) gives symptom text (sap-sucking, sooty mould, LCV vector) but no days-after-sowing window or humidity/temperature band. Whitefly is broadly known to favour hot, dry weather, but I found no cited numeric band -- a rule invented to fill this entry would be the same defect as a dosage invented to fill a ladder rung. Real inspection tasks are still authored (seed/inspection_tasks.json); only the risk-alert rule is withheld."
+  },
+  {
+    "target": "cotton_thrips",
+    "crop": "cotton",
+    "tier": "inspection",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING. Same gap as whitefly: TNAU gives identification and damage symptoms, no sourced timing or weather band."
+  },
+  {
+    "target": "cotton_bacterial_blight",
+    "crop": "cotton",
+    "tier": "diagnosable",
+    "driver": "weather",
+    "weather_rule": {
+      "humidity_min": 85,
+      "temp_min": 27,
+      "temp_max": 38,
+      "consecutive_days": 5
+    },
+    "susceptible_stages": ["vegetative", "squaring", "flowering", "boll_formation"],
+    "history_bump": true,
+    "note": "SOURCED: general plant-pathology literature on Xanthomonas citri pv. malvacearum (cross-referenced, Cotton Incorporated / NC State Extension pattern) -- RH above 85%, daytime 86-100F (30-38C), most severe after heavy rain or hail. Encoded as a moderate multi-day band rather than the literal storm trigger, since the risk engine scores daily weather rather than discrete rain events; consecutive_days set lower (5) than the fungal paddy diseases because bacterial spread is rain-splash driven and faster than fungal establishment."
+  },
+  {
+    "target": "cotton_leaf_curl_virus",
+    "crop": "cotton",
+    "tier": "diagnosable",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING. TNAU confirms whitefly transmits leaf curl virus, but I found no sourced numeric weather band or DAS window for the virus itself (as opposed to its vector, which is also UNSOURCED here -- see cotton_whitefly). Inventing a band by inference from an unsourced vector would compound one gap with another."
+  },
+  {
+    "target": "cotton_fusarium_wilt",
+    "crop": "cotton",
+    "tier": "diagnosable",
+    "driver": "phenology",
+    "phenology_rule": { "das_min": 55, "das_max": 90 },
+    "susceptible_stages": ["flowering"],
+    "history_bump": true,
+    "note": "SOURCED (partial, phenology only): TNAU (agritech.tnau.ac.in/crop_protection/cotton_diseases/cotton_d1.html) -- symptoms 'typically first appear on lower leaves around the time of first flower', soil temperature 20-30C, favoured by 'hot and dry periods followed by rains', worse in heavy black soils (the dominant cotton soil in the Vidarbha/Marathwada belt). The dry-then-rain transition does not fit this engine's consecutive-favourable-days weather schema -- encoding it as a sustained humidity band would misrepresent the actual trigger (a rewetting stress event, not sustained wet weather), so only the flowering-stage phenology window is encoded and the weather half is left out rather than approximated."
+  },
+
+  {
+    "target": "soybean_stem_fly",
+    "crop": "soybean",
+    "tier": "inspection",
+    "driver": "phenology",
+    "phenology_rule": { "das_min": 5, "das_max": 30 },
+    "susceptible_stages": ["emergence", "vegetative"],
+    "history_bump": true,
+    "note": "SOURCED: field study (ResearchGate, 'Incidence of soybean stem fly during Rabi-summer') -- seedling mortality peaked 10-20 DAS, stem-tunnelling began by 30 DAS in Indian trial data. No numeric weather band found; the risk is age-driven, not weather-driven, which is consistent with the pest attacking the stem base of young plants."
+  },
+  {
+    "target": "soybean_girdle_beetle",
+    "crop": "soybean",
+    "tier": "inspection",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING. Symptom text is sourced (girdling cuts on stem, wilting, plant severed 15-25 cm above ground), but no days-after-sowing window or weather band was found."
+  },
+  {
+    "target": "soybean_defoliating_caterpillars",
+    "crop": "soybean",
+    "tier": "inspection",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING. Covers green semilooper, tobacco caterpillar and chickpea caterpillar as a group, per the same grouping used in Indian Kharif soybean advisories. Sourced as a general Kharif-season, vegetative-through-pod-stage pest complex; no numeric band or precise DAS window found for the group."
+  },
+  {
+    "target": "soybean_yellow_mosaic_virus",
+    "crop": "soybean",
+    "tier": "diagnosable",
+    "driver": "weather+phenology",
+    "weather_rule": {
+      "humidity_min": 75,
+      "temp_min": 20,
+      "temp_max": 30,
+      "consecutive_days": 5
+    },
+    "phenology_rule": { "das_min": 10, "das_max": 60 },
+    "susceptible_stages": ["emergence", "vegetative"],
+    "history_bump": true,
+    "note": "SOURCED: field-correlation study (Indian Journal of Agricultural Research, 'Relationship between Whiteflies, Yellow Mosaic Severity, Weather and Crop Age in Soybean') -- disease progression correlates positively with evening relative humidity, negatively with maximum temperature and sunshine hours; spreads rapidly within the first two months of planting (approx. DAS 60). temp_max is set conservatively (30C) reflecting the negative correlation with high temperature, which is the opposite shape from the fungal paddy/cotton rules and is intentional."
+  },
+  {
+    "target": "soybean_anthracnose",
+    "crop": "soybean",
+    "tier": "diagnosable",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING. Colletotrichum truncatum symptom text is sourced (stem/pod/petiole lesions, premature defoliation), no numeric weather band found specific to Indian conditions."
+  },
+  {
+    "target": "soybean_alternaria_leaf_spot",
+    "crop": "soybean",
+    "tier": "diagnosable",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING. Symptom text sourced (leaf/pod/stem spots), no numeric band found."
+  },
+  {
+    "target": "soybean_bacterial_blight",
+    "crop": "soybean",
+    "tier": "diagnosable",
+    "driver": "weather",
+    "weather_rule": {
+      "humidity_min": 80,
+      "temp_min": 21,
+      "temp_max": 27,
+      "consecutive_days": 5
+    },
+    "susceptible_stages": ["vegetative", "flowering", "pod_formation"],
+    "history_bump": true,
+    "note": "SOURCED: cross-referenced US extension sources (Cornell CALS, UNL CropWatch, NC State) on Pseudomonas syringae pv. glycinea -- cool, wet weather (70-80F / 21-27C) favours development, disease stops in hot-dry conditions, rain-splash spread. Plant-pathogen temperature/humidity response is not geography-specific, so this is treated as usable for Indian Kharif conditions despite the sources being US-focused. temp_max set to 27C reflecting the documented 'stops in hot and dry conditions' ceiling -- this is a NARROWER band than the fungal rules, by design."
+  },
+
+  {
+    "target": "jowar_shoot_fly",
+    "crop": "jowar",
+    "tier": "inspection",
+    "driver": "phenology",
+    "phenology_rule": { "das_min": 7, "das_max": 30 },
+    "susceptible_stages": ["seedling"],
+    "history_bump": true,
+    "note": "SOURCED: entomology literature (eagri.org / PMC, Atherigona soccata) -- 'attacks sorghum at 7-30 days after seedling emergence', deadheart symptom from maggot feeding in the central whorl. A precise, real, cited DAS window -- the strongest phenology source found in this pass."
+  },
+  {
+    "target": "jowar_stem_borer",
+    "crop": "jowar",
+    "tier": "inspection",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING. Chilo partellus symptom text is sourced (leaf scraping by young larvae, deadhearts, bore holes), and general entomology places it in the seedling-to-late-vegetative window, but no source gave a specific days-after-sowing range precise enough to encode without guessing at the boundary -- unlike shoot fly, where 7-30 DAS was explicit."
+  },
+  {
+    "target": "jowar_shoot_bug",
+    "crop": "jowar",
+    "tier": "inspection",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING. Peregrinus maidis symptom text is sourced (sap-sucking, sooty mould, reddened midribs from egg-laying, stunting), including its role as a vector for sorghum stripe virus. No days-after-sowing window or weather band found."
+  },
+  {
+    "target": "jowar_anthracnose",
+    "crop": "jowar",
+    "tier": "diagnosable",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING. Colletotrichum sublineola symptom text is sourced (red leaf spots, black acervuli), no numeric weather band found -- the sources found covered resistance breeding, not epidemiology."
+  },
+  {
+    "target": "jowar_grain_mold",
+    "crop": "jowar",
+    "tier": "diagnosable",
+    "driver": "weather+phenology",
+    "weather_rule": {
+      "humidity_min": 90,
+      "temp_min": 25,
+      "temp_max": 28,
+      "consecutive_days": 5
+    },
+    "phenology_rule": { "das_min": 60, "das_max": 100 },
+    "susceptible_stages": ["flowering", "grain_filling"],
+    "history_bump": true,
+    "note": "SOURCED, strongest band in this file: ICAR-IIMR (millets.res.in/pub/2020/Sorghum_grain_mold_2020.pdf) and ICRISAT (oar.icrisat.org) -- RH 95-98% and temperature 25-28C during the flowering-to-maturity window drive mold sporulation; AICRP-Sorghum hotspot testing locations for this disease include sites in Maharashtra. humidity_min set to 90 (slightly below the cited 95-98 peak) since this engine's daily-mean humidity reading will rarely hit the sporulation-chamber figure sustained for the full window; the phenology gate (flowering/grain_filling) is what actually narrows this rule."
+  },
+  {
+    "target": "jowar_smut",
+    "crop": "jowar",
+    "tier": "diagnosable",
+    "driver": "UNSOURCED",
+    "susceptible_stages": [],
+    "history_bump": false,
+    "note": "EXCLUDED FROM SCORING, and not merely for lack of a source. Smut (grain replaced by sori) is a seed-borne systemic infection: the fungus infects at germination via contaminated seed and is only VISIBLE at panicle emergence. A current-weather risk alert cannot meaningfully warn about an infection that was already determined at sowing -- this is a wrong-shaped rule, not an unsourced one. Inspection tasks are still authored so a farmer knows what to look for at grain-fill/maturity."
+  },
+  {
+    "target": "jowar_downy_mildew",
+    "crop": "jowar",
+    "tier": "diagnosable",
+    "driver": "weather+phenology",
+    "weather_rule": {
+      "humidity_min": 95,
+      "temp_min": 21,
+      "temp_max": 23,
+      "consecutive_days": 4
+    },
+    "phenology_rule": { "das_min": 0, "das_max": 20 },
+    "susceptible_stages": ["seedling"],
+    "history_bump": true,
+    "note": "SOURCED: Peronosclerospora sorghi literature (eagri.org / oar.icrisat.org) -- RH near 100%, temperature 21-23C, light drizzling and cool weather at the seedling / 3-4-leaf stage produce systemic infection with chlorotic downy growth. humidity_min set to 95 rather than the cited ~100 for the same daily-mean-reading reason as grain mold; consecutive_days lower (4) since the seedling-stage infection window is itself short."
   }
 ]

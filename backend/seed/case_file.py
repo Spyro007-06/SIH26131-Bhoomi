@@ -70,9 +70,9 @@ FARM_A_PHONE = "+919820000001"
 # numbers are copied from the PRD, not produced by a classifier.
 TOPK = {
     "predictions": [
-        {"label": "blast", "confidence": 0.58},
-        {"label": "brown_spot", "confidence": 0.49},
-        {"label": "bacterial_leaf_blight", "confidence": 0.11},
+        {"label": "paddy_blast", "confidence": 0.58},
+        {"label": "paddy_brown_spot", "confidence": 0.49},
+        {"label": "paddy_bacterial_leaf_blight", "confidence": 0.11},
     ],
     "out_of_scope": False,
     "model_version": "fixture-0",
@@ -155,7 +155,7 @@ async def seed_case_file() -> None:
         problem = Problem(
             farm_id=farm.id,
             problem_type=ProblemType.DISEASE,
-            label=TargetLabel.BLAST,
+            label=TargetLabel.PADDY_BLAST,
             severity=ProblemSeverity.EARLY,
             status=ProblemStatus.OPEN,
             opened_at=opened,
@@ -216,7 +216,7 @@ async def seed_case_file() -> None:
             Alert(
                 farm_id=farm.id,
                 trigger_type=AlertTrigger.WEATHER,
-                target=TargetLabel.BLAST,
+                target=TargetLabel.PADDY_BLAST,
                 risk_level="high",
                 reason=(
                     "Humidity above 90% for 4 consecutive nights at tillering stage."

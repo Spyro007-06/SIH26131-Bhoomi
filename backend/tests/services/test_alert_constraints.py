@@ -15,7 +15,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.contracts.enums import AlertTrigger, Crop, GrowthStage, Role, TargetLabel
+from app.contracts.enums import AlertTrigger, Crop, Role, TargetLabel
 from app.core.models import Alert, Farm, User
 
 TASKS = [
@@ -31,7 +31,7 @@ async def _farm(session) -> Farm:
     farm = Farm(
         farmer_id=farmer.id,
         crop=Crop.PADDY,
-        growth_stage=GrowthStage.TILLERING,
+        growth_stage="tillering",
         region="Nashik",
         location="SRID=4326;POINT(73.7898 19.9975)",
     )
@@ -44,7 +44,7 @@ def _alert(farm: Farm, **overrides) -> Alert:
     return Alert(
         farm_id=farm.id,
         trigger_type=overrides.pop("trigger_type", AlertTrigger.WEATHER),
-        target=overrides.pop("target", TargetLabel.BLAST),
+        target=overrides.pop("target", TargetLabel.PADDY_BLAST),
         risk_level=overrides.pop("risk_level", "high"),
         reason=overrides.pop(
             "reason", "Humidity above 90% for 4 consecutive nights at tillering stage."
@@ -97,9 +97,9 @@ async def test_a_different_target_on_the_same_day_is_accepted(db_session) -> Non
     """The constraint is per target, not per farm. Blast and stem borer can both
     be live on one field on one day."""
     farm = await _farm(db_session)
-    db_session.add(_alert(farm, target=TargetLabel.BLAST))
+    db_session.add(_alert(farm, target=TargetLabel.PADDY_BLAST))
     await db_session.flush()
-    db_session.add(_alert(farm, target=TargetLabel.BROWN_SPOT))
+    db_session.add(_alert(farm, target=TargetLabel.PADDY_BROWN_SPOT))
     await db_session.flush()
 
 

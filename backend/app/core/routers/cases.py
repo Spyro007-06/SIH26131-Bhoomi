@@ -1,6 +1,6 @@
 """F12 - expert validation and the case bundle.
 
-OWNER: split, deliberately. See docs/DATA_MODEL_ADDENDUM.md Part D.
+OWNER: split, deliberately. See docs/API_CONTRACT.md §13, ownership note.
 
     POST /cases/{id}/confirm         Shreekumar  (this file)
     GET  /agronomist/case-queue      Shreekumar  (this file)

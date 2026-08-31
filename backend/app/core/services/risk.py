@@ -45,7 +45,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import MAX_ALERTS_PER_FARM_PER_DAY, RISK_ALERT_MIN_LEVEL, RISK_LEVELS
-from app.contracts.enums import AlertTrigger, Crop, GrowthStage, TargetLabel
+from app.contracts.enums import TARGET_TIERS, AlertTrigger, Crop, TargetLabel, TargetTier
 from app.core.models import Alert, Farm, Problem
 from app.core.weather import WeatherCache, WeatherWindow
 
@@ -53,7 +53,19 @@ SEED = pathlib.Path(__file__).resolve().parents[3] / "seed"
 REGISTRY_PATH = SEED / "risk_targets.json"
 TASKS_PATH = SEED / "inspection_tasks.json"
 
-VALID_DRIVERS = {"weather", "phenology", "weather+phenology"}
+VALID_DRIVERS = {"weather", "phenology", "weather+phenology", "UNSOURCED"}
+
+UNSOURCED_DRIVER = "UNSOURCED"
+"""Marks an entry the risk engine will never fire, honestly.
+
+For some targets neither a favourability band nor a phenology window is
+sourced in seed/risk_targets.json's note field. The alternative to this
+marker is guessing a humidity range to fill the row — the same defect as a
+dosage invented to fill an advisory ladder rung. An UNSOURCED entry stays in
+the registry (so its target_tier, susceptible_stages placeholder and note are
+on record for whoever sources it next) but is excluded from scoring by
+construction, not by convention: see the two checks in _validate_entry below
+and the explicit filter in issue_alerts."""
 
 
 class RegistryError(ValueError):
@@ -69,11 +81,17 @@ class RegistryError(ValueError):
 class RiskTarget:
     target: str
     crop: str
+    tier: str
     driver: str
     susceptible_stages: tuple[str, ...]
     history_bump: bool
     weather_rule: dict[str, Any] | None = None
     phenology_rule: dict[str, Any] | None = None
+    note: str = ""
+    """Free-text provenance for this entry's rule, or lack of one. Not
+    validated for content beyond presence -- see tests/services/
+    test_risk_tuning.py for the structural SOURCED/UNSOURCED checks that
+    read it."""
 
     @property
     def uses_weather(self) -> bool:
@@ -88,6 +106,7 @@ def _validate_entry(raw: dict, index: int, errors: list[str]) -> RiskTarget | No
     where = f"entry {index}"
     target = raw.get("target")
     crop = raw.get("crop")
+    tier = raw.get("tier")
     driver = raw.get("driver")
 
     if target not in {t.value for t in TargetLabel}:
@@ -101,14 +120,35 @@ def _validate_entry(raw: dict, index: int, errors: list[str]) -> RiskTarget | No
             f"{where}: crop {crop!r} is not in the frozen crop enum "
             f"({', '.join(c.value for c in Crop)})"
         )
+    unsourced = driver == UNSOURCED_DRIVER
+
+    if tier not in {t.value for t in TargetTier}:
+        errors.append(
+            f"{where}: tier {tier!r} is not one of "
+            f"{sorted(t.value for t in TargetTier)}"
+        )
+    elif target in {t.value for t in TargetLabel}:
+        # The registry must AGREE with app/contracts/enums.py, not restate it.
+        # Two sources for one fact is two chances to be wrong, and the contract
+        # is the one five people read.
+        canonical = TARGET_TIERS[TargetLabel(target)].value
+        if tier != canonical:
+            errors.append(
+                f"{where}: tier {tier!r} disagrees with the contract "
+                f"({canonical!r} in app/contracts/enums.py TARGET_TIERS)"
+            )
+
     if driver not in VALID_DRIVERS:
         errors.append(f"{where}: driver {driver!r} is not one of {sorted(VALID_DRIVERS)}")
 
     stages = raw.get("susceptible_stages") or []
-    unknown = [s for s in stages if s not in {g.value for g in GrowthStage}]
-    if unknown:
-        errors.append(f"{where}: unknown growth stages {unknown}")
-    if not stages:
+    # Stage keys are NOT validated here any more. They live in the `growth_stage`
+    # table keyed (crop, stage_key), so the authoritative check needs a database
+    # session and belongs at load time against real rows —
+    # validate_registry_stages() below, called by the loader script. Validating
+    # against a stale in-process copy of the vocabulary would be worse than not
+    # validating: it would reject a stage someone had just added.
+    if not stages and not unsourced:
         errors.append(f"{where}: susceptible_stages is empty - the entry can never fire")
 
     if driver and "weather" in str(driver) and not raw.get("weather_rule"):
@@ -116,18 +156,71 @@ def _validate_entry(raw: dict, index: int, errors: list[str]) -> RiskTarget | No
     if driver and "phenology" in str(driver) and not raw.get("phenology_rule"):
         errors.append(f"{where}: driver names phenology but phenology_rule is missing")
 
+    if unsourced:
+        # The honesty of UNSOURCED is enforced, not assumed. An entry that
+        # keeps a weather_rule or a real stage list while claiming UNSOURCED
+        # is a half-measure — either source it properly or leave it fully
+        # empty, so a reader scanning the file cannot mistake a stale rule for
+        # a live one.
+        if raw.get("weather_rule") or raw.get("phenology_rule"):
+            errors.append(
+                f"{where}: driver is UNSOURCED but a weather_rule or "
+                "phenology_rule is still present - remove it or source the "
+                "driver properly"
+            )
+        if stages:
+            errors.append(
+                f"{where}: driver is UNSOURCED but susceptible_stages is "
+                "non-empty - an unsourced entry must not partially fire"
+            )
+        if raw.get("history_bump"):
+            errors.append(
+                f"{where}: driver is UNSOURCED but history_bump is true - "
+                "an entry that never fires cannot carry a history bump"
+            )
+
     if errors:
         return None
 
     return RiskTarget(
         target=target,
         crop=crop,
+        tier=tier,
         driver=driver,
         susceptible_stages=tuple(stages),
         history_bump=bool(raw.get("history_bump", False)),
         weather_rule=raw.get("weather_rule"),
         phenology_rule=raw.get("phenology_rule"),
+        note=raw.get("note", ""),
     )
+
+
+async def validate_registry_stages(session, registry: list[RiskTarget]) -> list[str]:
+    """Check every entry's susceptible_stages against the growth_stage table.
+
+    Separate from load_registry because it needs a session and load_registry is
+    called from synchronous code and from tests with no database. Returns the
+    problems rather than raising, so a caller can report all of them at once.
+    """
+    from sqlalchemy import select
+
+    from app.core.models import GrowthStage as GrowthStageRow
+
+    known: dict[str, set[str]] = {}
+    for row in (await session.execute(select(GrowthStageRow))).scalars().all():
+        crop = row.crop.value if hasattr(row.crop, "value") else str(row.crop)
+        known.setdefault(crop, set()).add(row.stage_key)
+
+    problems: list[str] = []
+    for entry in registry:
+        valid = known.get(entry.crop, set())
+        unknown = [s for s in entry.susceptible_stages if s not in valid]
+        if unknown:
+            problems.append(
+                f"{entry.target}: stage(s) {unknown} are not in growth_stage for "
+                f"crop {entry.crop!r} (known: {sorted(valid) or 'none'})"
+            )
+    return problems
 
 
 def load_registry(path: pathlib.Path | None = None) -> list[RiskTarget]:
@@ -231,7 +324,8 @@ class Score:
 
 
 def days_after_sowing(farm: Farm, on: date | None = None) -> int | None:
-    """Derived, never stored. See docs/DATA_MODEL_ADDENDUM.md Part C."""
+    """Derived, never stored. docs/DESIGN.md §5: a stored integer is wrong the
+    next morning and nothing here would refresh it."""
     if farm.sowing_date is None:
         return None
     return ((on or datetime.now(UTC).date()) - farm.sowing_date).days
@@ -256,9 +350,7 @@ def score_farm_target(
     below-threshold count is only meaningful if every non-firing case is
     accounted for.
     """
-    stage = farm.growth_stage.value if hasattr(farm.growth_stage, "value") else str(
-        farm.growth_stage
-    )
+    stage = str(farm.growth_stage)
     if stage not in entry.susceptible_stages:
         return Score(
             entry.target, "low",
@@ -357,6 +449,7 @@ class RunReport:
     issued: int = 0
     skipped_duplicate: int = 0
     below_threshold: int = 0
+    unsourced_excluded: int = 0
     suppressed_by_cap: int = 0
     no_tasks: int = 0
     weather_calls: int = 0
@@ -369,6 +462,7 @@ class RunReport:
             f"  alerts issued       {self.issued}",
             f"  skipped, duplicate  {self.skipped_duplicate}",
             f"  below threshold     {self.below_threshold}",
+            f"  unsourced, excluded {self.unsourced_excluded}",
             f"  suppressed, cap     {self.suppressed_by_cap}",
             f"  skipped, no tasks   {self.no_tasks}",
             f"  weather HTTP calls  {self.weather_calls}",
@@ -400,7 +494,14 @@ async def issue_alerts(session: AsyncSession, today: date | None = None) -> RunR
     async with WeatherCache() as weather:
         for farm in farms:
             crop = farm.crop.value if hasattr(farm.crop, "value") else str(farm.crop)
-            entries = [e for e in registry if e.crop == crop]
+            # UNSOURCED entries are excluded here, explicitly, rather than
+            # relying on their empty susceptible_stages to prevent them
+            # firing by coincidence. The report counts them so an unusually
+            # high number is visible rather than silently absorbed into
+            # "below threshold".
+            all_entries = [e for e in registry if e.crop == crop]
+            entries = [e for e in all_entries if e.driver != UNSOURCED_DRIVER]
+            report.unsourced_excluded += len(all_entries) - len(entries)
 
             window: WeatherWindow | None = None
             if any(e.uses_weather for e in entries):

@@ -1,4 +1,4 @@
-"""ORM models — docs/DESIGN.md §5 plus docs/DATA_MODEL_ADDENDUM.md.
+"""ORM models — docs/DESIGN.md §5 (v3).
 
 OWNER: Shreekumar.
 
@@ -9,13 +9,13 @@ Eighteen tables:
   registered_use, follow_up, alert, case, confirmation, corpus_doc,
   distinguishing_cue.
 
-  Four from the addendum's Part A, required by docs/API_CONTRACT.md and absent
+  Four from docs/DESIGN.md §5, required by docs/API_CONTRACT.md and absent
   from the frozen §5: app_user, otp_request, asset, label_prior.
 
-  One from Part B4: label_reference — the per-label signature and reference
+  One added in v3: label_reference — the per-label signature and reference
   image that docs/API_CONTRACT.md §7 returns for Doubt Doctor candidates.
 
-Three added columns, Part B1-B3, accepted by Shreekumar: alert.reason,
+Three columns added in v3: alert.reason,
 registered_use.pesticide_class, confirmation.treatment.
 
 Two table names deviate from the §5 entity names because the literal names are
@@ -48,6 +48,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     Numeric,
@@ -71,7 +72,6 @@ from app.contracts.enums import (
     FollowupResponse,
     GateOutcome,
     GateReasonCode,
-    GrowthStage,
     ProblemSeverity,
     ProblemStatus,
     ProblemType,
@@ -126,7 +126,7 @@ def _uuid_pk() -> Mapped[uuid.UUID]:
 
 
 class User(Base):
-    """Addendum A1. Forced by docs/API_CONTRACT.md §2 and §0's role claim, and
+    """docs/DESIGN.md §5. Forced by docs/API_CONTRACT.md §2 and §0's role claim, and
     by §5's own Farm.farmer_id, Case.assigned_to and Confirmation.agronomist_id,
     none of which have a table to point at in the frozen model."""
 
@@ -159,7 +159,7 @@ class User(Base):
 
 
 class OtpRequest(Base):
-    """Addendum A2. `/auth/otp/request` returns a request_id that must be
+    """docs/DESIGN.md §5. `/auth/otp/request` returns a request_id that must be
     storable, and an expires_in that forces expires_at.
 
     code_hash rather than code: an OTP table readable in plaintext is a
@@ -184,7 +184,7 @@ class OtpRequest(Base):
 
 
 class Asset(Base):
-    """Addendum A3. docs/API_CONTRACT.md §3 mints these; §5's three
+    """docs/DESIGN.md §5. docs/API_CONTRACT.md §3 mints these; §5's three
     *_asset_id columns all reference a table the frozen model never defines.
 
     object_key is the S3/MinIO key, kept separate from id so the storage layout
@@ -212,7 +212,7 @@ class Asset(Base):
 
 
 class LabelPrior(Base):
-    """Addendum A4. docs/DESIGN.md §11 step 3 describes
+    """docs/DESIGN.md §5. docs/DESIGN.md §11 step 3 describes
     prior[region][crop][stage][label] and never gives it a table. Those four
     dimensions are the composite primary key.
 
@@ -225,9 +225,7 @@ class LabelPrior(Base):
 
     region: Mapped[str] = mapped_column(Text, primary_key=True)
     crop: Mapped[Crop] = mapped_column(pg_enum(Crop, "crop"), primary_key=True)
-    growth_stage: Mapped[GrowthStage] = mapped_column(
-        pg_enum(GrowthStage, "growth_stage"), primary_key=True
-    )
+    growth_stage: Mapped[str] = mapped_column(Text, primary_key=True)
     label: Mapped[TargetLabel] = mapped_column(
         pg_enum(TargetLabel, "target_label"), primary_key=True
     )
@@ -246,11 +244,17 @@ class LabelPrior(Base):
             "confirmed_count >= 0 AND corrected_count >= 0",
             name="ck_label_prior_counts_non_negative",
         ),
+        ForeignKeyConstraint(
+            ["crop", "growth_stage"],
+            ["growth_stage.crop", "growth_stage.stage_key"],
+            name="fk_label_prior_crop_growth_stage",
+            onupdate="CASCADE",
+        ),
     )
 
 
 class LabelReference(Base):
-    """Addendum B4. docs/API_CONTRACT.md §7 returns, per Doubt Doctor candidate,
+    """docs/DESIGN.md §5. docs/API_CONTRACT.md §7 returns, per Doubt Doctor candidate,
     a `signature` and an `image_url`. DistinguishingCue holds the cue that
     separates a pair, not a per-label description, and no other table held these.
 
@@ -276,6 +280,47 @@ class LabelReference(Base):
 # ===========================================================================
 
 
+class GrowthStage(Base):
+    """Per-crop phenological stages. docs/DESIGN.md §5 (v3).
+
+    Was an enum of six paddy stages. Cotton has squaring and boll formation,
+    jowar and soybean have their own, and the F5 phenology branch could not
+    express "pink bollworm at boll formation" because the stage did not exist as
+    a value. Rows, not an enum, so adding a crop is a seed edit rather than a
+    migration.
+
+    typical_das_min/max are what phenology rules read, so a rule says "at boll
+    formation" and the day window comes from here — one place to correct when an
+    agronomist says the window is wrong, rather than every rule that mentions
+    the stage.
+    """
+
+    __tablename__ = "growth_stage"
+
+    crop: Mapped[Crop] = mapped_column(pg_enum(Crop, "crop"), primary_key=True)
+    stage_key: Mapped[str] = mapped_column(Text, primary_key=True)
+    display_name: Mapped[str] = mapped_column(Text, nullable=False)
+    display_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    typical_das_min: Mapped[int] = mapped_column(Integer, nullable=False)
+    typical_das_max: Mapped[int] = mapped_column(Integer, nullable=False)
+    source: Mapped[str] = mapped_column(Text, nullable=False)
+    """Where this stage vocabulary came from.
+
+    Paddy's six carry their v2 provenance. Cotton, soybean and jowar are seeded
+    as UNSOURCED-PENDING-REVIEW because the ICAR reference PDF named in the V1
+    brief is not in the repository — see seed/growth_stages.py. A seed test
+    fails if any UNSOURCED row survives past V2."""
+
+    __table_args__ = (
+        CheckConstraint(
+            "typical_das_min >= 0 AND typical_das_max >= typical_das_min",
+            name="ck_growth_stage_das_window",
+        ),
+        CheckConstraint("display_order >= 0", name="ck_growth_stage_display_order"),
+        UniqueConstraint("crop", "display_order", name="uq_growth_stage_crop_order"),
+    )
+
+
 class Farm(Base):
     """Contract C2. docs/DESIGN.md §4 and §5.
 
@@ -292,12 +337,15 @@ class Farm(Base):
     )
     crop: Mapped[Crop] = mapped_column(pg_enum(Crop, "crop"), nullable=False)
     variety: Mapped[str | None] = mapped_column(Text)
-    growth_stage: Mapped[GrowthStage] = mapped_column(
-        pg_enum(GrowthStage, "growth_stage"), nullable=False
-    )
+    growth_stage: Mapped[str] = mapped_column(Text, nullable=False)
+    """A stage_key from `growth_stage`, valid for this farm's crop.
+
+    Constrained by the composite FK in __table_args__: (crop, growth_stage) must
+    exist as (crop, stage_key). A cotton farm holding `tillering` is not
+    filtered out, it is not storable."""
     region: Mapped[str] = mapped_column(Text, nullable=False, index=True)
     sowing_date: Mapped[date | None] = mapped_column(Date)
-    """Addendum Part C. Nullable: existing seed rows predate the column and a
+    """docs/DESIGN.md §5. Nullable: existing seed rows predate the column and a
     sowing date is not something to invent.
 
     days_after_sowing is deliberately NOT stored. It is derived on read — a
@@ -323,6 +371,14 @@ class Farm(Base):
         # F6's ST_DWithin fan-out is a query rather than a table scan because of
         # this index. docs/DESIGN.md §10.
         Index("idx_farm_location", "location", postgresql_using="gist"),
+        # A farm cannot hold a stage belonging to another crop. Enforced here,
+        # at the database, rather than by a validator someone can bypass.
+        ForeignKeyConstraint(
+            ["crop", "growth_stage"],
+            ["growth_stage.crop", "growth_stage.stage_key"],
+            name="fk_farm_crop_growth_stage",
+            onupdate="CASCADE",
+        ),
     )
 
 

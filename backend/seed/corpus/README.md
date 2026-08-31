@@ -1,6 +1,18 @@
 # seed/corpus/
 
-**Both files in this directory are hard blockers with no owner.** `docs/DESIGN.md`
+**Phase 4 status:** `distinguishing_cues.json` has its first real entry
+(`paddy_blast` / `paddy_brown_spot`) and `documents.json` (new, this phase --
+no loader script exists for either file yet, that's the next owner's job) has
+three sourced chunks for `paddy_blast`. Everything else named below is still
+`[]` / unauthored: the other paddy targets (`paddy_bacterial_leaf_blight`,
+`paddy_yellow_stem_borer`, `paddy_brown_planthopper`) have no cue and no
+corpus content yet, and cotton / soybean / jowar have neither cues nor corpus
+content either, though the v3 four-crop rename (`d437f97`, landed on `main`
+after this phase was authored) means they're now schema-representable --
+authoring for them is future writing work, not a structural blocker the way it
+was when this phase started.
+
+**These files were hard blockers with no owner.** `docs/DESIGN.md`
 §14 flags them and `docs/PRD.md` §10 repeats it:
 
 > Two blocking inputs have no owner in the current split — the corpus cues and
@@ -29,8 +41,8 @@ which is the designed behaviour. It degrades to *no feature*, though.
 | `title` | Rendered in citations, so write it as the reader should see it |
 | `source` | The publication. ICAR PoP, CIB&RC, Maharashtra package of practices |
 | `reviewed_on` | Date the source was last checked. Appears in the citation |
-| `target` | One of the five `target_label` values, `docs/API_CONTRACT.md` §1 |
-| `crop` | `paddy` in v2 |
+| `target` | A `target_label` value -- crop-namespaced as of v3 (`paddy_blast`, not `blast`), `docs/API_CONTRACT.md` §1 |
+| `crop` | One of the four crops as of v3: `paddy`, `cotton`, `soybean`, `jowar` |
 | `content` | The text that gets embedded and quoted |
 | `embedding` | `vector(1024)`, BGE-m3. Generated at load time, not authored |
 
@@ -41,6 +53,16 @@ invisible to the pipeline.
 normalisation step that drops Devanagari produces a zero vector, a degenerate
 similarity score that sails past the relevance threshold, and confident
 fabricated advice. This has bitten this codebase before.
+
+### `documents.json` (Phase 4, new)
+
+Pre-load staging for `CorpusDoc`, same idea as `distinguishing_cues.json`: a
+JSON array of objects using the field names in the table above minus
+`embedding` (generated at load time, not authored). No loader script exists
+yet -- whoever writes `scripts/load_corpus.py` should follow
+`scripts/load_registered_use.py`'s validate-and-refuse shape: a row missing
+`source` or `reviewed_on` is not auditable and does not belong in a table an
+advisory gets composed and cited from.
 
 ## DistinguishingCue
 
@@ -69,9 +91,15 @@ Design rules that constrain how these are written, from `docs/DESIGN.md` §7:
   a gap to paper over with a lower-quality cue.
 
 The highest-value pair to author first is `blast` / `brown_spot`: it is the
-ambiguous pair in the demo scenario, `docs/PRD.md` §6.
+ambiguous pair in the demo scenario, `docs/PRD.md` §6. Done, Phase 4: the
+`paddy_blast`/`paddy_brown_spot` entry's `doc_id` is `null` in the JSON (no row
+exists to point at yet, since there's no loader) but is authored from
+`documents.json`'s "Rice Blast (Magnaporthe oryzae) -- Symptoms and
+Identification" entry -- whoever writes the loader should set `doc_id` to that
+row's id once both files are loaded, in id-assignment order (`documents.json`
+first).
 
 ## Format
 
 `distinguishing_cues.json` is a JSON array of objects using the field names
-above. It currently contains `[]`.
+above.

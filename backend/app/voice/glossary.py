@@ -2,9 +2,10 @@
 
 OWNER: Shruthi. Spec: docs/DESIGN.md §8.
 
-Scoped to the five frozen `TargetLabel` values (contracts/enums.py). Kept
-small and reviewable on purpose — docs/DESIGN.md §8's own example is one
-entry: करपा -> blast.
+Scoped to paddy's five `TargetLabel` values (contracts/enums.py; 26 exist
+total as of v3, crop-namespaced — this glossary only covers paddy's).
+Kept small and reviewable on purpose — docs/DESIGN.md §8's own example is
+one entry: करपा -> blast.
 
 S0 caveat, load-bearing: `StubTranslator` (providers.py) is an identity
 passthrough — it performs no real translation yet. Until S3 wires live
@@ -22,16 +23,16 @@ import re
 from app.contracts.enums import TargetLabel
 
 GLOSSARY: dict[str, TargetLabel] = {
-    "करपा": TargetLabel.BLAST,
-    "blast": TargetLabel.BLAST,
-    "brown spot": TargetLabel.BROWN_SPOT,
-    "brown_spot": TargetLabel.BROWN_SPOT,
-    "bacterial leaf blight": TargetLabel.BACTERIAL_LEAF_BLIGHT,
-    "bacterial_leaf_blight": TargetLabel.BACTERIAL_LEAF_BLIGHT,
-    "yellow stem borer": TargetLabel.YELLOW_STEM_BORER,
-    "yellow_stem_borer": TargetLabel.YELLOW_STEM_BORER,
-    "brown planthopper": TargetLabel.BROWN_PLANTHOPPER,
-    "brown_planthopper": TargetLabel.BROWN_PLANTHOPPER,
+    "करपा": TargetLabel.PADDY_BLAST,
+    "blast": TargetLabel.PADDY_BLAST,
+    "brown spot": TargetLabel.PADDY_BROWN_SPOT,
+    "brown_spot": TargetLabel.PADDY_BROWN_SPOT,
+    "bacterial leaf blight": TargetLabel.PADDY_BACTERIAL_LEAF_BLIGHT,
+    "bacterial_leaf_blight": TargetLabel.PADDY_BACTERIAL_LEAF_BLIGHT,
+    "yellow stem borer": TargetLabel.PADDY_YELLOW_STEM_BORER,
+    "yellow_stem_borer": TargetLabel.PADDY_YELLOW_STEM_BORER,
+    "brown planthopper": TargetLabel.PADDY_BROWN_PLANTHOPPER,
+    "brown_planthopper": TargetLabel.PADDY_BROWN_PLANTHOPPER,
 }
 
 # Longest term first so a phrase (e.g. "brown spot") is matched whole rather

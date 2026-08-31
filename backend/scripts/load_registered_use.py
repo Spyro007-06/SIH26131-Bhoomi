@@ -200,7 +200,7 @@ async def load(dry_run: bool = False) -> int:
     print(f"  rows refused  {len(refusals)}")
 
     if refusals:
-        print("\n  refused rows — corrected in the CSV, never here:")
+        print("\n  refused rows - correct these in the CSV, never here:")
         for refusal in refusals:
             print(f"    line {refusal.line}  {refusal.ingredient}")
             for reason in refusal.reasons:
