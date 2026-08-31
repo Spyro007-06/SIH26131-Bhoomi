@@ -110,8 +110,8 @@ class ProblemDetailScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: AppSpacing.s8),
                         Text(
-                          '${strings.openedOnLabel}: ${problem.openedAt.substring(0, 10)}'
-                          '${problem.resolvedAt != null ? ' • ${strings.resolvedOnLabel}: ${problem.resolvedAt!.substring(0, 10)}' : ''}',
+                          '${strings.openedOnLabel}: ${problem.openedAt.length >= 10 ? problem.openedAt.substring(0, 10) : (problem.openedAt.isNotEmpty ? problem.openedAt : "N/A")}'
+                          '${problem.resolvedAt != null && problem.resolvedAt!.isNotEmpty ? ' • ${strings.resolvedOnLabel}: ${problem.resolvedAt!.length >= 10 ? problem.resolvedAt!.substring(0, 10) : problem.resolvedAt}' : ''}',
                           style: AppTypography.caption.copyWith(
                             color: AppColors.fieldSlate,
                           ),
