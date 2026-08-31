@@ -13,17 +13,16 @@ strings, which are fixed server copy read verbatim, never slang-rephrased.
 
 from __future__ import annotations
 
-from typing import Any
+from app.voice.providers import SynthesisResult, get_text_to_speech
 
 
-def synthesize(text: str, lang: str) -> Any:
+def synthesize(text: str, lang: str) -> SynthesisResult:
     """Render text to an audio object and return a presigned URL.
 
     Return shape is docs/API_CONTRACT.md §4: audio_url, expires_in.
 
     Raises:
-        NotImplementedError: owner Shruthi, docs/DESIGN.md §3.
+        NotImplementedError: when the live Sarvam provider is selected; that
+            call is implemented in S3.
     """
-    raise NotImplementedError(
-        "TTS not implemented — owner: Shruthi, docs/API_CONTRACT.md §4."
-    )
+    return get_text_to_speech().synthesize(text, lang)
