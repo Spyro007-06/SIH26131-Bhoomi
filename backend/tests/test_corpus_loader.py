@@ -126,8 +126,9 @@ def test_a_bare_name_is_refused_even_though_a_prefixed_version_exists() -> None:
     a bare name to whichever enum member looks close would eventually attach
     the wrong crop's document to the wrong crop's target."""
     row = {
-        "doc_id": "d1", "file": "x.md", "crop": "cotton", "target": "american_bollworm",
-        "title": "t", "source": "TNAU Agritech Portal (https://example.test)",
+        "doc_id": "d1", "source_file": "x.md", "crop": "cotton",
+        "target": "american_bollworm", "title": "t",
+        "source": "TNAU Agritech Portal (https://example.test)",
         "source_dated": "2024-01-01",
     }
     chunks, refusal, mismatch = _validate_row(row, 1)
@@ -140,8 +141,9 @@ def test_a_bare_name_is_refused_even_though_a_prefixed_version_exists() -> None:
 
 def test_an_unrecognisable_target_gets_no_confident_suggestion_rather_than_a_guess() -> None:
     row = {
-        "doc_id": "d1", "file": "x.md", "crop": "cotton", "target": "leaf_gremlins",
-        "title": "t", "source": "TNAU Agritech Portal (https://example.test)",
+        "doc_id": "d1", "source_file": "x.md", "crop": "cotton",
+        "target": "leaf_gremlins", "title": "t",
+        "source": "TNAU Agritech Portal (https://example.test)",
         "source_dated": "2024-01-01",
     }
     _, refusal, mismatch = _validate_row(row, 1)

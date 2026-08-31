@@ -28,37 +28,45 @@ this shape (consistent with every other loader in this family: the input is
 what gets fixed) or this loader is revised in a reviewed change, not patched
 silently to swallow a different shape.
 
-`seed/corpus/manifest.json`, a JSON array. One row per (document, target)
-pair -- a two-target document appears TWICE, once per target, naming the same
-`doc_id` and `file` both times (docs/DESIGN.md's "ingest that file's chunks
-once per target, per the manifest's own note"):
+`seed/corpus/manifest.json`, a JSON object with a `rows` array (plus `_note`
+and `DOSAGE_VERIFICATION_NEEDED` strings for the human author -- read by
+nobody in this codebase). One row per (document, target) pair -- a two-target
+document appears TWICE, once per target, naming the same `doc_id` and
+`source_file` both times (docs/DESIGN.md's "ingest that file's chunks once
+per target, per the manifest's own note"):
 
-    [
-      {
-        "doc_id": "cotton_bollworm_complex",
-        "file": "cotton_bollworm_complex.md",
-        "crop": "cotton",
-        "target": "cotton_american_bollworm",
-        "title": "Cotton Bollworm Complex",
-        "source": "TNAU Agritech Portal, Crop Protection > Cotton Pests, ...",
-        "source_dated": "2024-03-15"
-      },
-      {
-        "doc_id": "cotton_bollworm_complex",
-        "file": "cotton_bollworm_complex.md",
-        "crop": "cotton",
-        "target": "cotton_pink_bollworm",
-        "title": "Cotton Bollworm Complex",
-        "source": "TNAU Agritech Portal, Crop Protection > Cotton Pests, ...",
-        "source_dated": "2024-03-15"
-      }
-    ]
+    {
+      "rows": [
+        {
+          "doc_id": "cotton_bollworm_complex_v1",
+          "source_file": "cotton/cotton_bollworm_complex_v1.md",
+          "crop": "cotton",
+          "target": "cotton_american_bollworm",
+          "title": "Cotton Bollworm Complex",
+          "source": "TNAU Agritech Portal, Crop Protection > Cotton Pests, ...",
+          "reviewed_on": "2026-08-31",
+          "source_dated": "2024-03-15"
+        },
+        {
+          "doc_id": "cotton_bollworm_complex_v1",
+          "source_file": "cotton/cotton_bollworm_complex_v1.md",
+          "crop": "cotton",
+          "target": "cotton_pink_bollworm",
+          "title": "Cotton Bollworm Complex",
+          "source": "TNAU Agritech Portal, Crop Protection > Cotton Pests, ...",
+          "reviewed_on": "2026-08-31",
+          "source_dated": "2024-03-15"
+        }
+      ]
+    }
 
-`file` is relative to seed/corpus/. `source_dated` is REQUIRED even though
-the delivered manifest is known not to carry it yet -- see Part 2 of the
-brief: "the manifest has none, so add the column requirement and report it."
-Every row is expected to fail on this until the manifest is corrected. That
-is the validation working, not a bug in this script.
+`source_file` is relative to seed/corpus/. `source_dated` is REQUIRED --
+the field the author must positively fill in to assert they know how current
+the underlying source material is -- and is validated only, never stored: the
+schema's own `reviewed_on` (when the row was last checked) is what lands in
+CorpusDoc.reviewed_on. Every row in the first real delivery has
+`source_dated: null` and is expected to fail on this until corrected. That is
+the validation working, not a bug in this script.
 
 -----------------------------------------------------------------------------
 CHUNKING
@@ -93,8 +101,10 @@ source      must name a specific, findable document -- refused if it exact-
             signal at all (no URL, no year, no known institution acronym, no
             quoted title). See GENERIC_SOURCE_PHRASES and
             _looks_like_a_real_citation().
-source_dated  must be present. Required field, not yet in the delivered
-            manifest -- see the module docstring above.
+source_dated  must be present. Validated only, never stored -- it is the
+            author's positive attestation that they know how current the
+            underlying source material is. reviewed_on (also manifest-
+            supplied) is the value that lands in CorpusDoc.reviewed_on.
 content     each markdown section must have non-empty body text once its
             heading line is removed; an empty section is skipped (not a
             document-level refusal) and reported.
@@ -136,7 +146,7 @@ MAPPING_REPORT_PATH = CORPUS_DIR / "NAME_MAPPING_NEEDED.md"
 
 REQUIRED_MANIFEST_FIELDS = (
     "doc_id",
-    "file",
+    "source_file",
     "crop",
     "target",
     "title",
@@ -334,7 +344,7 @@ def _validate_row(
             + (f" -- likely {likely!r}" if likely else " -- no confident match found")
         )
         mismatch = NameMismatch(
-            doc_id=doc_id, file=str(row.get("file", "")), field_name="target",
+            doc_id=doc_id, file=str(row.get("source_file", "")), field_name="target",
             value=target_raw, likely=likely,
         )
 
@@ -351,21 +361,21 @@ def _validate_row(
             mismatch,
         )
 
-    file_path = CORPUS_DIR / row["file"]
+    file_path = CORPUS_DIR / row["source_file"]
     if not file_path.exists():
         return [], Refusal(
             doc_id=doc_id, target_raw=target_raw,
-            reasons=[f"file {row['file']!r} referenced by the manifest does not exist"],
+            reasons=[f"source_file {row['source_file']!r} does not exist"],
         ), None
 
     sections = _chunk_markdown(file_path.read_text(encoding="utf-8"))
     if not sections:
         return [], Refusal(
             doc_id=doc_id, target_raw=target_raw,
-            reasons=[f"file {row['file']!r} produced zero non-empty sections to chunk"],
+            reasons=[f"source_file {row['source_file']!r} produced zero non-empty sections"],
         ), None
 
-    reviewed = _parse_date(row["source_dated"])
+    reviewed = _parse_date(row.get("reviewed_on", "") or "")
     chunks = [
         ChunkRow(
             doc_id=doc_id,
@@ -414,9 +424,13 @@ async def load(dry_run: bool = False) -> int:
         )
         return 0
 
-    raw_rows = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    if isinstance(manifest, dict):
+        raw_rows = manifest.get("rows")
+    else:
+        raw_rows = manifest
     if not isinstance(raw_rows, list):
-        print("ERROR: manifest.json must be a JSON array of rows.")
+        print("ERROR: manifest.json must be a JSON object with a 'rows' array.")
         return 1
 
     all_chunks: list[ChunkRow] = []
