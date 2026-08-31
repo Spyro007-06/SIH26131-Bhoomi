@@ -2,9 +2,10 @@
   "_comment": [
     "Inspection tasks, keyed by target_label. Loaded by core/services/risk.py.",
     "",
-    "docs/DESIGN.md section 10 says these come from the corpus. The corpus has zero",
-    "documents and no owner (docs/DESIGN.md section 14), so they are authored here",
-    "and the loader reads corpus-first-then-seed once the corpus exists.",
+    "docs/DESIGN.md section 10 says these come from the corpus. The corpus (as of",
+    "Phase V2) covers only paddy_blast (three documents, TNAU + NIPHM sourced) -",
+    "so tasks for every other target are still authored here, and the loader reads",
+    "corpus-first-then-seed once a target's corpus coverage exists.",
     "",
     "Every task names WHERE ON THE PLANT to look and WHEN. That specificity is the",
     "entire replacement for pest-trap hardware - docs/PRD.md section 11 argues traps",
@@ -15,7 +16,16 @@
     "textbook exactly which ten plants to walk to and what to photograph.",
     "",
     "Minimum two per target. A target with none raises at load time rather than",
-    "producing an alert the CHECK constraint rejects later."
+    "producing an alert the CHECK constraint rejects later.",
+    "",
+    "SOURCING, V2: the 21 cotton/soybean/jowar entries are grounded in TNAU",
+    "Agritech symptom pages and cited entomology/plant-pathology literature -",
+    "see seed/risk_targets.json's per-target 'note' field for the exact source",
+    "of the underlying symptom description each task is built from. For the",
+    "inspection-tier targets (stem borers, shoot fly/bug, whitefly, thrips,",
+    "girdle beetle, bollworms, defoliators) this text is the ONLY thing the",
+    "system will ever give a farmer about them - there is no photo path, no",
+    "gate decision, no automatic advisory."
   ],
 
   "paddy_blast": [
@@ -46,5 +56,129 @@
     "Part the canopy on ten plants and look at the stem base just above the water line, in the afternoon when hoppers are active.",
     "Tap the base of the plant sharply over the water and photograph anything that falls onto the surface - hoppers float.",
     "Walk the middle of the field, not only the edges. Hopper burn starts as a circular patch of drying plants in the interior and is easy to miss from the bund."
+  ],
+
+  "cotton_american_bollworm": [
+    "From squaring onward, check ten squares and bolls across the field each week for a round, regular borehole with grubby dark pellets stuck at the entrance.",
+    "Open any bored boll you find. A larva hanging with its head and part of its body still inside the hole, rather than free inside the boll, confirms this pest rather than another borer.",
+    "Photograph any square or bract that has dried and flared open before the boll inside it has formed properly."
+  ],
+
+  "cotton_pink_bollworm": [
+    "From boll formation onward, walk ten plants and look for a flower that has not opened normally but stays twisted shut - a 'rosette flower'. Photograph it before it drops.",
+    "Cut open five mature-looking bolls with a knife each week and check for double seeds joined by silk, or seeds stuck together inside one lock - both mean larvae have been feeding inside.",
+    "Check the surface of ten bolls for a small hole with fine, sawdust-like frass stuck to the outside. This is the entry point; the larva itself is inside and will not be visible from outside."
+  ],
+
+  "cotton_whitefly": [
+    "Turn over five leaves in the lower and middle canopy on ten plants and count tiny yellowish-white insects on the underside - both the still nymphs and the adults that fly up when disturbed.",
+    "Check the same leaves for a black, sooty coating on the top surface. This sooty mould grows on whitefly honeydew and is often easier to spot than the insect itself.",
+    "Photograph any bud or young boll that has shed on its own, especially where the leaves nearby are heavily sooty - this pest also spreads leaf curl virus, so early counts matter."
+  ],
+
+  "cotton_thrips": [
+    "Unfold five young, still-curling leaves on ten plants and look closely at the leaf surface for tiny slender yellowish insects - thrips are smaller than whitefly and easy to miss without a close look.",
+    "Photograph any leaf whose edges have started to curl upward and look silvery or crinkled rather than flat and green."
+  ],
+
+  "cotton_bacterial_blight": [
+    "After any spell of heavy rain, check the undersides of ten leaves for small, water-soaked, angular spots that look darker when held up to the light.",
+    "Photograph any leaf where the dark spots follow the leaf veins in straight lines rather than spreading in a round patch - that vein-following pattern is the sign to look for.",
+    "Check the main stem and branch joints (not just leaves) for black, sunken streaks - this disease also attacks the stem, not only the leaves."
+  ],
+
+  "cotton_leaf_curl_virus": [
+    "Walk ten plants and check whether the youngest leaves at the top are curling upward at the edges, like a cup, rather than lying flat.",
+    "Turn over a curling leaf and look for small leaf-like outgrowths (enations) on the underside along the veins - photograph any you find.",
+    "Note whether curling is worse near the field edge closest to a whitefly-infested neighbouring field; that pattern is common since this disease spreads by whitefly, not by direct contact between plants."
+  ],
+
+  "cotton_fusarium_wilt": [
+    "Around first flower, walk the field and flag any plant that looks stunted and slightly darker green than its neighbours before it starts yellowing - that is the earliest sign.",
+    "On a flagged plant, cut the lower stem at an angle and check inside for a brown-to-black ring just under the bark. A healthy stem is white or pale inside.",
+    "Note whether wilted plants are concentrated in the same low or heavy-soil patch of the field, especially right after a dry spell broken by rain - this disease is worse in heavy black soil after exactly that weather pattern."
+  ],
+
+  "soybean_stem_fly": [
+    "In the first month after sowing, check ten young seedlings for tiny puncture marks at the base of the leaf stalk where it meets the main stem.",
+    "Split open the stem of any seedling that looks stunted or is wilting for no clear reason. A thin, zig-zag tunnel with a small maggot or pupa inside confirms this pest.",
+    "Photograph any patch of seedlings that have died or are dying together in one spot rather than scattered across the field."
+  ],
+
+  "soybean_girdle_beetle": [
+    "Walk ten plants and look partway up each main stem and branch for two clean circular cuts close together, as if someone had nicked the stem with a blade.",
+    "Photograph any branch that is drooping or drying above a point where the stem looks girdled, even if the plant below still looks healthy.",
+    "In a badly affected patch, check whether plants have snapped off cleanly about a hand's width above the ground - that is this pest in its later stage."
+  ],
+
+  "soybean_defoliating_caterpillars": [
+    "Shake the canopy of five plants gently over your open palm or a white cloth and count any green or brown caterpillars that fall.",
+    "Photograph any leaf that is skeletonised - only the veins left, with the green tissue eaten away - rather than simply chewed at the edge.",
+    "Check the underside of young leaves for small caterpillars curled into the leaf, since some of these feed while folded inside a rolled or webbed leaf rather than sitting in the open."
+  ],
+
+  "soybean_yellow_mosaic_virus": [
+    "In the first two months after sowing, check the newest leaves on ten plants for a patchy pattern of dark green and bright yellow, rather than one even green colour.",
+    "Photograph any plant that looks noticeably shorter and bushier than its neighbours alongside the mottled leaf colour.",
+    "Check whether affected plants are flowering less than healthy plants nearby, and note it - this virus reduces flowering and pod-set on the plants it infects."
+  ],
+
+  "soybean_anthracnose": [
+    "Check the stems, pods and leaf stalks (not just the leaf blade) of ten plants for irregular brown-to-black patches.",
+    "Photograph any patch with tiny black dots scattered across its surface, visible up close - those dots are the fungus's fruiting bodies.",
+    "Open a handful of pods from affected plants and check whether the seeds inside look shrivelled, undersized, or fewer than a healthy pod of the same age."
+  ],
+
+  "soybean_alternaria_leaf_spot": [
+    "Check ten plants for dark brown-to-black spots on the leaves, and also check the pods and stems, not only the leaves.",
+    "Photograph any spot that has visible concentric rings inside it, like a target - that ringed pattern is the sign to look for."
+  ],
+
+  "soybean_bacterial_blight": [
+    "After a spell of cool, rainy weather, check the top leaves of ten plants first - this disease shows there before it shows lower down.",
+    "Look for small, angular, water-soaked spots with a yellow ring around each one. Photograph a leaf against the light so the yellow halo is visible.",
+    "Check whether spots have merged into larger dead, ragged patches rather than staying as separate small dots - that merging happens fastest in cool, wet weather."
+  ],
+
+  "jowar_shoot_fly": [
+    "In the first month after seedlings emerge, check the central whorl (the newest, still-rolled leaf) on ten plants for a leaf that has turned yellow and can be pulled out easily.",
+    "Pull any dead central shoot fully out and smell it - a foul, rotting smell together with an easy pull confirms a dead heart from this pest rather than drought stress.",
+    "Turn over young leaves and look for a single white, cigar-shaped egg lying flat and parallel to the leaf's centre vein - photograph any you find."
+  ],
+
+  "jowar_stem_borer": [
+    "In the first six weeks, check the youngest leaves on ten plants for thin, papery, window-pane patches where the caterpillar has scraped the surface without eating all the way through.",
+    "Pull on any dry central shoot the same way as for shoot fly, and check the stem below it for small round bore holes with frass around the edge - that distinguishes this pest from shoot fly, which leaves no bore hole.",
+    "Photograph any stem with a row of small holes running up it rather than a single deadheart."
+  ],
+
+  "jowar_shoot_bug": [
+    "Part the leaves near the base of ten plants and look for small greenish-brown insects clustered at the base of the youngest leaves.",
+    "Check whether the midribs of young leaves have turned reddish and look for leaves drying from the tip downward on an otherwise green plant.",
+    "Photograph any leaf with a black, sooty coating on top - this insect secretes honeydew the same way whitefly does, and the sooty mould is often easier to spot than the insect."
+  ],
+
+  "jowar_anthracnose": [
+    "Check both sides of the leaves on ten plants for small red-coloured spots, especially after wet weather.",
+    "Photograph any lesion with tiny black dots scattered across the middle of the spot - up close these look like grains of pepper on the red patch.",
+    "Check the stem near the base for a similar reddish rot, not only the leaves - this fungus also causes a stalk rot separate from the leaf spots."
+  ],
+
+  "jowar_grain_mold": [
+    "From flowering onward, check the developing grain heads on ten plants after any spell of humid or rainy weather.",
+    "Photograph any grain head with a fuzzy, discoloured (grey, pink, black or white) growth on the individual grains rather than a clean, dry head.",
+    "Break open a few grains from a discoloured head and check whether the inside looks mouldy or discoloured rather than the plain white or cream of a healthy grain."
+  ],
+
+  "jowar_smut": [
+    "At grain-fill and again near harvest, check the grain heads on ten plants for individual grains that look swollen and covered in a tough, pale skin instead of a normal grain shape.",
+    "Photograph any head where a swollen grain has split open to show a mass of dark brown or black powder inside - do not shake it, since the powder spreads easily.",
+    "Check for whole heads that never opened properly and stayed wrapped in a greyish-white membrane rather than showing loose grain - that is a more severe form of the same disease."
+  ],
+
+  "jowar_downy_mildew": [
+    "In the first three weeks after emergence, especially after cool, drizzly weather, check ten seedlings for leaves with pale green or yellowish stripes running lengthwise along the leaf.",
+    "Photograph any seedling leaf with a fuzzy, whitish growth on its underside, matching a pale stripe on the top surface of the same spot.",
+    "Flag and revisit any seedling that looks pale and stunted next to normal green neighbours - by the time the plant is older this disease is harder to identify from the leaves alone."
   ]
 }

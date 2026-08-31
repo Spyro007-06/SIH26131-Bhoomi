@@ -93,12 +93,38 @@ def test_the_monsoon_window_now_separates_targets() -> None:
 # ===========================================================================
 
 
-def test_every_weather_rule_requires_six_consecutive_days() -> None:
+def test_every_paddy_weather_rule_still_requires_six_consecutive_days() -> None:
+    """Scoped to paddy, not the whole registry.
+
+    This was written as a registry-wide invariant in Phase 3, when paddy was
+    the only crop and 6 was the number the Nashik-monsoon tuning exercise
+    landed on for it. V2 added cotton, soybean and jowar weather rules with
+    their OWN independently sourced consecutive_days values (5 for the
+    bacterial diseases -- rain-splash spread is faster than fungal
+    establishment; 4 for jowar_downy_mildew's short seedling window) --
+    see each entry's `note` field in seed/risk_targets.json for its citation.
+    Holding every future crop's rules to a number tuned for paddy fungal
+    disease would be re-litigating Phase 3's finding by accident rather than
+    on purpose.
+    """
     for entry in load_registry():
-        if entry.weather_rule:
+        if entry.crop == "paddy" and entry.weather_rule:
             assert entry.weather_rule["consecutive_days"] == 6, (
                 f"{entry.target} still requires "
                 f"{entry.weather_rule['consecutive_days']} days"
+            )
+
+
+def test_non_paddy_weather_rules_state_their_own_sourced_days() -> None:
+    """The complement of the test above: every non-paddy weather rule's
+    consecutive_days must be a deliberate, cited choice, not a copy-paste
+    default. Checked structurally -- a rule with no citable reasoning in its
+    note is indistinguishable from an invented one."""
+    for entry in load_registry():
+        if entry.crop != "paddy" and entry.weather_rule:
+            assert entry.note, f"{entry.target} has a weather rule with no note"
+            assert "SOURCED" in entry.note, (
+                f"{entry.target}'s weather rule note does not say SOURCED"
             )
 
 

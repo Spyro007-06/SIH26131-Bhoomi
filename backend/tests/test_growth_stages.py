@@ -5,7 +5,6 @@ OWNER: Shreekumar. docs/DESIGN.md §5 (v3).
 
 from __future__ import annotations
 
-import pytest
 from sqlalchemy import select
 
 from app.contracts.enums import Crop
@@ -32,25 +31,15 @@ def test_das_windows_are_well_formed() -> None:
         assert hi >= lo, f"{crop}.{key} typical_das_max < typical_das_min"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "18 growth_stage rows (cotton, soybean, jowar) are "
-        "UNSOURCED-PENDING-REVIEW pending the ICAR reference named in the V1 "
-        "brief. strict=True: the day someone sources them and this test starts "
-        "passing, the suite goes RED until this xfail marker is removed — that "
-        "forced failure is the mechanical prompt to update seed/growth_stages.py "
-        "and this docstring, not a bug in either."
-    ),
-)
-async def test_unsourced_stages_are_visible_in_the_live_table(db_session) -> None:
-    """Fails (xfail) while cotton/soybean/jowar stages remain unsourced;
-    forces attention (XPASS -> suite failure) the moment they are not.
+async def test_no_growth_stage_row_is_unsourced(db_session) -> None:
+    """The V1 trip-wire, closed in V2.
 
-    Five people are building phenology rules against these stage keys, and
-    nobody should discover the provenance gap by reading a comment.
-    docs/PRD.md §10 and docs/DESIGN.md §14 flag unowned/unsourced inputs the
-    same way — visible in the tree or the test suite, not only in prose.
+    Every row now names a real source in seed/growth_stages.py — see that
+    module's docstring for what "sourced" means here: the named ICAR PDF was
+    not reachable from this environment on either phase, so these are drawn
+    from reachable agronomic literature, cited per crop, not from that single
+    document. If a stricter source supersedes these, correct the row and this
+    test keeps passing on its own; it is not itself the citation.
     """
     rows = (
         await db_session.execute(
@@ -59,11 +48,9 @@ async def test_unsourced_stages_are_visible_in_the_live_table(db_session) -> Non
     ).scalars().all()
 
     unsourced_crops = sorted({r.crop.value for r in rows})
-
     assert not unsourced_crops, (
-        f"{len(rows)} growth_stage row(s) across {unsourced_crops} are still "
-        f"UNSOURCED-PENDING-REVIEW. This is expected until the ICAR reference "
-        f"(cotton_soybean_jowar_pest_disease_symptoms.pdf) is sourced and "
-        f"seed/growth_stages.py is corrected. Not a bug to silence — fix the "
-        f"data, then this test passes on its own."
+        f"{len(rows)} growth_stage row(s) across {unsourced_crops} still read "
+        f"UNSOURCED-PENDING-REVIEW — seed/growth_stages.py was not fully "
+        f"applied, or a new unsourced row was added without updating its "
+        f"source field."
     )
