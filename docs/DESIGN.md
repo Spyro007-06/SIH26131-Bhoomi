@@ -21,7 +21,7 @@ This document covers structure: stack, modules, data model, the three algorithms
 | OCR | Lightweight on-device or server-side OCR (Tesseract or PaddleOCR) | Label text only; no layout understanding needed |
 | Embeddings | BGE-m3 via pgvector | Multilingual — handles Devanagari alongside English |
 | LLM | Hosted API, strict grounding prompt | Composition only, never retrieval and never verdicts |
-| ASR/TTS | Indic ASR/TTS provider, Marathi and Hindi | Regional-language requirement is a PS clause |
+| ASR/TTS | Sarvam — Saaras (STT), Bulbul (TTS), Mayura (translate-before-embed) | Regional-language PS clause; one Indic vendor across the voice path. Embeddings stay BGE-m3 — the translator changed, the embedder did not |
 | Weather | Open-Meteo | Free, no key, returns the fields F5 needs |
 | Scheduling | APScheduler | Follow-up check-ins; one dependency |
 
@@ -268,6 +268,8 @@ query (or resolved diagnosis)
 The validation step is not optional. If the LLM returns a ladder with a chemical rung first, the response is rejected and recomposed, not shipped. Structural guarantees enforced only by prompt wording are not guarantees.
 
 **The Devanagari trap.** Any normalisation step that strips non-ASCII produces a zero vector for a Marathi query, which produces a degenerate similarity score, which sails past the relevance threshold and yields confident fabricated advice. This has bitten this codebase before. `to_embedding_text()` translates to a common language before embedding, and there is a test asserting a Marathi query and its English equivalent retrieve overlapping documents.
+
+The translator is **Sarvam Mayura**, formal mode, pinned — one engine for both voice-origin and typed-origin queries, so the same Marathi sentence yields the same English yields the same vector, and the overlap test stays reproducible. A voice query is transcribed once (Saaras, native script); that single transcript is both read back for confirmation and fed here — it is **not** re-translated by Saaras's translate mode, because two engines means two English renderings and a flaky test. Order inside `to_embedding_text()`: translate → normalise the **English only** → glossary-pin domain terms to the `target_label` vocabulary (करपा → `blast`) → length-guard against a degenerate empty vector. The model pins live in `config.py` as module constants, not settings, so the environment cannot swap them at demo time.
 
 ---
 
