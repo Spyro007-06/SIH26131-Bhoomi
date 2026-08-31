@@ -769,23 +769,53 @@ class CorpusDoc(Base):
     chunk missing either is invisible to the pipeline.
 
     The HNSW index for cosine distance is created by hand in the migration; the
-    vector operator class is not expressible in plain Index() metadata."""
+    vector operator class is not expressible in plain Index() metadata.
+
+    doc_id and authoritative added in migration 0009 for the corpus loader
+    (scripts/load_corpus.py):
+
+    doc_id is the manifest's stable slug for the SOURCE DOCUMENT (e.g.
+    "cotton_bollworm_complex"), distinct from `id`, which identifies one CHUNK.
+    One document produces several chunks (one per markdown section) and, for
+    the two-target files the manifest itself notes, the same doc_id appears
+    again under a second target. The loader's idempotency is delete-then-
+    reinsert per (doc_id, target) rather than a per-chunk upsert, because
+    section chunking can change the chunk count between runs — there is no
+    stable per-chunk key to upsert against, but the (doc_id, target) group is
+    stable.
+
+    authoritative is false on a chunk sourced from a document's Chemical
+    Management section. Every delivered document carries one, written from
+    training knowledge and flagged by the manifest itself as unverified against
+    any registration table. The corpus text stays available as background
+    reading; the retrieval path that composes a chemical rung
+    (app/core/services/registered_use.py, for_advisory()) must filter this
+    flag out before it ever reaches composition — a citation attached to an
+    unverified dosage is more dangerous than no citation, because it looks
+    checked."""
 
     __tablename__ = "corpus_doc"
 
     id: Mapped[uuid.UUID] = _uuid_pk()
+    doc_id: Mapped[str] = mapped_column(Text, nullable=False)
     title: Mapped[str] = mapped_column(Text, nullable=False)
     source: Mapped[str] = mapped_column(Text, nullable=False)
     reviewed_on: Mapped[datetime | None] = mapped_column(Date)
     target: Mapped[TargetLabel | None] = mapped_column(pg_enum(TargetLabel, "target_label"))
     crop: Mapped[Crop | None] = mapped_column(pg_enum(Crop, "crop"))
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    authoritative: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1024))
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMPTZ, nullable=False, server_default=func.now()
     )
 
-    __table_args__ = (Index("ix_corpus_doc_crop_target", "crop", "target"),)
+    __table_args__ = (
+        Index("ix_corpus_doc_crop_target", "crop", "target"),
+        Index("ix_corpus_doc_doc_id_target", "doc_id", "target"),
+    )
 
 
 class DistinguishingCue(Base):
