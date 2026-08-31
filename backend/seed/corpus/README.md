@@ -1,15 +1,16 @@
 # seed/corpus/
 
-**Phase 4 status:** `distinguishing_cues.json` has its first real entry (`blast`
-/ `brown_spot`) and `documents.json` (new, this phase -- no loader script exists
-for either file yet, that's the next owner's job) has three sourced chunks for
-`blast`. Everything else named below is still `[]` / unauthored: the other
-paddy targets (`bacterial_leaf_blight`, `yellow_stem_borer`,
-`brown_planthopper`) have no cue and no corpus content yet, and cotton /
-soybean / jowar cannot be authored at all against the current schema --
-`CorpusDoc.crop` and `DistinguishingCue.answer_yes_implies` are native Postgres
-enums bound to the frozen `Crop` / `TargetLabel` (paddy, 5 labels), same wall
-Phase 3 hit on `registered_use.csv`.
+**Phase 4 status:** `distinguishing_cues.json` has its first real entry
+(`paddy_blast` / `paddy_brown_spot`) and `documents.json` (new, this phase --
+no loader script exists for either file yet, that's the next owner's job) has
+three sourced chunks for `paddy_blast`. Everything else named below is still
+`[]` / unauthored: the other paddy targets (`paddy_bacterial_leaf_blight`,
+`paddy_yellow_stem_borer`, `paddy_brown_planthopper`) have no cue and no
+corpus content yet, and cotton / soybean / jowar have neither cues nor corpus
+content either, though the v3 four-crop rename (`d437f97`, landed on `main`
+after this phase was authored) means they're now schema-representable --
+authoring for them is future writing work, not a structural blocker the way it
+was when this phase started.
 
 **These files were hard blockers with no owner.** `docs/DESIGN.md`
 §14 flags them and `docs/PRD.md` §10 repeats it:
@@ -40,8 +41,8 @@ which is the designed behaviour. It degrades to *no feature*, though.
 | `title` | Rendered in citations, so write it as the reader should see it |
 | `source` | The publication. ICAR PoP, CIB&RC, Maharashtra package of practices |
 | `reviewed_on` | Date the source was last checked. Appears in the citation |
-| `target` | One of the five `target_label` values, `docs/API_CONTRACT.md` §1 |
-| `crop` | `paddy` in v2 |
+| `target` | A `target_label` value -- crop-namespaced as of v3 (`paddy_blast`, not `blast`), `docs/API_CONTRACT.md` §1 |
+| `crop` | One of the four crops as of v3: `paddy`, `cotton`, `soybean`, `jowar` |
 | `content` | The text that gets embedded and quoted |
 | `embedding` | `vector(1024)`, BGE-m3. Generated at load time, not authored |
 
@@ -91,11 +92,12 @@ Design rules that constrain how these are written, from `docs/DESIGN.md` §7:
 
 The highest-value pair to author first is `blast` / `brown_spot`: it is the
 ambiguous pair in the demo scenario, `docs/PRD.md` §6. Done, Phase 4: the
-`blast`/`brown_spot` entry's `doc_id` is `null` in the JSON (no row exists to
-point at yet, since there's no loader) but is authored from `documents.json`'s
-"Rice Blast (Magnaporthe oryzae) -- Symptoms and Identification" entry --
-whoever writes the loader should set `doc_id` to that row's id once both files
-are loaded, in id-assignment order (`documents.json` first).
+`paddy_blast`/`paddy_brown_spot` entry's `doc_id` is `null` in the JSON (no row
+exists to point at yet, since there's no loader) but is authored from
+`documents.json`'s "Rice Blast (Magnaporthe oryzae) -- Symptoms and
+Identification" entry -- whoever writes the loader should set `doc_id` to that
+row's id once both files are loaded, in id-assignment order (`documents.json`
+first).
 
 ## Format
 

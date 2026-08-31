@@ -3,7 +3,7 @@
     "title": "Rice Blast (Magnaporthe oryzae) -- Symptoms and Identification",
     "source": "TNAU Agritech Portal, Crop Protection > Rice Diseases, 'Blast: Magnaporthe oryzae (Syn: P. grisea, Magnaporthe grisea)' (https://agritech.tnau.ac.in/crop_protection/rice_diseases/rice_1.html)",
     "reviewed_on": "2026-08-31",
-    "target": "blast",
+    "target": "paddy_blast",
     "crop": "paddy",
     "content": "The fungus attacks the crop at all stages of crop growth from seedling to late tillering and ear heading stage. Symptoms appear on leaves, nodes, rachis, and glumes. On the leaves, the lesions appear as small bluish green flecks. The lesions soon enlarge under moist weather to form the characteristic spindle shaped spots with grey centre and dark brown margin (Leaf blast). The spots coalesce as the disease progresses and large areas of the leaves dry up and wither. Spots also appear on sheath. Severely infected nursery and field appear as burnt. Black lesions appear on nodes girdling them. The affected nodes may break up and all the plant parts above the infected nodes may die (nodal blast). Nodal infection causes the culm to break at the infected area. Internodal infection also occurs at the base of the plant which causes white panicles similar to that induced by yellow stem borer or water deficit. Lesions on the neck are grayish brown and cause the girdling of the neck and the panicle to fall over. If infection of the neck occurs before the milky stage, no grain is formed, but if infection occurs later, grains of poor quality are formed. Lesions on the branches of the panicles and on the spikelet pedicels are brown to dark brown. The size and shape of the spots vary on different rice varieties."
   },
@@ -11,7 +11,7 @@
     "title": "Rice Blast -- Resistant Varieties and Nitrogen Management",
     "source": "Anand Prakash, J S Bentur, M Srinivas Prasad, R K Tanwar, O P Sharma, Someshwar Bhagat, Mukesh Sehgal, S P Singh, Monika Singh, C Chattopadhyay, S N Sushil, A K Sinha, Ram Asre, K S Kapoor, K Satyagopal, and P Jeyakumar. 2014. Integrated Pest Management for Rice. National Institute of Plant Health Management (NIPHM) / Directorate of Plant Protection, Quarantine & Storage (DPPQ&S), p. 43. (niphm.gov.in/IPMPackages/Rice.pdf)",
     "reviewed_on": "2026-08-31",
-    "target": "blast",
+    "target": "paddy_blast",
     "crop": "paddy",
     "content": "Varieties with resistance to blast: Rasi, Vikas, Krishna Hamsa, Tulasi, IR 64, Aditya, Swarnadhan, Himalaya 1, Himalaya 2, Himalaya 2216, Pant dhan 10, HKR 228 and PNR 519. At the flowering stage, apply nitrogen in small dose, if needed -- heavy or late nitrogen top-dressing favours blast development, the same caution the source gives for bacterial leaf blight (reduce nitrogen application and apply, if needed, only a small dose of N in more split doses)."
   },
@@ -19,7 +19,7 @@
     "title": "Rice Blast -- Chemical Control (IPM Package recommendations)",
     "source": "Anand Prakash et al. 2014. Integrated Pest Management for Rice. NIPHM / DPPQ&S, p. 17 (Generic IPM module, vegetative and flowering stages). (niphm.gov.in/IPMPackages/Rice.pdf)",
     "reviewed_on": "2026-08-31",
-    "target": "blast",
+    "target": "paddy_blast",
     "crop": "paddy",
     "content": "Vegetative stage and panicle-initiation-to-booting: spray carbendazim 50% WP @ 250-500 g/ha or isoprothiolan 40% EC @ 750 ml/ha or tricyclazole 75% WP @ 300-400 g/ha or tricyclazole 70% WG @ 300 g/ha. Flowering stage: spray ediphenphos 50% EC @ 500-600 ml/ha or isoprothiolan 40% EC @ 750 ml/ha or tricyclazole 75% WP @ 300-400 g/ha; apply nitrogen in small dose, if needed. Chemical control is the last rung after cultural practices and resistant-variety choice, per the source's own generic IPM sequencing (chemical as last resort, after regular scouting and once pest/disease crosses the economic threshold)."
   }
