@@ -558,7 +558,28 @@ class RegisteredUse(Base):
 
     pesticide_class is addendum B2: docs/DESIGN.md §9 defines a WRONG_CLASS
     verdict ("This is a fungicide. Your problem is an insect pest.") which is
-    underivable without it. The seed CSV already carried the column."""
+    underivable without it. The seed CSV already carried the column.
+
+    reentry_hours is nullable (migration 0011) -- CIB&RC major-use tables and
+    PPQS labels frequently state a PHI without stating a re-entry period at
+    all, and the loader used to refuse the whole row for that omission. A row
+    the source itself is silent on should say so (NULL), not be discarded
+    outright: for_advisory() (services/registered_use.py) is what excludes an
+    incomplete row from a chemical rung, and it can only do that if the row
+    exists to be excluded. A wrong re-entry number is never invented to fill
+    the gap -- re-entry is jurisdiction-specific and a wrong number is a real
+    exposure.
+
+    source_dated (migration 0011) is the date of the SOURCE DOCUMENT itself --
+    distinct from last_verified, which is the date someone last checked it.
+    "We read it today" and "it was published in 2012" are different facts;
+    conflating them is how a farmer reads a CIB&RC table from 2012 as current
+    in 2026. Both are required by the loader.
+
+    restriction_note (migration 0011) records a sub-national or non-CIB&RC
+    restriction on an ingredient that is still nationally registered -- e.g. a
+    state agriculture department's crop-specific order -- so the row stays
+    (it is not a ban) but the caution is visible rather than silent."""
 
     __tablename__ = "registered_use"
 
@@ -571,9 +592,11 @@ class RegisteredUse(Base):
     pesticide_class: Mapped[str] = mapped_column(Text, nullable=False)
     dosage_text: Mapped[str] = mapped_column(Text, nullable=False)
     phi_days: Mapped[int] = mapped_column(Integer, nullable=False)
-    reentry_hours: Mapped[int] = mapped_column(Integer, nullable=False)
+    reentry_hours: Mapped[int | None] = mapped_column(Integer)
     source: Mapped[str] = mapped_column(Text, nullable=False)
+    source_dated: Mapped[datetime] = mapped_column(Date, nullable=False)
     last_verified: Mapped[datetime | None] = mapped_column(Date)
+    restriction_note: Mapped[str | None] = mapped_column(Text)
 
     __table_args__ = (
         CheckConstraint(
