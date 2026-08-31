@@ -212,6 +212,39 @@
       "reviewed_on": "2026-08-31",
       "source_file": "jowar/jowar_downy_mildew_v1.md",
       "source_dated": null
+    },
+    {
+      "doc_id": "paddy_blast_symptoms_v1",
+      "target": "paddy_blast",
+      "crop": "paddy",
+      "title": "Rice Blast (Magnaporthe oryzae) -- Symptoms and Identification",
+      "source": "TNAU Agritech Portal, Crop Protection > Rice Diseases, 'Blast: Magnaporthe oryzae (Syn: P. grisea, Magnaporthe grisea)' (https://agritech.tnau.ac.in/crop_protection/rice_diseases/rice_1.html)",
+      "reviewed_on": "2026-08-31",
+      "source_file": "paddy/paddy_blast_symptoms_v1.md",
+      "source_dated": null,
+      "note": "Converted from the pre-manifest seed/corpus/documents.json (Phase 4). Held to the same bar as every other row -- source_dated was never captured for this content and is not being invented now."
+    },
+    {
+      "doc_id": "paddy_blast_cultural_management_v1",
+      "target": "paddy_blast",
+      "crop": "paddy",
+      "title": "Rice Blast -- Resistant Varieties and Nitrogen Management",
+      "source": "Anand Prakash, J S Bentur, M Srinivas Prasad, R K Tanwar, O P Sharma, Someshwar Bhagat, Mukesh Sehgal, S P Singh, Monika Singh, C Chattopadhyay, S N Sushil, A K Sinha, Ram Asre, K S Kapoor, K Satyagopal, and P Jeyakumar. 2014. Integrated Pest Management for Rice. National Institute of Plant Health Management (NIPHM) / Directorate of Plant Protection, Quarantine & Storage (DPPQ&S), p. 43. (niphm.gov.in/IPMPackages/Rice.pdf)",
+      "reviewed_on": "2026-08-31",
+      "source_file": "paddy/paddy_blast_cultural_management_v1.md",
+      "source_dated": null,
+      "note": "Converted from documents.json. See paddy_blast_symptoms_v1 note."
+    },
+    {
+      "doc_id": "paddy_blast_chemical_control_v1",
+      "target": "paddy_blast",
+      "crop": "paddy",
+      "title": "Rice Blast -- Chemical Control (IPM Package recommendations)",
+      "source": "Anand Prakash et al. 2014. Integrated Pest Management for Rice. NIPHM / DPPQ&S, p. 17 (Generic IPM module, vegetative and flowering stages). (niphm.gov.in/IPMPackages/Rice.pdf)",
+      "reviewed_on": "2026-08-31",
+      "source_file": "paddy/paddy_blast_chemical_control_v1.md",
+      "source_dated": null,
+      "note": "Converted from documents.json. See paddy_blast_symptoms_v1 note."
     }
   ]
 }
