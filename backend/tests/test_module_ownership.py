@@ -80,8 +80,10 @@ def test_unimplemented_entry_points_raise_loudly(
         func(*args)
 
 
-def test_gate_signature_exists_and_refuses() -> None:
+def test_gate_signature_exists_and_returns_a_decision() -> None:
+    """Phase 2 implements decide(); it no longer refuses. See test_gate.py for
+    the four-band coverage against Phase 1's fixtures."""
     from app.intelligence import decide
 
-    with pytest.raises(NotImplementedError):
-        decide(_sample_topk(), 0.8)
+    decision = decide(_sample_topk(), 0.8)
+    assert decision.outcome == "advise"
