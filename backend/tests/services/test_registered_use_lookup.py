@@ -13,7 +13,7 @@ from datetime import date
 import pytest
 
 from app.core.models import RegisteredUse
-from app.core.services.registered_use import lookup, normalise_ingredient
+from app.core.services.registered_use import for_advisory, lookup, normalise_ingredient
 
 
 async def _insert(session, **overrides) -> RegisteredUse:
@@ -26,6 +26,7 @@ async def _insert(session, **overrides) -> RegisteredUse:
         phi_days=overrides.pop("phi_days", 30),
         reentry_hours=overrides.pop("reentry_hours", 24),
         source=overrides.pop("source", "CIB&RC label"),
+        source_dated=overrides.pop("source_dated", date(2012, 9, 30)),
         last_verified=overrides.pop("last_verified", date(2026, 1, 15)),
         **overrides,
     )
@@ -148,3 +149,53 @@ def test_normalise_only_trims_and_folds() -> None:
     # Not collapsed, not de-spaced, not stripped of punctuation.
     assert normalise_ingredient("carben dazim") == "carben dazim"
     assert normalise_ingredient("2,4-D") == "2,4-d"
+
+
+# --- for_advisory: the half of DESIGN §8 that lives on the read side --------
+#
+# services/registered_use.py's docstring names the property under test: an
+# incomplete rung (source silent on re-entry) must never compose an advisory,
+# because a citation attached to it looks checked. The table now allows an
+# incomplete row to exist at all (migration 0011) specifically so this
+# function has something real to filter out, rather than the filter being
+# vacuous against data the loader would have refused anyway.
+
+
+async def test_for_advisory_never_returns_an_incomplete_row(db_session) -> None:
+    await _insert(db_session, active_ingredient="isoprothiolane", reentry_hours=24)
+    await _insert(db_session, active_ingredient="kasugamycin", reentry_hours=None)
+    await _insert(db_session, active_ingredient="edifenphos", reentry_hours=None)
+
+    rows = await for_advisory(db_session, "paddy_blast", "paddy")
+
+    assert len(rows) == 1
+    assert rows[0].active_ingredient == "isoprothiolane"
+    assert all(r.reentry_hours is not None for r in rows)
+
+
+async def test_for_advisory_returns_empty_when_every_row_lacks_reentry(db_session) -> None:
+    """The current paddy data's actual shape for most targets: real rows
+    exist, none of them complete enough to render a rung. Empty is correct —
+    the advisory then has no chemical rung, not a partial one."""
+    await _insert(
+        db_session, target="paddy_brown_planthopper",
+        active_ingredient="acephate", reentry_hours=None,
+    )
+    await _insert(
+        db_session, target="paddy_brown_planthopper",
+        active_ingredient="imidacloprid", reentry_hours=None,
+    )
+
+    assert await for_advisory(db_session, "paddy_brown_planthopper", "paddy") == []
+
+
+async def test_for_advisory_is_empty_for_a_target_with_no_rows_at_all(db_session) -> None:
+    assert await for_advisory(db_session, "paddy_yellow_stem_borer", "paddy") == []
+
+
+async def test_for_advisory_unknown_crop_or_target_misses_rather_than_errors(
+    db_session,
+) -> None:
+    await _insert(db_session, target="paddy_blast", reentry_hours=24)
+    assert await for_advisory(db_session, "paddy_blast", "not-a-crop") == []
+    assert await for_advisory(db_session, "not-a-target", "paddy") == []

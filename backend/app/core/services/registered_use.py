@@ -40,7 +40,7 @@ from datetime import date
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.contracts.enums import Crop
+from app.contracts.enums import Crop, TargetLabel
 from app.core.models import RegisteredUse
 
 
@@ -61,9 +61,11 @@ class RegisteredUseRow:
     pesticide_class: str
     dosage_text: str
     phi_days: int
-    reentry_hours: int
+    reentry_hours: int | None
     source: str
+    source_dated: date
     last_verified: date | None
+    restriction_note: str | None
 
 
 def normalise_ingredient(raw: str) -> str:
@@ -73,6 +75,23 @@ def normalise_ingredient(raw: str) -> str:
     for OCR whitespace. Nothing else — see the module docstring.
     """
     return (raw or "").strip().casefold()
+
+
+def _as_row(row: RegisteredUse) -> RegisteredUseRow:
+    return RegisteredUseRow(
+        id=str(row.id),
+        active_ingredient=row.active_ingredient,
+        crop=row.crop.value if hasattr(row.crop, "value") else str(row.crop),
+        target=row.target.value if hasattr(row.target, "value") else str(row.target),
+        pesticide_class=row.pesticide_class,
+        dosage_text=row.dosage_text,
+        phi_days=row.phi_days,
+        reentry_hours=row.reentry_hours,
+        source=row.source,
+        source_dated=row.source_dated,
+        last_verified=row.last_verified,
+        restriction_note=row.restriction_note,
+    )
 
 
 async def lookup(
@@ -110,19 +129,44 @@ async def lookup(
         .order_by(RegisteredUse.target)
     )
     rows = (await session.execute(statement)).scalars().all()
+    return [_as_row(row) for row in rows]
 
-    return [
-        RegisteredUseRow(
-            id=str(row.id),
-            active_ingredient=row.active_ingredient,
-            crop=row.crop.value if hasattr(row.crop, "value") else str(row.crop),
-            target=row.target.value if hasattr(row.target, "value") else str(row.target),
-            pesticide_class=row.pesticide_class,
-            dosage_text=row.dosage_text,
-            phi_days=row.phi_days,
-            reentry_hours=row.reentry_hours,
-            source=row.source,
-            last_verified=row.last_verified,
+
+async def for_advisory(session: AsyncSession, target: str, crop: str) -> list[RegisteredUseRow]:
+    """Rows complete enough to render a chemical rung for `target` on `crop`.
+
+    docs/DESIGN.md §8 (v3): a chemical rung must resolve against registered_use
+    at composition time, and an incomplete rung is omitted rather than shipped
+    partial. "Complete" means dosage, phi_days AND reentry_hours are all
+    present — dosage_text and phi_days are NOT NULL columns, guaranteed by the
+    schema itself, so the one real filter is reentry_hours IS NOT NULL. A row
+    whose source never stated a re-entry period loads (migration 0011) so
+    for_advisory() has something to exclude; excluding it here is what stops a
+    dosage figure from training-knowledge corpus text reaching a farmer with
+    no re-entry guidance attached. A target whose rows are all incomplete
+    returns an empty list — correct, not a bug, and what most of the current
+    paddy data will produce (2 of 10 rows carry re-entry).
+
+    This is the half of docs/DESIGN.md §8's guarantee that lives on the read
+    side. The composer (Thaariha, app/intelligence/) calls this before
+    treating any corpus chemical-management text as a citable dosage — see
+    app/core/services/corpus.py's authoritative_chunks() for the other half,
+    which excludes that same unverified text from retrieval in the first
+    place.
+    """
+    if crop not in {c.value for c in Crop}:
+        return []
+    if target not in {t.value for t in TargetLabel}:
+        return []
+
+    statement = (
+        select(RegisteredUse)
+        .where(
+            RegisteredUse.target == target,
+            RegisteredUse.crop == crop,
+            RegisteredUse.reentry_hours.is_not(None),
         )
-        for row in rows
-    ]
+        .order_by(RegisteredUse.active_ingredient)
+    )
+    rows = (await session.execute(statement)).scalars().all()
+    return [_as_row(row) for row in rows]
