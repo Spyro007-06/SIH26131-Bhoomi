@@ -23,51 +23,72 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Header
 
+from app.config import settings
 from app.contracts.vision import Prediction, TopK
-from app.vision import classify
-from app.vision.classifier import STUB_MODEL_VERSION
+from app.errors import FixturesDisabled, ValidationFailed
+
+# _stub_topk, not classify(): the no-header path must return the stub without
+# handing invented bytes to a classifier. Reaching into Suchit's module for the
+# private builder keeps one definition of the stub distribution; assembling a
+# second copy of it here is the thing that drifts.
+from app.vision.classifier import STUB_MODEL_VERSION, _stub_topk
 
 router = APIRouter(tags=["diagnose"])
 
 # Fixture presets, Phase 1 vision test mode. Fixed values only -- never derived
 # from the uploaded image (docs/DESIGN.md §12: a stub must not produce
 # input-dependent output that looks like a real prediction).
+#
+# Two properties hold for every entry, and both are asserted in
+# tests/routers/test_diagnose.py rather than trusted here:
+#
+#   Every label is in TargetLabel, the bounded five-class set. These predictions
+#   reach the client as gate.alternatives, where Tharun renders each label
+#   against reference data -- a label from outside the set has none.
+#
+#   Every distribution sums to 1.0, because that is what a softmax over the
+#   bounded set returns. Out-of-scope is the `out_of_scope` flag plus a flat,
+#   low distribution; it is never a label borrowed from another crop.
+#
+# Band comments below name the config constant and not its value: a number
+# written into a comment cannot be checked by anything and is believed anyway.
 _FIXTURES: dict[str, TopK] = {
-    "confident": TopK(  # advise band: top-1 >= GATE (0.70)
+    "confident": TopK(  # advise band: top-1 at or above GATE, clear by MARGIN
         predictions=[
-            Prediction(label="blast", confidence=0.85),
-            Prediction(label="brown_spot", confidence=0.10),
-            Prediction(label="bacterial_leaf_blight", confidence=0.05),
+            Prediction(label="paddy_blast", confidence=0.85),
+            Prediction(label="paddy_brown_spot", confidence=0.10),
+            Prediction(label="paddy_bacterial_leaf_blight", confidence=0.05),
         ],
         out_of_scope=False,
         model_version=STUB_MODEL_VERSION,
         is_stub=True,
     ),
-    "torn": TopK(  # Doubt Doctor band: blast vs brown_spot, both 0.40-0.69
+    "torn": TopK(  # Doubt Doctor band: blast vs brown_spot, both above FLOOR,
+        # gap under MARGIN
         predictions=[
-            Prediction(label="blast", confidence=0.58),
-            Prediction(label="brown_spot", confidence=0.49),
-            Prediction(label="bacterial_leaf_blight", confidence=0.11),
+            Prediction(label="paddy_blast", confidence=0.50),
+            Prediction(label="paddy_brown_spot", confidence=0.46),
+            Prediction(label="paddy_bacterial_leaf_blight", confidence=0.04),
         ],
         out_of_scope=False,
         model_version=STUB_MODEL_VERSION,
         is_stub=True,
     ),
-    "low_confidence": TopK(  # escalate band: top-1 < 0.40
+    "low_confidence": TopK(  # escalate band: top-1 below FLOOR
         predictions=[
-            Prediction(label="blast", confidence=0.31),
-            Prediction(label="brown_spot", confidence=0.08),
-            Prediction(label="bacterial_leaf_blight", confidence=0.04),
+            Prediction(label="paddy_blast", confidence=0.38),
+            Prediction(label="paddy_brown_spot", confidence=0.33),
+            Prediction(label="paddy_bacterial_leaf_blight", confidence=0.29),
         ],
         out_of_scope=False,
         model_version=STUB_MODEL_VERSION,
         is_stub=True,
     ),
-    "out_of_scope": TopK(  # a target outside the bounded label set
+    "out_of_scope": TopK(  # nothing in the bounded set fits: flat, low, flag set
         predictions=[
-            Prediction(label="wheat_rust", confidence=0.91),
-            Prediction(label="blast", confidence=0.05),
-            Prediction(label="brown_spot", confidence=0.04),
+            Prediction(label="paddy_blast", confidence=0.36),
+            Prediction(label="paddy_brown_spot", confidence=0.33),
+            Prediction(label="paddy_bacterial_leaf_blight", confidence=0.31),
         ],
         out_of_scope=True,
         model_version=STUB_MODEL_VERSION,
@@ -82,9 +103,32 @@ async def classify_vision_fixture(
 ) -> TopK:
     """Return a fixture TopK selected by the X-Vision-Fixture header.
 
-    No header, or a value not in _FIXTURES, falls back to the unmodified
-    classify() stub -- current behavior, unchanged.
+    No header returns the inert stub distribution, unchanged, in every mode.
+    That is the one path here that does not name a fixture.
+
+    A fixture name is refused with FIXTURES_DISABLED when VISION_MODEL=real.
+    Not FORBIDDEN: the caller's identity is irrelevant to it. On a machine with
+    the model loaded, a stray header left in a client must not quietly stand in
+    for inference -- that is a silent stub by another route (docs/DESIGN.md §12).
+
+    An unrecognised name is a 422 rather than a fall-through. Falling through
+    handed back the stub's near-uniform distribution, which reads as a broken
+    gate rather than as a typo in the header.
     """
-    if x_vision_fixture in _FIXTURES:
-        return _FIXTURES[x_vision_fixture]
-    return classify(b"")
+    if x_vision_fixture is None:
+        return _stub_topk()
+
+    if settings.vision_model == "real":
+        raise FixturesDisabled(
+            "Vision fixtures are not served when VISION_MODEL=real. Drop the "
+            "X-Vision-Fixture header, or run with VISION_MODEL=stub.",
+            details={"vision_model": settings.vision_model},
+        )
+
+    if x_vision_fixture not in _FIXTURES:
+        raise ValidationFailed(
+            f"Unknown X-Vision-Fixture value {x_vision_fixture!r}.",
+            details={"known_fixtures": sorted(_FIXTURES)},
+        )
+
+    return _FIXTURES[x_vision_fixture]

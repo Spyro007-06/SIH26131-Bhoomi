@@ -42,7 +42,7 @@ from datetime import UTC, date, datetime, timedelta
 from sqlalchemy import select, text
 
 from app.config import SPREAD_RADIUS_M
-from app.contracts.enums import Crop, GrowthStage, Role
+from app.contracts.enums import Crop, Role
 from app.core import security
 from app.core.models import Farm, User
 from app.db import SessionLocal, dispose_engine
@@ -83,11 +83,11 @@ def _sowing_date(label: str) -> date:
 
 # (label, phone, variety, growth_stage, region, lat, lng)
 FARMS = [
-    ("A Gangapur", "+919820000001", "Indrayani", GrowthStage.TILLERING,
+    ("A Gangapur", "+919820000001", "Indrayani", "tillering",
      "Nashik", 19.99730, 73.74140),
-    ("B Anandvalli", "+919820000002", "Phule Samruddhi", GrowthStage.TILLERING,
+    ("B Anandvalli", "+919820000002", "Phule Samruddhi", "tillering",
      "Nashik", 19.99310, 73.75530),
-    ("C Ozar", "+919820000003", "Indrayani", GrowthStage.VEGETATIVE,
+    ("C Ozar", "+919820000003", "Indrayani", "vegetative",
      "Nashik", 20.09280, 73.92860),
 ]
 
