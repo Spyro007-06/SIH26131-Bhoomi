@@ -1,10 +1,23 @@
-# Bhoomi v2 — Product Requirements
+# Bhoomi v3 — Product Requirements
 
 **PS:** SIH26131 · Government of Maharashtra · Early detection and management of crop diseases and pest infestations
-**Status:** v2.0 · frozen for the build
+**Status:** v3.0 · frozen for the build
 **Companions:** `Bhoomi_v2_Design_Doc.md` (how it's built), `Bhoomi_v2_API_Contract.md` (wire format), `Bhoomi_SIH26131_Feature_Set_v2.pdf` (feature rationale)
 
 **One line:** A voice-first crop-health system that tells a farmer when and where to look, identifies what it finds or admits it cannot, asks one clarifying question instead of guessing, and vetoes the wrong pesticide before it is sprayed.
+
+---
+
+## Changelog — v2 to v3
+
+| Change | Why |
+|---|---|
+| Four crops (paddy, cotton, soybean, jowar), 26 targets | Scope decision. v2 was paddy and five targets. |
+| 14 of the 26 are `diagnosable`, 12 are `inspection` | A photograph cannot settle a stem borer inside a stem or a shoot fly's damage that looks like drought. Those get risk alerts and inspection tasks instead of a gated prediction — the honest answer rather than a confident one. |
+| Growth stages are per-crop | Cotton has squaring and boll formation; the paddy vocabulary could not express them. |
+| §6 top-3 corrected to 0.50 / 0.46 / 0.04 | The v2 figures summed to 1.18, which no softmax produces. The demo script and the code now agree. |
+
+Nothing in §2 Principles changed. Scope grew; the principles did not move.
 
 ---
 
@@ -51,10 +64,19 @@ The farmer never sees a keyboard-first flow. The agronomist's time is the system
 ## 4. Scope
 
 ### In scope
-Paddy only. Three diseases (blast, brown spot, bacterial leaf blight) and two pests (yellow stem borer, brown planthopper). Marathi and Hindi voice; Tamil if hours allow.
+**Four crops — paddy, cotton, soybean, jowar — and 26 targets.** Marathi and Hindi voice; Tamil if hours allow.
+
+Targets are namespaced by crop (`cotton_bacterial_blight`, `soybean_bacterial_blight`) because the same disease name occurs in more than one crop. Unprefixed, a wrong-crop match would be something the system has to filter out; prefixed, it is not expressible.
+
+Each target carries a **tier**:
+
+- **diagnosable** (14) — in the vision label set. Photo in, prediction out, gated, advisory composed. Mostly diseases with lesions the camera can see.
+- **inspection** (12) — never image-classified. Risk alerts with inspection tasks, and an advisory only if a human confirms it. Mostly insect pests: a stem borer larva is inside the stem, shoot fly damage looks like drought, a whitefly is 1 mm on a leaf underside.
+
+The tier split is not a statement about how good the classifier is. It is a statement about what a photograph can settle. Moving a target from diagnosable to inspection later is always safe; the other direction is not.
 
 ### Bounded by design
-Anything outside that crop/target set escalates. This is not a limitation to hide — it is the confidence gate working, and it is what the demo shows.
+Anything outside that crop/target set escalates. So does anything in it that is `inspection` tier and reaches the diagnose path. This is not a limitation to hide — it is the confidence gate working, and it is what the demo shows.
 
 ### Explicitly out
 Pest-trap and sensor inputs (see §11). Subsidy and scheme matching. Land registry and boundary verification. Irrigation planning. Live government API integrations. True offline operation. Any claim of model fine-tuning or reinforcement learning.
@@ -189,7 +211,7 @@ Hotspot map, outbreak counts by region and crop, confirmation queue, and field a
 A paddy farmer near Nashik, vegetative stage.
 
 1. **Alert.** Humidity and temperature have favoured blast for four days. The system issues a risk alert with one task: examine the upper leaves and photograph any spots. The card cannot be dismissed without an outcome.
-2. **Photo.** The farmer finds lesions and photographs them. Top-3 comes back blast 0.58, brown spot 0.49, BLB 0.11.
+2. **Photo.** The farmer finds lesions and photographs them. Top-3 comes back paddy_blast 0.50, paddy_brown_spot 0.46, paddy_bacterial_leaf_blight 0.04.
 3. **Gate.** `top1 < GATE` but `top1 ≥ FLOOR` and the gap is under MARGIN → ambiguous band → Doubt Doctor.
 4. **Doubt Doctor.** In Marathi: "I am not certain — I see two possibilities." Both candidates shown with their signatures. One question: is there fuzzy grey growth on the underside? The farmer taps Yes.
 5. **Resolution.** The cue discriminates for blast. Diagnosis resolves; the answer is stored as a field observation.

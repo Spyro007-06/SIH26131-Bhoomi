@@ -1,10 +1,25 @@
-# Bhoomi v2 — API Contract
+# Bhoomi v3 — API Contract
 
 **PS:** SIH26131 · Early detection and management of crop diseases and pest infestations
-**Status:** v2.0 · frozen at hour 2
+**Status:** v3.0 · frozen
 **Companions:** `Bhoomi_v2_PRD.md`, `Bhoomi_v2_Design_Doc.md`
 
 Wire format only — request and response shapes, enums, error codes. Internal logic lives in the design doc.
+
+---
+
+## Changelog — v2 to v3
+
+| Change | Why |
+|---|---|
+| Four crops (paddy, cotton, soybean, jowar), 26 targets | Scope decision. v2 was paddy and five targets. |
+| Targets namespaced by crop (`cotton_bacterial_blight`) | Bacterial blight exists in cotton AND soybean, anthracnose in soybean AND jowar. Unprefixed, a wrong-crop match is something the system must filter out; prefixed it is not expressible. |
+| `target_tier`: diagnosable \| inspection | 12 of the 26 cannot be settled by a photograph — a stem borer larva is inside the stem. Routing those through the gate would produce a confident answer about something the image never contained. |
+| Growth stages became a per-crop table | The v2 enum was paddy-specific, so the phenology branch could not express "pink bollworm at boll formation". |
+| Data-model addendum folded in and deleted | Six parts deep, and the base documents still said paddy. Over a month that gap becomes the thing nobody can resolve. |
+
+The gate constants, the gate algorithm and the frozen contract shapes in
+`app/contracts/` are **unchanged**. Scope grew; the principles did not move.
 
 ---
 
@@ -31,7 +46,14 @@ Wire format only — request and response shapes, enums, error codes. Internal l
 }
 ```
 
-Stable codes: `UNAUTHENTICATED` · `FORBIDDEN` · `NOT_FOUND` · `VALIDATION_FAILED` · `BELOW_CONFIDENCE_GATE` · `AMBIGUOUS_REQUIRES_CLARIFICATION` · `OUT_OF_SCOPE_TARGET` · `NO_RELEVANT_SOURCE` · `OCR_UNREADABLE` · `PRODUCT_NOT_IN_RECORDS` · `AGRONOMIST_UNAVAILABLE`
+**One code, one status.** A client switches on `code` and can predict the
+status from it. `VALIDATION_FAILED` is always 422; it is never 400.
+`FIXTURES_DISABLED` (409) is a server *configuration* state — with
+`VISION_MODEL=real` nobody may pull a vision fixture and with `stub` everybody
+may — so it is not `FORBIDDEN`, which would claim the caller's identity was the
+problem.
+
+Stable codes: `UNAUTHENTICATED` · `FORBIDDEN` · `NOT_FOUND` · `VALIDATION_FAILED` · `BELOW_CONFIDENCE_GATE` · `AMBIGUOUS_REQUIRES_CLARIFICATION` · `OUT_OF_SCOPE_TARGET` · `NO_RELEVANT_SOURCE` · `OCR_UNREADABLE` · `PRODUCT_NOT_IN_RECORDS` · `AGRONOMIST_UNAVAILABLE` · `FIXTURES_DISABLED`
 
 ---
 
@@ -39,12 +61,29 @@ Stable codes: `UNAUTHENTICATED` · `FORBIDDEN` · `NOT_FOUND` · `VALIDATION_FAI
 
 ```
 role                : farmer | agronomist | official
-crop                : paddy                          (bounded, v2)
+crop                : paddy | cotton | soybean | jowar
 problem_type        : disease | pest
-target_label        : blast | brown_spot | bacterial_leaf_blight
-                    | yellow_stem_borer | brown_planthopper
-growth_stage        : nursery | tillering | vegetative | booting
-                    | flowering | maturity
+target_tier         : diagnosable | inspection
+target_label        : 26 values, NAMESPACED BY CROP.
+
+  paddy     paddy_blast, paddy_brown_spot, paddy_bacterial_leaf_blight,
+            paddy_yellow_stem_borer, paddy_brown_planthopper
+  cotton    cotton_american_bollworm, cotton_pink_bollworm, cotton_whitefly,
+            cotton_thrips, cotton_bacterial_blight, cotton_leaf_curl_virus,
+            cotton_fusarium_wilt
+  soybean   soybean_stem_fly, soybean_girdle_beetle,
+            soybean_defoliating_caterpillars, soybean_yellow_mosaic_virus,
+            soybean_anthracnose, soybean_alternaria_leaf_spot,
+            soybean_bacterial_blight
+  jowar     jowar_shoot_fly, jowar_stem_borer, jowar_shoot_bug,
+            jowar_anthracnose, jowar_grain_mold, jowar_smut,
+            jowar_downy_mildew
+
+growth_stage        : NOT an enum. Rows in `growth_stage`, keyed
+                      (crop, stage_key). Farm.growth_stage holds a stage_key
+                      and is constrained by a composite FK on
+                      (crop, growth_stage), so a farm cannot hold a stage
+                      belonging to another crop.
 problem_severity    : early | moderate | severe
 problem_status      : open | resolved
 gate_outcome        : advise | clarify | escalate
@@ -175,15 +214,15 @@ Every response carries a `gate` object. Its `outcome` determines which other fie
     "threshold_applied": 0.70,
     "reason_code": "ABOVE_GATE",
     "alternatives": [
-      { "label": "blast", "confidence": 0.87 },
-      { "label": "brown_spot", "confidence": 0.09 },
-      { "label": "bacterial_leaf_blight", "confidence": 0.04 }
+      { "label": "paddy_blast", "confidence": 0.87 },
+      { "label": "paddy_brown_spot", "confidence": 0.09 },
+      { "label": "paddy_bacterial_leaf_blight", "confidence": 0.04 }
     ],
     "is_stub": false
   },
   "problem_id": "p_7",
   "problem_type": "disease",
-  "diagnosis": { "label": "blast", "severity": "early", "confidence": 0.87 },
+  "diagnosis": { "label": "paddy_blast", "severity": "early", "confidence": 0.87 },
   "advisory": { "...see §8..." },
   "citations": [ { "doc_id": "kb_211", "title": "ICAR PoP: Rice — Blast", "reviewed_on": "2025-11-02" } ],
   "spoken_summary": "..."
@@ -195,13 +234,13 @@ Every response carries a `gate` object. Its `outcome` determines which other fie
 {
   "gate": {
     "outcome": "clarify",
-    "confidence": 0.58,
+    "confidence": 0.50,
     "threshold_applied": 0.15,
     "reason_code": "AMBIGUOUS",
     "alternatives": [
-      { "label": "blast", "confidence": 0.58 },
-      { "label": "brown_spot", "confidence": 0.49 },
-      { "label": "bacterial_leaf_blight", "confidence": 0.11 }
+      { "label": "paddy_blast", "confidence": 0.50 },
+      { "label": "paddy_brown_spot", "confidence": 0.46 },
+      { "label": "paddy_bacterial_leaf_blight", "confidence": 0.04 }
     ],
     "is_stub": false
   },
@@ -211,8 +250,8 @@ Every response carries a `gate` object. Its `outcome` determines which other fie
     "question": "Flip the leaf over. Do you see fuzzy grey growth?",
     "question_localized": "पान उलटून पहा. करडी बुरशी दिसते का?",
     "candidates": [
-      { "label": "blast", "signature": "Diamond-shaped spots with grey centres", "image_url": "..." },
-      { "label": "brown_spot", "signature": "Round spots with a yellow halo", "image_url": "..." }
+      { "label": "paddy_blast", "signature": "Diamond-shaped spots with grey centres", "image_url": "..." },
+      { "label": "paddy_brown_spot", "signature": "Round spots with a yellow halo", "image_url": "..." }
     ],
     "answers": ["yes", "no", "unknown"]
   },
@@ -259,7 +298,7 @@ No `advisory` field. The client must not render treatment text on this branch.
 ```json
 {
   "resolved": true,
-  "diagnosis": { "label": "blast", "severity": "early", "resolved_by": "field_observation" },
+  "diagnosis": { "label": "paddy_blast", "severity": "early", "resolved_by": "field_observation" },
   "observation_id": "o_2",
   "advisory": { "...§8..." },
   "citations": [ ... ],
@@ -377,7 +416,7 @@ Contract rules:
     {
       "id": "al_1",
       "trigger_type": "weather",
-      "target": "blast",
+      "target": "paddy_blast",
       "risk_level": "high",
       "reason": "Humidity above 90% for 4 consecutive nights at tillering stage.",
       "inspection_tasks": [
@@ -437,6 +476,13 @@ GET  /farms/{id}/followups/pending           due check-ins
   "queue_position": 3, "eta_minutes": 45 }
 ```
 
+`queue_position` is correct at the instant it is issued and **is not
+authoritative afterwards**. The stored column is stale the moment anything ahead
+of it resolves, and nothing recomputes it. `GET /agronomist/case-queue` computes
+position from the live ordering and ignores the stored value. Treat the stored
+column as a record of where the case entered the queue, not its current place in
+it.
+
 **`GET /cases/{id}`** — the bundle the agronomist opens
 ```json
 {
@@ -444,12 +490,12 @@ GET  /farms/{id}/followups/pending           due check-ins
   "status": "assigned",
   "farm": { "id": "f_1", "crop": "paddy", "variety": "Indrayani",
             "growth_stage": "tillering", "region": "Nashik" },
-  "problem": { "id": "p_7", "type": "disease", "label": "blast", "severity": "moderate",
+  "problem": { "id": "p_7", "type": "disease", "label": "paddy_blast", "severity": "moderate",
                "opened_at": "2026-08-25T..." },
   "model_hypotheses": [
-    { "label": "blast", "confidence": 0.58 },
-    { "label": "brown_spot", "confidence": 0.49 },
-    { "label": "bacterial_leaf_blight", "confidence": 0.11 }
+    { "label": "paddy_blast", "confidence": 0.50 },
+    { "label": "paddy_brown_spot", "confidence": 0.46 },
+    { "label": "paddy_bacterial_leaf_blight", "confidence": 0.04 }
   ],
   "gate": { "outcome": "clarify", "reason_code": "AMBIGUOUS", "threshold_applied": 0.15 },
   "field_observations": [
@@ -476,12 +522,20 @@ POST /cases/{id}/confirm
 POST /cases/{id}/request-info
 ```
 
+> **Ownership, v3.** `POST /cases/{id}/confirm` and `GET /agronomist/case-queue`
+> moved from Thaariha to Shreekumar. Confirm has no inference in it: it takes a
+> verdict, writes a `Confirmation`, and its four downstream effects — problem
+> resolution, the prior, the spread fan-out, the F15 aggregates — are all `core/`
+> features that touch the database, which `intelligence/` never does
+> (`docs/DESIGN.md` §3). `GET /cases/{id}`, the bundle, is the part with
+> judgement in it and remains Thaariha's.
+
 **`POST /cases/{id}/confirm`**
 ```json
 // req — confirming the model
 { "verdict": "confirmed", "treatment": "Tricyclazole per label; drain and dry 48h.", "notes": "Recheck in 5 days." }
 // req — correcting it
-{ "verdict": "corrected", "corrected_label": "brown_spot",
+{ "verdict": "corrected", "corrected_label": "paddy_brown_spot",
   "treatment": "...", "notes": "Halo pattern is diagnostic here." }
 // res 200
 {
@@ -527,10 +581,10 @@ GET /officials/queue
 ```json
 {
   "points": [
-    { "lat": 19.99, "lng": 73.78, "label": "blast", "confirmed_count": 7,
+    { "lat": 19.99, "lng": 73.78, "label": "paddy_blast", "confirmed_count": 7,
       "first_seen": "2026-08-20", "last_seen": "2026-08-29" }
   ],
-  "totals_by_label": { "blast": 7, "brown_planthopper": 3 }
+  "totals_by_label": { "paddy_blast": 7, "paddy_brown_planthopper": 3 }
 }
 ```
 Only **confirmed** cases appear. Model output alone never renders on an official's map.
@@ -539,8 +593,8 @@ Only **confirmed** cases appear. Model output alone never renders on an official
 ```json
 {
   "by_label": [
-    { "label": "blast", "confirmed": 12, "corrected": 3, "accuracy": 0.80 },
-    { "label": "brown_spot", "confirmed": 5, "corrected": 6, "accuracy": 0.45 }
+    { "label": "paddy_blast", "confirmed": 12, "corrected": 3, "accuracy": 0.80 },
+    { "label": "paddy_brown_spot", "confirmed": 5, "corrected": 6, "accuracy": 0.45 }
   ],
   "window": { "from": "2026-08-01", "to": "2026-08-29" }
 }
@@ -564,7 +618,8 @@ Only **confirmed** cases appear. Model output alone never renders on an official
 | GET | `/farms/{id}/timeline` · `/problems` · `/problems/{id}` | Case file | Shreekumar |
 | GET/POST | `/farms/{id}/followups/pending` · `/followups/{id}/respond` | Follow-up loop | Shreekumar |
 | POST/GET | `/problems/{id}/escalate` · `/cases/{id}` | Escalation + bundle | Thaariha |
-| GET/POST | `/agronomist/case-queue` · `/cases/{id}/confirm` | Expert loop | Thaariha + Santheesh |
+| GET | `/agronomist/case-queue` | Case queue | **Shreekumar** (was Thaariha) |
+| POST | `/cases/{id}/confirm` | Confirmation write | **Shreekumar** (was Thaariha) |
 | GET | `/farms/{id}/referrals` | Referral | Tharun |
 | GET | `/officials/hotspots` · `/accuracy` · `/queue` | Dashboard | Santheesh + Shreekumar |
 
@@ -585,7 +640,16 @@ Things that must hold on every response. Each is testable and each protects a PR
 9. Case bundles contain no placeholder strings on live cases.
 10. Only confirmed diagnoses drive spread alerts and hotspot points.
 11. `is_stub: true` is surfaced whenever `VISION_MODEL=stub`, and clients must show it.
+12. A `TopK` sums to **at most 1.0**, not exactly. It is the top three of a
+    softmax over 26 classes; the other 23 hold the remainder. Asserting equality
+    would be asserting the model is certain the answer is in the top three.
+13. Only `diagnosable` targets reach the gate. An `inspection` target is never
+    image-classified — it produces risk alerts with inspection tasks, and an
+    advisory only if a human confirms it.
+14. `Farm.growth_stage` is a `stage_key` valid for that farm's crop, enforced by
+    a composite foreign key. A cotton farm holding `tillering` is not filtered
+    out; it is not storable.
 
 ---
 
-*End of contract v2.0. Frozen at hour 2. Changes after that require a team decision, not a pull request.*
+*End of contract v3.0. Frozen. Changes after that require a team decision, not a pull request.*

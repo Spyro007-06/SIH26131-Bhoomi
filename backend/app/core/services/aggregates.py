@@ -10,7 +10,7 @@ Specified by: docs/API_CONTRACT.md §15.
 -----------------------------------------------------------------------------
 Derived from Confirmation rows on read. No counter table.
 
-The Phase 1 decision, recorded in docs/DATA_MODEL_ADDENDUM.md Part A: "A
+The Phase 1 decision, now in docs/DESIGN.md §5: "A
 maintained counter can drift from its source; a query cannot." It also makes
 §15's own rule — only confirmed cases appear — structurally true rather than
 something a writer has to remember, because the aggregate IS the confirmation

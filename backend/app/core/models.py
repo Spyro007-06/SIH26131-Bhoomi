@@ -1,4 +1,4 @@
-"""ORM models — docs/DESIGN.md §5 plus docs/DATA_MODEL_ADDENDUM.md.
+"""ORM models — docs/DESIGN.md §5 (v3).
 
 OWNER: Shreekumar.
 
@@ -9,13 +9,13 @@ Eighteen tables:
   registered_use, follow_up, alert, case, confirmation, corpus_doc,
   distinguishing_cue.
 
-  Four from the addendum's Part A, required by docs/API_CONTRACT.md and absent
+  Four from docs/DESIGN.md §5, required by docs/API_CONTRACT.md and absent
   from the frozen §5: app_user, otp_request, asset, label_prior.
 
-  One from Part B4: label_reference — the per-label signature and reference
+  One added in v3: label_reference — the per-label signature and reference
   image that docs/API_CONTRACT.md §7 returns for Doubt Doctor candidates.
 
-Three added columns, Part B1-B3, accepted by Shreekumar: alert.reason,
+Three columns added in v3: alert.reason,
 registered_use.pesticide_class, confirmation.treatment.
 
 Two table names deviate from the §5 entity names because the literal names are
@@ -126,7 +126,7 @@ def _uuid_pk() -> Mapped[uuid.UUID]:
 
 
 class User(Base):
-    """Addendum A1. Forced by docs/API_CONTRACT.md §2 and §0's role claim, and
+    """docs/DESIGN.md §5. Forced by docs/API_CONTRACT.md §2 and §0's role claim, and
     by §5's own Farm.farmer_id, Case.assigned_to and Confirmation.agronomist_id,
     none of which have a table to point at in the frozen model."""
 
@@ -159,7 +159,7 @@ class User(Base):
 
 
 class OtpRequest(Base):
-    """Addendum A2. `/auth/otp/request` returns a request_id that must be
+    """docs/DESIGN.md §5. `/auth/otp/request` returns a request_id that must be
     storable, and an expires_in that forces expires_at.
 
     code_hash rather than code: an OTP table readable in plaintext is a
@@ -184,7 +184,7 @@ class OtpRequest(Base):
 
 
 class Asset(Base):
-    """Addendum A3. docs/API_CONTRACT.md §3 mints these; §5's three
+    """docs/DESIGN.md §5. docs/API_CONTRACT.md §3 mints these; §5's three
     *_asset_id columns all reference a table the frozen model never defines.
 
     object_key is the S3/MinIO key, kept separate from id so the storage layout
@@ -212,7 +212,7 @@ class Asset(Base):
 
 
 class LabelPrior(Base):
-    """Addendum A4. docs/DESIGN.md §11 step 3 describes
+    """docs/DESIGN.md §5. docs/DESIGN.md §11 step 3 describes
     prior[region][crop][stage][label] and never gives it a table. Those four
     dimensions are the composite primary key.
 
@@ -254,7 +254,7 @@ class LabelPrior(Base):
 
 
 class LabelReference(Base):
-    """Addendum B4. docs/API_CONTRACT.md §7 returns, per Doubt Doctor candidate,
+    """docs/DESIGN.md §5. docs/API_CONTRACT.md §7 returns, per Doubt Doctor candidate,
     a `signature` and an `image_url`. DistinguishingCue holds the cue that
     separates a pair, not a per-label description, and no other table held these.
 
@@ -345,7 +345,7 @@ class Farm(Base):
     filtered out, it is not storable."""
     region: Mapped[str] = mapped_column(Text, nullable=False, index=True)
     sowing_date: Mapped[date | None] = mapped_column(Date)
-    """Addendum Part C. Nullable: existing seed rows predate the column and a
+    """docs/DESIGN.md §5. Nullable: existing seed rows predate the column and a
     sowing date is not something to invent.
 
     days_after_sowing is deliberately NOT stored. It is derived on read — a

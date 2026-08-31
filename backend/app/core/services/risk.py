@@ -45,7 +45,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import MAX_ALERTS_PER_FARM_PER_DAY, RISK_ALERT_MIN_LEVEL, RISK_LEVELS
-from app.contracts.enums import AlertTrigger, Crop, TargetLabel
+from app.contracts.enums import TARGET_TIERS, AlertTrigger, Crop, TargetLabel, TargetTier
 from app.core.models import Alert, Farm, Problem
 from app.core.weather import WeatherCache, WeatherWindow
 
@@ -69,6 +69,7 @@ class RegistryError(ValueError):
 class RiskTarget:
     target: str
     crop: str
+    tier: str
     driver: str
     susceptible_stages: tuple[str, ...]
     history_bump: bool
@@ -88,6 +89,7 @@ def _validate_entry(raw: dict, index: int, errors: list[str]) -> RiskTarget | No
     where = f"entry {index}"
     target = raw.get("target")
     crop = raw.get("crop")
+    tier = raw.get("tier")
     driver = raw.get("driver")
 
     if target not in {t.value for t in TargetLabel}:
@@ -101,6 +103,22 @@ def _validate_entry(raw: dict, index: int, errors: list[str]) -> RiskTarget | No
             f"{where}: crop {crop!r} is not in the frozen crop enum "
             f"({', '.join(c.value for c in Crop)})"
         )
+    if tier not in {t.value for t in TargetTier}:
+        errors.append(
+            f"{where}: tier {tier!r} is not one of "
+            f"{sorted(t.value for t in TargetTier)}"
+        )
+    elif target in {t.value for t in TargetLabel}:
+        # The registry must AGREE with app/contracts/enums.py, not restate it.
+        # Two sources for one fact is two chances to be wrong, and the contract
+        # is the one five people read.
+        canonical = TARGET_TIERS[TargetLabel(target)].value
+        if tier != canonical:
+            errors.append(
+                f"{where}: tier {tier!r} disagrees with the contract "
+                f"({canonical!r} in app/contracts/enums.py TARGET_TIERS)"
+            )
+
     if driver not in VALID_DRIVERS:
         errors.append(f"{where}: driver {driver!r} is not one of {sorted(VALID_DRIVERS)}")
 
@@ -125,6 +143,7 @@ def _validate_entry(raw: dict, index: int, errors: list[str]) -> RiskTarget | No
     return RiskTarget(
         target=target,
         crop=crop,
+        tier=tier,
         driver=driver,
         susceptible_stages=tuple(stages),
         history_bump=bool(raw.get("history_bump", False)),
@@ -262,7 +281,8 @@ class Score:
 
 
 def days_after_sowing(farm: Farm, on: date | None = None) -> int | None:
-    """Derived, never stored. See docs/DATA_MODEL_ADDENDUM.md Part C."""
+    """Derived, never stored. docs/DESIGN.md §5: a stored integer is wrong the
+    next morning and nothing here would refresh it."""
     if farm.sowing_date is None:
         return None
     return ((on or datetime.now(UTC).date()) - farm.sowing_date).days
@@ -287,9 +307,7 @@ def score_farm_target(
     below-threshold count is only meaningful if every non-firing case is
     accounted for.
     """
-    stage = farm.growth_stage.value if hasattr(farm.growth_stage, "value") else str(
-        farm.growth_stage
-    )
+    stage = str(farm.growth_stage)
     if stage not in entry.susceptible_stages:
         return Score(
             entry.target, "low",

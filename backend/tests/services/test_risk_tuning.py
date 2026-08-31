@@ -111,6 +111,7 @@ def _entry(**overrides) -> RiskTarget:
     return RiskTarget(
         target=overrides.pop("target", "paddy_blast"),
         crop="paddy",
+        tier=overrides.pop("tier", "diagnosable"),
         driver="weather",
         susceptible_stages=overrides.pop("stages", ("tillering",)),
         history_bump=overrides.pop("history_bump", True),

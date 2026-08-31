@@ -185,7 +185,7 @@ async def seed() -> None:
         for label, farm in created:
             print(
                 f"{label:16s} {farm.sowing_date!s:12s} "
-                f"{DAYS_AFTER_SOWING[label]:4d}  {farm.growth_stage.value}"
+                f"{DAYS_AFTER_SOWING[label]:4d}  {farm.growth_stage}"
             )
 
         print(f"\n{len(created)} farms, {len(FARMERS)} farmers, {len(STAFF)} staff.")

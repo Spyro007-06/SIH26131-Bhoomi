@@ -1,7 +1,15 @@
-# CLAUDE.md — Bhoomi v2 backend
+# CLAUDE.md — Bhoomi v3 backend
 
 SIH26131 · Government of Maharashtra · early detection and management of crop
-diseases and pest infestations. 36-hour hackathon build, six people.
+diseases and pest infestations. Six people.
+
+**Scope is v3: four crops (paddy, cotton, soybean, jowar) and 26 targets.**
+Targets are namespaced by crop — `cotton_bacterial_blight`, not
+`bacterial_blight` — because the same disease name occurs in more than one crop,
+and the prefix makes a wrong-crop match unrepresentable rather than filtered.
+Each carries a `target_tier`: `diagnosable` (14, in the vision label set) or
+`inspection` (12, never image-classified). `docs/DATA_MODEL_ADDENDUM.md` is gone;
+every decision it held is folded into the three frozen documents.
 
 **Read `docs/` before writing anything.** `docs/PRD.md` (what and why),
 `docs/DESIGN.md` (how), `docs/API_CONTRACT.md` (wire format). They are frozen
@@ -65,6 +73,9 @@ there is wrong, raise it with the team — do not edit it in a pull request.
 
 - **C1** `backend/app/contracts/vision.py` — `Prediction`, `TopK` · vision → intelligence
 - **C2** `backend/app/contracts/farm.py` — `Farm`, `GeoPoint` · core → everyone
+  (v3: `growth_stage` is a `stage_key` string, not an enum — stages are rows in
+  `growth_stage` keyed (crop, stage_key), and a composite FK stops a farm holding
+  another crop's stage)
 - **C3** `backend/app/contracts/gate.py` — `GateDecision`, the six verdict strings · intelligence → clients
 - `backend/app/contracts/enums.py` — every wire enum, exact string values from API_CONTRACT §1
 
