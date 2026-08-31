@@ -37,9 +37,9 @@ STUB_MODEL_VERSION = "stub-0"
 # incapable of composing an advisory is the property worth having here.
 # ---------------------------------------------------------------------------
 STUB_DISTRIBUTION: tuple[tuple[str, float], ...] = (
-    ("blast", 0.34),
-    ("brown_spot", 0.33),
-    ("bacterial_leaf_blight", 0.33),
+    ("paddy_blast", 0.34),
+    ("paddy_brown_spot", 0.33),
+    ("paddy_bacterial_leaf_blight", 0.33),
 )
 
 

@@ -51,9 +51,9 @@ def reference_gate(topk: TopK) -> str:
 def _topk(top1: float, top2: float, top3: float = 0.0) -> TopK:
     return TopK(
         predictions=[
-            Prediction(label="blast", confidence=top1),
-            Prediction(label="brown_spot", confidence=top2),
-            Prediction(label="bacterial_leaf_blight", confidence=top3),
+            Prediction(label="paddy_blast", confidence=top1),
+            Prediction(label="paddy_brown_spot", confidence=top2),
+            Prediction(label="paddy_bacterial_leaf_blight", confidence=top3),
         ],
         out_of_scope=False,
         model_version="property-test",
@@ -104,7 +104,7 @@ def test_prior_never_changes_the_gate_outcome() -> None:
 
     for top1, top2, bias in GRID:
         before = _topk(top1, top2)
-        after = apply(before, {"blast": bias})
+        after = apply(before, {"paddy_blast": bias})
 
         outcome_before = reference_gate(before)
         outcome_after = reference_gate(after)
@@ -138,7 +138,7 @@ def test_the_cap_alone_would_not_have_been_enough() -> None:
         (top1, top2, bias)
         for top1, top2, bias in GRID
         if reference_gate(_topk(top1, top2))
-        != reference_gate(apply(_topk(top1, top2), {"blast": bias}, clamp=False))
+        != reference_gate(apply(_topk(top1, top2), {"paddy_blast": bias}, clamp=False))
     ]
     assert crossings, (
         "expected the unclamped prior to cross a band somewhere in the grid; "
@@ -150,7 +150,7 @@ def test_the_clamp_never_increases_the_bias() -> None:
     """A clamp that could raise the nudge would be a different bug."""
     for top1, top2, bias in GRID:
         before = _topk(top1, top2)
-        after = apply(before, {"blast": bias})
+        after = apply(before, {"paddy_blast": bias})
         delta = after.predictions[0].confidence - top1
         assert -1e-9 <= delta <= bias + 1e-9, f"delta {delta} outside [0, {bias}]"
 
@@ -159,7 +159,7 @@ def test_apply_preserves_the_contract_shape() -> None:
     """Still exactly 3 predictions, still descending — TopK validates both, so a
     reordering bug would raise rather than pass silently."""
     for top1, top2, bias in GRID[::97]:
-        after = apply(_topk(top1, top2), {"blast": bias})
+        after = apply(_topk(top1, top2), {"paddy_blast": bias})
         assert len(after.predictions) == 3
         confidences = [p.confidence for p in after.predictions]
         assert confidences == sorted(confidences, reverse=True)
@@ -169,7 +169,7 @@ def test_apply_leaves_other_labels_alone() -> None:
     """Only top-1 is nudged. Adjusting every candidate by its own prior would
     let history reorder the list, which is a larger claim than §11 makes."""
     before = _topk(0.80, 0.10, 0.05)
-    after = apply(before, {"brown_spot": config.PRIOR_MAX_BIAS})
+    after = apply(before, {"paddy_brown_spot": config.PRIOR_MAX_BIAS})
     assert after.predictions == before.predictions
 
 

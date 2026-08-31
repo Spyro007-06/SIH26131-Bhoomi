@@ -13,7 +13,6 @@ from datetime import date, timedelta
 import pytest
 
 from app.config import MAX_ALERTS_PER_FARM_PER_DAY, RISK_LEVELS
-from app.contracts.enums import GrowthStage
 from app.core.services.risk import RiskTarget, load_registry, score_farm_target
 from app.core.weather import DayWeather, WeatherWindow
 
@@ -110,7 +109,7 @@ def test_every_weather_rule_requires_six_consecutive_days() -> None:
 
 def _entry(**overrides) -> RiskTarget:
     return RiskTarget(
-        target=overrides.pop("target", "blast"),
+        target=overrides.pop("target", "paddy_blast"),
         crop="paddy",
         driver="weather",
         susceptible_stages=overrides.pop("stages", ("tillering",)),
@@ -123,7 +122,7 @@ def _entry(**overrides) -> RiskTarget:
 class _Farm:
     """Minimal stand-in. score_farm_target reads three attributes."""
 
-    def __init__(self, stage=GrowthStage.TILLERING, sowing_date=None):
+    def __init__(self, stage="tillering", sowing_date=None):
         self.growth_stage = stage
         self.sowing_date = sowing_date
 
@@ -143,7 +142,7 @@ def test_high_needs_both_stage_and_history() -> None:
     assert both.level == "high"
 
     history_only = score_farm_target(
-        _Farm(stage=GrowthStage.MATURITY), _entry(), window, has_history=True
+        _Farm(stage="maturity"), _entry(), window, has_history=True
     )
     assert history_only.fired is False, "a stage mismatch cannot fire on history"
     assert history_only.level == "low"

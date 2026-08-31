@@ -21,7 +21,6 @@ from app.contracts.enums import (
     Crop,
     GateOutcome,
     GateReasonCode,
-    GrowthStage,
     ProblemType,
     Role,
     TargetLabel,
@@ -31,7 +30,7 @@ from app.core.services import aggregates
 from app.core.services.confirmation import confirm_case, model_label_at_escalation
 
 
-async def _setup(session, region: str, model_says=TargetLabel.BLAST, diagnoses: int = 1):
+async def _setup(session, region: str, model_says=TargetLabel.PADDY_BLAST, diagnoses: int = 1):
     """A farm, a problem the model labelled `model_says`, and an assigned case."""
     farmer = User(role=Role.FARMER, phone=f"+9196{uuid.uuid4().int % 10**9:09d}", name="probe")
     agronomist = User(
@@ -42,7 +41,7 @@ async def _setup(session, region: str, model_says=TargetLabel.BLAST, diagnoses: 
     await session.flush()
 
     farm = Farm(
-        farmer_id=farmer.id, crop=Crop.PADDY, growth_stage=GrowthStage.TILLERING,
+        farmer_id=farmer.id, crop=Crop.PADDY, growth_stage="tillering",
         region=region, location="SRID=4326;POINT(-45.0 -30.0)",
     )
     session.add(farm)
@@ -87,16 +86,16 @@ async def test_a_correction_counts_against_the_models_label(db_session) -> None:
     inflate its accuracy with a case it had no part in.
     """
     region = f"Probe-{uuid.uuid4().hex[:8]}"
-    _, _, case, agronomist = await _setup(db_session, region, model_says=TargetLabel.BLAST)
+    _, _, case, agronomist = await _setup(db_session, region, model_says=TargetLabel.PADDY_BLAST)
 
     result = await confirm_case(
         db_session, case=case, agronomist_id=agronomist.id,
-        verdict=ConfirmationVerdict.CORRECTED, corrected_label=TargetLabel.BROWN_SPOT,
+        verdict=ConfirmationVerdict.CORRECTED, corrected_label=TargetLabel.PADDY_BROWN_SPOT,
     )
-    assert result.model_label == "blast"
+    assert result.model_label == "paddy_blast"
 
     rows = {r.label: r for r in await aggregates.accuracy(db_session)}
-    assert rows["blast"].corrected >= 1, "the correction belongs to the model's label"
+    assert rows["paddy_blast"].corrected >= 1, "the correction belongs to the model's label"
 
     # Scoped to this run: other tests and the seed share the database.
     confirmation = (
@@ -104,8 +103,8 @@ async def test_a_correction_counts_against_the_models_label(db_session) -> None:
             select(Confirmation).where(Confirmation.case_id == case.id)
         )
     ).scalar_one()
-    assert confirmation.model_label == TargetLabel.BLAST
-    assert confirmation.corrected_label == TargetLabel.BROWN_SPOT
+    assert confirmation.model_label == TargetLabel.PADDY_BLAST
+    assert confirmation.corrected_label == TargetLabel.PADDY_BROWN_SPOT
 
 
 async def test_the_prior_still_records_both_facts(db_session) -> None:
@@ -116,11 +115,11 @@ async def test_the_prior_still_records_both_facts(db_session) -> None:
         accuracy  how good is the model       -> blast wrong, brown_spot silent
     """
     region = f"Probe-{uuid.uuid4().hex[:8]}"
-    _, _, case, agronomist = await _setup(db_session, region, model_says=TargetLabel.BLAST)
+    _, _, case, agronomist = await _setup(db_session, region, model_says=TargetLabel.PADDY_BLAST)
 
     await confirm_case(
         db_session, case=case, agronomist_id=agronomist.id,
-        verdict=ConfirmationVerdict.CORRECTED, corrected_label=TargetLabel.BROWN_SPOT,
+        verdict=ConfirmationVerdict.CORRECTED, corrected_label=TargetLabel.PADDY_BROWN_SPOT,
     )
 
     priors = {
@@ -129,27 +128,27 @@ async def test_the_prior_still_records_both_facts(db_session) -> None:
             await db_session.execute(select(LabelPrior).where(LabelPrior.region == region))
         ).scalars().all()
     }
-    assert priors["blast"].corrected_count == 1, "the model was wrong about blast"
-    assert priors["blast"].confirmed_count == 0
-    assert priors["brown_spot"].confirmed_count == 1, "brown_spot was what it actually was"
-    assert priors["brown_spot"].corrected_count == 0
+    assert priors["paddy_blast"].corrected_count == 1, "the model was wrong about blast"
+    assert priors["paddy_blast"].confirmed_count == 0
+    assert priors["paddy_brown_spot"].confirmed_count == 1, "brown_spot was what it actually was"
+    assert priors["paddy_brown_spot"].corrected_count == 0
 
 
 async def test_a_confirmation_counts_for_the_models_label(db_session) -> None:
     """The control. A confirmed verdict credits the label the model predicted."""
     region = f"Probe-{uuid.uuid4().hex[:8]}"
     _, _, case, agronomist = await _setup(
-        db_session, region, model_says=TargetLabel.YELLOW_STEM_BORER
+        db_session, region, model_says=TargetLabel.PADDY_YELLOW_STEM_BORER
     )
 
     result = await confirm_case(
         db_session, case=case, agronomist_id=agronomist.id,
         verdict=ConfirmationVerdict.CONFIRMED,
     )
-    assert result.model_label == "yellow_stem_borer"
+    assert result.model_label == "paddy_yellow_stem_borer"
 
     rows = {r.label: r for r in await aggregates.accuracy(db_session)}
-    assert rows["yellow_stem_borer"].confirmed >= 1
+    assert rows["paddy_yellow_stem_borer"].confirmed >= 1
 
 
 # ===========================================================================
@@ -165,27 +164,27 @@ async def test_model_label_survives_the_problem_label_being_overwritten(
     written down at the time."""
     region = f"Probe-{uuid.uuid4().hex[:8]}"
     _, problem, case, agronomist = await _setup(
-        db_session, region, model_says=TargetLabel.BLAST
+        db_session, region, model_says=TargetLabel.PADDY_BLAST
     )
 
     result = await confirm_case(
         db_session, case=case, agronomist_id=agronomist.id,
         verdict=ConfirmationVerdict.CORRECTED,
-        corrected_label=TargetLabel.BACTERIAL_LEAF_BLIGHT,
+        corrected_label=TargetLabel.PADDY_BACTERIAL_LEAF_BLIGHT,
     )
 
-    assert problem.label == TargetLabel.BACTERIAL_LEAF_BLIGHT, "case file says what it was"
-    assert result.confirmation.model_label == TargetLabel.BLAST, "and what the model said"
+    assert problem.label == TargetLabel.PADDY_BACTERIAL_LEAF_BLIGHT, "case file says what it was"
+    assert result.confirmation.model_label == TargetLabel.PADDY_BLAST, "and what the model said"
 
 
 async def test_model_label_is_read_from_the_diagnosis_current_at_escalation(
     db_session,
 ) -> None:
     region = f"Probe-{uuid.uuid4().hex[:8]}"
-    _, problem, case, _ = await _setup(db_session, region, model_says=TargetLabel.BROWN_SPOT)
+    _, problem, case, _ = await _setup(db_session, region, model_says=TargetLabel.PADDY_BROWN_SPOT)
 
     found = await model_label_at_escalation(db_session, problem.id, case.created_at)
-    assert found == "brown_spot"
+    assert found == "paddy_brown_spot"
 
 
 async def test_model_label_is_null_when_the_problem_never_had_a_diagnosis(
@@ -208,7 +207,7 @@ async def test_rows_with_no_model_label_are_excluded_from_accuracy(db_session) -
     """A case the model never saw is not evidence about the model."""
     region = f"Probe-{uuid.uuid4().hex[:8]}"
     _, _, case, agronomist = await _setup(
-        db_session, region, model_says=TargetLabel.BROWN_PLANTHOPPER, diagnoses=0
+        db_session, region, model_says=TargetLabel.PADDY_BROWN_PLANTHOPPER, diagnoses=0
     )
 
     before = {r.label: (r.confirmed, r.corrected) for r in await aggregates.accuracy(db_session)}
@@ -218,7 +217,7 @@ async def test_rows_with_no_model_label_are_excluded_from_accuracy(db_session) -
     )
     after = {r.label: (r.confirmed, r.corrected) for r in await aggregates.accuracy(db_session)}
 
-    assert after.get("brown_planthopper") == before.get("brown_planthopper"), (
+    assert after.get("paddy_brown_planthopper") == before.get("paddy_brown_planthopper"), (
         "a confirmation with no model_label must not move any accuracy row"
     )
 

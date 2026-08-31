@@ -42,7 +42,6 @@ from app.contracts.enums import (
     Crop,
     GateOutcome,
     GateReasonCode,
-    GrowthStage,
     ProblemType,
     Role,
     TargetLabel,
@@ -75,7 +74,7 @@ async def _farm(session, coords, crop=Crop.PADDY, region="Probe") -> Farm:
     await session.flush()
     lat, lng = coords
     farm = Farm(
-        farmer_id=farmer.id, crop=crop, growth_stage=GrowthStage.TILLERING,
+        farmer_id=farmer.id, crop=crop, growth_stage="tillering",
         region=region, location=f"SRID=4326;POINT({lng} {lat})",
     )
     session.add(farm)
@@ -83,7 +82,7 @@ async def _farm(session, coords, crop=Crop.PADDY, region="Probe") -> Farm:
     return farm
 
 
-async def _problem(session, farm, label=TargetLabel.BLAST) -> Problem:
+async def _problem(session, farm, label=TargetLabel.PADDY_BLAST) -> Problem:
     problem = Problem(farm_id=farm.id, problem_type=ProblemType.DISEASE, label=label)
     session.add(problem)
     await session.flush()
@@ -93,7 +92,7 @@ async def _problem(session, farm, label=TargetLabel.BLAST) -> Problem:
 async def _diagnosed(session, problem) -> Diagnosis:
     diagnosis = Diagnosis(
         problem_id=problem.id,
-        topk={"predictions": [{"label": "blast", "confidence": 0.58}]},
+        topk={"predictions": [{"label": "paddy_blast", "confidence": 0.58}]},
         gate_outcome=GateOutcome.CLARIFY, gate_confidence=0.58,
         reason_code=GateReasonCode.AMBIGUOUS, model_version="probe", is_stub=False,
     )
@@ -189,8 +188,8 @@ async def test_a_confirmation_does_contribute_a_hotspot_point(db_session) -> Non
     )
 
     points, totals = await aggregates.hotspots(db_session, region="Probe-Confirmed")
-    assert any(p.label == "blast" and p.confirmed_count >= 1 for p in points)
-    assert totals.get("blast", 0) >= 1
+    assert any(p.label == "paddy_blast" and p.confirmed_count >= 1 for p in points)
+    assert totals.get("paddy_blast", 0) >= 1
 
 
 # ===========================================================================
@@ -217,7 +216,7 @@ async def test_propagate_issues_one_alert_per_neighbour(db_session) -> None:
     near = await _farm(db_session, offset(base, NEAR_OFFSET))
     await _farm(db_session, offset(base, FAR_OFFSET))
 
-    report = await propagate(db_session, origin, TargetLabel.BLAST)
+    report = await propagate(db_session, origin, TargetLabel.PADDY_BLAST)
     assert (report.neighbours, report.issued, report.upgraded) == (1, 1, 0)
     assert report.total == 1
     assert report.farm_ids == [near.id]
@@ -243,7 +242,7 @@ async def test_an_existing_same_day_alert_is_upgraded_not_skipped(db_session) ->
     near = await _farm(db_session, offset(base, NEAR_OFFSET))
 
     existing = Alert(
-        farm_id=near.id, trigger_type=AlertTrigger.WEATHER, target=TargetLabel.BLAST,
+        farm_id=near.id, trigger_type=AlertTrigger.WEATHER, target=TargetLabel.PADDY_BLAST,
         risk_level="moderate", reason="Humidity stayed above 90% for 4 consecutive days.",
         inspection_tasks=["Walk a diagonal line and check ten upper leaves today."],
         outcome="nothing_found",
@@ -251,7 +250,7 @@ async def test_an_existing_same_day_alert_is_upgraded_not_skipped(db_session) ->
     db_session.add(existing)
     await db_session.flush()
 
-    report = await propagate(db_session, origin, TargetLabel.BLAST)
+    report = await propagate(db_session, origin, TargetLabel.PADDY_BLAST)
     assert (report.issued, report.upgraded) == (0, 1)
     assert report.total == 1, "an upgraded card still warns a farm"
 
@@ -271,20 +270,20 @@ async def test_upgrading_twice_does_not_duplicate_the_reason(db_session) -> None
     near = await _farm(db_session, offset(base, NEAR_OFFSET))
     db_session.add(
         Alert(
-            farm_id=near.id, trigger_type=AlertTrigger.WEATHER, target=TargetLabel.BLAST,
+            farm_id=near.id, trigger_type=AlertTrigger.WEATHER, target=TargetLabel.PADDY_BLAST,
             risk_level="low", reason="Weather window.",
             inspection_tasks=["Walk a diagonal line and check ten leaves today."],
         )
     )
     await db_session.flush()
 
-    await propagate(db_session, origin, TargetLabel.BLAST)
+    await propagate(db_session, origin, TargetLabel.PADDY_BLAST)
     alert = (
         await db_session.execute(select(Alert).where(Alert.farm_id == near.id))
     ).scalar_one()
     once = alert.reason
 
-    await propagate(db_session, origin, TargetLabel.BLAST)
+    await propagate(db_session, origin, TargetLabel.PADDY_BLAST)
     await db_session.refresh(alert)
     assert alert.reason == once, "the spread clause is appended once, not per call"
 
@@ -298,17 +297,17 @@ async def test_confirmation_moves_both_prior_counters_on_a_correction(db_session
     """docs/DESIGN.md §11. The model's label was wrong AND the corrected label
     was right; recording only one would flatter the model in F15."""
     farm = await _farm(db_session, isolated_base(), region="Probe-Correction")
-    problem = await _problem(db_session, farm, label=TargetLabel.BLAST)
+    problem = await _problem(db_session, farm, label=TargetLabel.PADDY_BLAST)
     agronomist = await _agronomist(db_session)
     case = await _case(db_session, problem, agronomist)
 
     result = await confirm_case(
         db_session, case=case, agronomist_id=agronomist.id,
-        verdict=ConfirmationVerdict.CORRECTED, corrected_label=TargetLabel.BROWN_SPOT,
+        verdict=ConfirmationVerdict.CORRECTED, corrected_label=TargetLabel.PADDY_BROWN_SPOT,
     )
 
-    assert result.label_before == "blast"
-    assert result.label_after == "brown_spot", "the case file says what it actually was"
+    assert result.label_before == "paddy_blast"
+    assert result.label_after == "paddy_brown_spot", "the case file says what it actually was"
 
     rows = {
         (r.label.value if hasattr(r.label, "value") else r.label): r
@@ -318,8 +317,8 @@ async def test_confirmation_moves_both_prior_counters_on_a_correction(db_session
             )
         ).scalars().all()
     }
-    assert rows["blast"].corrected_count >= 1
-    assert rows["brown_spot"].confirmed_count >= 1
+    assert rows["paddy_blast"].corrected_count >= 1
+    assert rows["paddy_brown_spot"].confirmed_count >= 1
 
 
 async def test_confirmation_resolves_the_problem_and_the_case(db_session) -> None:
@@ -346,7 +345,7 @@ async def test_confirmation_resolves_the_problem_and_the_case(db_session) -> Non
 def test_accuracy_is_none_not_zero_when_nothing_reviewed() -> None:
     """A label nobody has reviewed has undefined accuracy. Rendering 0.0 would
     put a bar at the bottom of the chart implying the model is always wrong."""
-    assert aggregates.AccuracyRow(label="blast", confirmed=0, corrected=0).accuracy is None
+    assert aggregates.AccuracyRow(label="paddy_blast", confirmed=0, corrected=0).accuracy is None
 
 
 @pytest.mark.parametrize(
@@ -354,7 +353,7 @@ def test_accuracy_is_none_not_zero_when_nothing_reviewed() -> None:
     [(12, 3, 0.8), (5, 6, 0.45), (1, 0, 1.0), (0, 4, 0.0)],
 )
 def test_accuracy_ratio(confirmed, corrected, expected) -> None:
-    row = aggregates.AccuracyRow(label="blast", confirmed=confirmed, corrected=corrected)
+    row = aggregates.AccuracyRow(label="paddy_blast", confirmed=confirmed, corrected=corrected)
     assert row.accuracy == expected
 
 

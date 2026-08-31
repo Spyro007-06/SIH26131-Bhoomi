@@ -166,13 +166,31 @@ def test_enum_wire_values_match_the_contract() -> None:
     breaks the Flutter app and the portal at the same time."""
     assert [r.value for r in enums.Role] == ["farmer", "agronomist", "official"]
     assert [o.value for o in enums.GateOutcome] == ["advise", "clarify", "escalate"]
-    assert [t.value for t in enums.TargetLabel] == [
-        "blast",
-        "brown_spot",
-        "bacterial_leaf_blight",
-        "yellow_stem_borer",
-        "brown_planthopper",
+    assert [c.value for c in enums.Crop] == ["paddy", "cotton", "soybean", "jowar"]
+
+    # 26 targets, namespaced by crop. The prefix is not decoration: bacterial
+    # blight exists in cotton AND soybean, anthracnose in soybean AND jowar, and
+    # unprefixed those would be one value two crops could both hold.
+    labels = [t.value for t in enums.TargetLabel]
+    assert len(labels) == 26
+    assert labels[:5] == [
+        "paddy_blast",
+        "paddy_brown_spot",
+        "paddy_bacterial_leaf_blight",
+        "paddy_yellow_stem_borer",
+        "paddy_brown_planthopper",
     ]
+    for label in labels:
+        assert label.split("_", 1)[0] in {c.value for c in enums.Crop}, (
+            f"{label} is not namespaced by a known crop"
+        )
+    assert {"cotton_bacterial_blight", "soybean_bacterial_blight"} <= set(labels)
+    assert {"soybean_anthracnose", "jowar_anthracnose"} <= set(labels)
+
+    assert [t.value for t in enums.TargetTier] == ["diagnosable", "inspection"]
+    assert set(enums.TARGET_TIERS) == set(enums.TargetLabel), "every target needs a tier"
+    assert len(enums.DIAGNOSABLE_TARGETS) == 14
+    assert len(enums.INSPECTION_TARGETS) == 12
     assert [t.value for t in enums.LadderTier] == ["cultural", "biological", "chemical"]
     assert enums.LADDER_TIER_ORDER[-1] is enums.LadderTier.CHEMICAL
 

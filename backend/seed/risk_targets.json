@@ -1,6 +1,6 @@
 [
   {
-    "target": "blast",
+    "target": "paddy_blast",
     "crop": "paddy",
     "driver": "weather",
     "weather_rule": {
@@ -19,7 +19,7 @@
     "note": "Leaf blast favours long leaf-wetness at moderate temperature. docs/PRD.md section 6 uses this rule as the demo trigger."
   },
   {
-    "target": "brown_spot",
+    "target": "paddy_brown_spot",
     "crop": "paddy",
     "driver": "weather",
     "weather_rule": {
@@ -38,7 +38,7 @@
     "note": "Associated with stressed and nutrient-poor crops, so the history bump matters more here than for blast."
   },
   {
-    "target": "bacterial_leaf_blight",
+    "target": "paddy_bacterial_leaf_blight",
     "crop": "paddy",
     "driver": "weather",
     "weather_rule": {
@@ -56,7 +56,7 @@
     "note": "Spreads on wind-driven rain; a short wet window is enough."
   },
   {
-    "target": "yellow_stem_borer",
+    "target": "paddy_yellow_stem_borer",
     "crop": "paddy",
     "driver": "phenology",
     "phenology_rule": {
@@ -72,7 +72,7 @@
     "note": "Dead-heart damage tracks crop age rather than the weather window, which is why this entry is phenology-driven."
   },
   {
-    "target": "brown_planthopper",
+    "target": "paddy_brown_planthopper",
     "crop": "paddy",
     "driver": "weather+phenology",
     "weather_rule": {
