@@ -18,7 +18,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.contracts.enums import Crop, GrowthStage
+from app.contracts.enums import Crop, GrowthStageKey
 
 SRID = 4326
 """WGS84. The only SRID in this system. docs/DESIGN.md §5."""
@@ -39,7 +39,13 @@ class Farm(BaseModel):
     farmer_id: uuid.UUID
     crop: Crop
     variety: str | None = None
-    growth_stage: GrowthStage
+    growth_stage: GrowthStageKey
+    """A `stage_key` from the `growth_stage` table, valid for THIS farm's crop.
+
+    Was a `GrowthStage` enum in v2, which was paddy-specific. The (crop,
+    stage_key) pair is constrained by a composite foreign key at the database,
+    so a cotton farm cannot hold `tillering` — that is not filtered, it is not
+    storable. docs/DESIGN.md §5 (v3)."""
     region: str
     location: GeoPoint = Field(description="Required. NOT NULL in the schema.")
     created_at: datetime

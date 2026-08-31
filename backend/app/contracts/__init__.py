@@ -12,6 +12,7 @@ the team rather than editing the file.
 """
 
 from app.contracts.enums import (
+    TARGET_TIERS,
     AlertOutcome,
     AlertTrigger,
     AssetKind,
@@ -22,7 +23,7 @@ from app.contracts.enums import (
     FollowupResponse,
     GateOutcome,
     GateReasonCode,
-    GrowthStage,
+    GrowthStageKey,
     LadderTier,
     Lang,
     ProblemSeverity,
@@ -30,6 +31,7 @@ from app.contracts.enums import (
     ProblemType,
     Role,
     TargetLabel,
+    TargetTier,
     VerdictCode,
 )
 from app.contracts.farm import SRID, Farm, GeoPoint
@@ -59,7 +61,7 @@ __all__ = [
     "GateOutcome",
     "GateReasonCode",
     "GeoPoint",
-    "GrowthStage",
+    "GrowthStageKey",
     "LadderTier",
     "Lang",
     "Prediction",
@@ -67,7 +69,9 @@ __all__ = [
     "ProblemStatus",
     "ProblemType",
     "Role",
+    "TARGET_TIERS",
     "TargetLabel",
+    "TargetTier",
     "TopK",
     "VerdictCode",
     "phi_conflict_message",
