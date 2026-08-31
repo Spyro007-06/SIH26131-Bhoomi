@@ -27,7 +27,6 @@ from app.config import (
     SARVAM_TTS_MODEL,
     settings,
 )
-from app.contracts.enums import GrowthStage
 
 log = logging.getLogger("bhoomi.voice")
 
@@ -116,7 +115,12 @@ class StubSpeechToText:
             text=_STUB_TRANSCRIPT_TEXT,
             confidence=ASR_FLOOR * 0.5,
             lang=lang,
-            parsed_intent=ParsedIntent(field="growth_stage", value=GrowthStage.TILLERING.value),
+            # "tillering" is a stage_key, not an enum member (v3: growth stages
+            # are rows in the growth_stage table, contracts/farm.py). It's the
+            # paddy value the v2 GrowthStage enum used to carry here, fixed and
+            # deterministic like the rest of this stub -- not read from a crop,
+            # since the stub never sees one.
+            parsed_intent=ParsedIntent(field="growth_stage", value="tillering"),
             needs_confirmation=False,
             is_stub=True,
         )

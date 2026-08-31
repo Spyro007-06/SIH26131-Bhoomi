@@ -21,8 +21,8 @@ ENGLISH_EQUIVALENT = "my paddy has blast disease"
 def test_marathi_and_english_equivalent_overlap_on_the_glossary_term() -> None:
     marathi_result = to_embedding_text(MARATHI_TEXT, "mr-IN")
     english_result = to_embedding_text(ENGLISH_EQUIVALENT, "en-IN")
-    assert "blast" in marathi_result.split()
-    assert "blast" in english_result.split()
+    assert "paddy_blast" in marathi_result.split()
+    assert "paddy_blast" in english_result.split()
 
 
 def test_non_glossary_devanagari_token_is_never_mangled() -> None:
@@ -32,7 +32,7 @@ def test_non_glossary_devanagari_token_is_never_mangled() -> None:
 
 def test_english_input_is_normalised() -> None:
     result = to_embedding_text("Blast Disease", "en-IN")
-    assert result == "blast disease"
+    assert result == "paddy_blast disease"
 
 
 @pytest.mark.parametrize("degenerate_input", ["", "   ", "\n\t"])
