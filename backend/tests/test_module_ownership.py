@@ -63,9 +63,6 @@ NOT_YET_IMPLEMENTED = [
     ("app.intelligence.verdict", "verdict", (None, "paddy", "paddy_blast", None, None)),
     ("app.intelligence.bundle", "compile_bundle", (None, None, None, [], [], [], [])),
     ("app.vision.ocr", "extract_label", (b"x",)),
-    ("app.voice.asr", "transcribe", ("a_1", "mr-IN", "query")),
-    ("app.voice.tts", "synthesize", ("text", "mr-IN")),
-    ("app.voice.embedding_text", "to_embedding_text", ("text", "mr-IN")),
 ]
 
 
