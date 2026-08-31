@@ -16,7 +16,6 @@ from sqlalchemy import text
 from app.contracts.enums import (
     Crop,
     FollowupResponse,
-    GrowthStage,
     ProblemSeverity,
     ProblemType,
     Role,
@@ -32,14 +31,14 @@ async def _problem(session, severity=ProblemSeverity.EARLY) -> Problem:
     session.add(farmer)
     await session.flush()
     farm = Farm(
-        farmer_id=farmer.id, crop=Crop.PADDY, growth_stage=GrowthStage.TILLERING,
+        farmer_id=farmer.id, crop=Crop.PADDY, growth_stage="tillering",
         region="Nashik", location="SRID=4326;POINT(73.7898 19.9975)",
     )
     session.add(farm)
     await session.flush()
     problem = Problem(
         farm_id=farm.id, problem_type=ProblemType.DISEASE,
-        label=TargetLabel.BLAST, severity=severity,
+        label=TargetLabel.PADDY_BLAST, severity=severity,
     )
     session.add(problem)
     await session.flush()

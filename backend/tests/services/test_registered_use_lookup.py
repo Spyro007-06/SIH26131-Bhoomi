@@ -20,7 +20,7 @@ async def _insert(session, **overrides) -> RegisteredUse:
     row = RegisteredUse(
         active_ingredient=overrides.pop("active_ingredient", "carbendazim"),
         crop=overrides.pop("crop", "paddy"),
-        target=overrides.pop("target", "blast"),
+        target=overrides.pop("target", "paddy_blast"),
         pesticide_class=overrides.pop("pesticide_class", "fungicide"),
         dosage_text=overrides.pop("dosage_text", "0.6 g per litre"),
         phi_days=overrides.pop("phi_days", 30),
@@ -118,11 +118,11 @@ async def test_returns_every_target_for_the_ingredient(db_session) -> None:
     """The verdict logic needs the full set to tell NOT_IN_RECORDS (no rows at
     all) from NOT_REGISTERED_FOR_TARGET (rows exist, none for this target).
     Filtering by target in SQL would collapse the two."""
-    await _insert(db_session, target="blast")
-    await _insert(db_session, target="brown_spot")
+    await _insert(db_session, target="paddy_blast")
+    await _insert(db_session, target="paddy_brown_spot")
 
     rows = await lookup(db_session, "carbendazim", "paddy")
-    assert {r.target for r in rows} == {"blast", "brown_spot"}
+    assert {r.target for r in rows} == {"paddy_blast", "paddy_brown_spot"}
 
 
 async def test_row_is_detached_from_the_orm(db_session) -> None:
