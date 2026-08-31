@@ -24,7 +24,7 @@ def test_torn_fixture_goes_to_doubt_doctor() -> None:
     assert decision.outcome == "clarify"
     assert decision.reason_code == "AMBIGUOUS"
     competing = {p.label for p in decision.alternatives[:2]}
-    assert competing == {"blast", "brown_spot"}
+    assert competing == {"paddy_blast", "paddy_brown_spot"}
 
 
 def test_low_confidence_fixture_escalates() -> None:
@@ -34,7 +34,10 @@ def test_low_confidence_fixture_escalates() -> None:
 
 
 def test_out_of_scope_fixture_escalates_regardless_of_confidence() -> None:
-    """0.91 is well above GATE — the out-of-scope check must still win."""
+    """The out-of-scope flag must win even when top-1 clears the gate on its
+    own -- this fixture's distribution is flat and low (v3: a bounded model
+    cannot emit a confident label for a target outside the set), but the check
+    is on `out_of_scope`, never on the confidence numbers."""
     decision = decide(_FIXTURES["out_of_scope"], None)
     assert decision.outcome == "escalate"
     assert decision.reason_code == "OUT_OF_SCOPE"
