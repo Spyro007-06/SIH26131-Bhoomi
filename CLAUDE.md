@@ -162,6 +162,16 @@ before they can start, which is worse than an empty file.
 per module, and it must be the docstring. When you implement a module you own,
 drop it from that test's coverage in the same commit.
 
+### 8. Commit after every change, however small
+
+One logical change = one commit = one push. Not batched at the end of a task.
+Not "I'll commit once the tests pass." Fixing a comment is a commit. Changing
+one number is a commit. Adding one test is a commit. Every version must be
+recorded and independently revertible.
+
+Before each push: `git fetch && git rebase origin/main`, re-run pytest. Never
+commit `backend/.env`.
+
 ---
 
 ## Layout — three stacks

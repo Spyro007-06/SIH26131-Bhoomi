@@ -26,6 +26,7 @@ from app.core.schemas.alerts import (
     AlertRespondIn,
     AlertRespondOut,
 )
+from app.core.services import alerts as alerts_service
 from app.db import get_session
 from app.deps import Principal, current_principal
 from app.errors import Forbidden, NotFound
@@ -112,21 +113,30 @@ async def respond_to_alert(
 ) -> AlertRespondOut:
     """Record what the farmer found. This is what makes the card dismissible.
 
-    `found` returns `diagnose_suggested: true` — the farmer has a photo of
-    something and the next step is the gated diagnose path, not a treatment
-    recommendation from this endpoint. F5 tells you where to look; it does not
-    tell you what you found.
+    `found` on a diagnosable target returns `diagnose_suggested: true` — the
+    farmer has a photo of something and the next step is the gated diagnose
+    path, not a treatment recommendation from this endpoint. F5 tells you
+    where to look; it does not tell you what you found.
+
+    `found` on an inspection-tier target has no diagnose path: the target's
+    own definition is that a photograph cannot settle it. That case opens a
+    Problem and escalates directly — `escalated: true`, `case_id` set — same
+    as §11's FollowUpRespondOut does for a `got_worse` answer.
     """
     alert = await session.get(Alert, alert_id)
     if alert is None:
         raise NotFound("That alert does not exist.")
     await _owned_farm(alert.farm_id, principal, session)
 
-    alert.outcome = payload.outcome
+    diagnose_suggested, case_id = await alerts_service.record_response(
+        session, alert, payload.outcome
+    )
     await session.commit()
 
     return AlertRespondOut(
         alert_id=alert.id,
         outcome=payload.outcome,
-        diagnose_suggested=payload.outcome == AlertOutcome.FOUND,
+        diagnose_suggested=diagnose_suggested,
+        escalated=case_id is not None,
+        case_id=case_id,
     )

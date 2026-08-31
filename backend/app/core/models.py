@@ -2,7 +2,7 @@
 
 OWNER: Shreekumar.
 
-Eighteen tables:
+Nineteen tables:
 
   Thirteen from docs/DESIGN.md §5, transcribed with the exact column names in
   that section: farm, problem, diagnosis, observation, advisory, label_check,
@@ -14,6 +14,10 @@ Eighteen tables:
 
   One added in v3: label_reference — the per-label signature and reference
   image that docs/API_CONTRACT.md §7 returns for Doubt Doctor candidates.
+
+  One added in migration 0010: corpus_document — the stable per-document
+  identity that corpus_doc.doc_id and distinguishing_cue.doc_id both FK to,
+  fixing a dangling-pointer bug (see the class docstring below).
 
 Three columns added in v3: alert.reason,
 registered_use.pesticide_class, confirmation.treatment.
@@ -554,7 +558,28 @@ class RegisteredUse(Base):
 
     pesticide_class is addendum B2: docs/DESIGN.md §9 defines a WRONG_CLASS
     verdict ("This is a fungicide. Your problem is an insect pest.") which is
-    underivable without it. The seed CSV already carried the column."""
+    underivable without it. The seed CSV already carried the column.
+
+    reentry_hours is nullable (migration 0011) -- CIB&RC major-use tables and
+    PPQS labels frequently state a PHI without stating a re-entry period at
+    all, and the loader used to refuse the whole row for that omission. A row
+    the source itself is silent on should say so (NULL), not be discarded
+    outright: for_advisory() (services/registered_use.py) is what excludes an
+    incomplete row from a chemical rung, and it can only do that if the row
+    exists to be excluded. A wrong re-entry number is never invented to fill
+    the gap -- re-entry is jurisdiction-specific and a wrong number is a real
+    exposure.
+
+    source_dated (migration 0011) is the date of the SOURCE DOCUMENT itself --
+    distinct from last_verified, which is the date someone last checked it.
+    "We read it today" and "it was published in 2012" are different facts;
+    conflating them is how a farmer reads a CIB&RC table from 2012 as current
+    in 2026. Both are required by the loader.
+
+    restriction_note (migration 0011) records a sub-national or non-CIB&RC
+    restriction on an ingredient that is still nationally registered -- e.g. a
+    state agriculture department's crop-specific order -- so the row stays
+    (it is not a ban) but the caution is visible rather than silent."""
 
     __tablename__ = "registered_use"
 
@@ -567,9 +592,11 @@ class RegisteredUse(Base):
     pesticide_class: Mapped[str] = mapped_column(Text, nullable=False)
     dosage_text: Mapped[str] = mapped_column(Text, nullable=False)
     phi_days: Mapped[int] = mapped_column(Integer, nullable=False)
-    reentry_hours: Mapped[int] = mapped_column(Integer, nullable=False)
+    reentry_hours: Mapped[int | None] = mapped_column(Integer)
     source: Mapped[str] = mapped_column(Text, nullable=False)
+    source_dated: Mapped[datetime] = mapped_column(Date, nullable=False)
     last_verified: Mapped[datetime | None] = mapped_column(Date)
+    restriction_note: Mapped[str | None] = mapped_column(Text)
 
     __table_args__ = (
         CheckConstraint(
@@ -764,28 +791,85 @@ class Confirmation(Base):
     )
 
 
+class CorpusDocument(Base):
+    """docs/DESIGN.md §5, §7 (v3 addendum). One stable row per manifest
+    doc_id — added in migration 0010.
+
+    corpus_doc.doc_id (the manifest slug) is not itself unique: it repeats
+    across every section-chunk of a document and again across a two-target
+    file's second target, so it cannot be an FK target directly. This table
+    is the thing that IS unique per document. The loader upserts a row here
+    once, before it ever deletes/reinserts corpus_doc chunks for that
+    document, and never deletes it on reload.
+
+    This exists to fix a dangling-pointer bug: distinguishing_cue.doc_id used
+    to FK to corpus_doc.id, the per-chunk surrogate key that migration 0009's
+    delete-then-reinsert idempotency regenerates on every corpus reload —
+    orphaning every cue, not just the first one authored, and F4 escalates
+    silently rather than erroring on a missing cue. corpus_doc.doc_id and
+    distinguishing_cue.doc_id both FK to this table now, so a cue's reference
+    survives every future reload of the chunks underneath it."""
+
+    __tablename__ = "corpus_document"
+
+    doc_id: Mapped[str] = mapped_column(Text, primary_key=True)
+
+
 class CorpusDoc(Base):
     """docs/DESIGN.md §5 and §8. Retrieval filters by crop and target, so a
     chunk missing either is invisible to the pipeline.
 
     The HNSW index for cosine distance is created by hand in the migration; the
-    vector operator class is not expressible in plain Index() metadata."""
+    vector operator class is not expressible in plain Index() metadata.
+
+    doc_id and authoritative added in migration 0009 for the corpus loader
+    (scripts/load_corpus.py):
+
+    doc_id is the manifest's stable slug for the SOURCE DOCUMENT (e.g.
+    "cotton_bollworm_complex"), distinct from `id`, which identifies one CHUNK.
+    One document produces several chunks (one per markdown section) and, for
+    the two-target files the manifest itself notes, the same doc_id appears
+    again under a second target. The loader's idempotency is delete-then-
+    reinsert per (doc_id, target) rather than a per-chunk upsert, because
+    section chunking can change the chunk count between runs — there is no
+    stable per-chunk key to upsert against, but the (doc_id, target) group is
+    stable. Since migration 0010, doc_id also FKs to corpus_document —
+    see that class for why.
+
+    authoritative is false on a chunk sourced from a document's Chemical
+    Management section. Every delivered document carries one, written from
+    training knowledge and flagged by the manifest itself as unverified against
+    any registration table. The corpus text stays available as background
+    reading; the retrieval path that composes a chemical rung
+    (app/core/services/registered_use.py, for_advisory()) must filter this
+    flag out before it ever reaches composition — a citation attached to an
+    unverified dosage is more dangerous than no citation, because it looks
+    checked."""
 
     __tablename__ = "corpus_doc"
 
     id: Mapped[uuid.UUID] = _uuid_pk()
+    doc_id: Mapped[str] = mapped_column(
+        Text, ForeignKey("corpus_document.doc_id"), nullable=False
+    )
     title: Mapped[str] = mapped_column(Text, nullable=False)
     source: Mapped[str] = mapped_column(Text, nullable=False)
     reviewed_on: Mapped[datetime | None] = mapped_column(Date)
     target: Mapped[TargetLabel | None] = mapped_column(pg_enum(TargetLabel, "target_label"))
     crop: Mapped[Crop | None] = mapped_column(pg_enum(Crop, "crop"))
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    authoritative: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1024))
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMPTZ, nullable=False, server_default=func.now()
     )
 
-    __table_args__ = (Index("ix_corpus_doc_crop_target", "crop", "target"),)
+    __table_args__ = (
+        Index("ix_corpus_doc_crop_target", "crop", "target"),
+        Index("ix_corpus_doc_doc_id_target", "doc_id", "target"),
+    )
 
 
 class DistinguishingCue(Base):
@@ -793,7 +877,14 @@ class DistinguishingCue(Base):
 
     Cues are retrieved, not generated: question_text is authored alongside the
     corpus. An LLM composing a differential diagnostic question at runtime is
-    exactly the fabrication risk the product exists to avoid."""
+    exactly the fabrication risk the product exists to avoid.
+
+    doc_id FKs to corpus_document (migration 0010), the manifest's stable
+    per-document slug — not corpus_doc.id, the per-chunk surrogate key that
+    gets regenerated on every corpus reload. See CorpusDocument's docstring
+    for why: a cue pointing at a chunk id orphans on the next reload, not
+    just the first one, and F4 escalates silently rather than erroring on a
+    missing cue."""
 
     __tablename__ = "distinguishing_cue"
 
@@ -804,8 +895,8 @@ class DistinguishingCue(Base):
     answer_yes_implies: Mapped[TargetLabel] = mapped_column(
         pg_enum(TargetLabel, "target_label"), nullable=False
     )
-    doc_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("corpus_doc.id", ondelete="SET NULL")
+    doc_id: Mapped[str | None] = mapped_column(
+        Text, ForeignKey("corpus_document.doc_id", ondelete="SET NULL")
     )
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMPTZ, nullable=False, server_default=func.now()

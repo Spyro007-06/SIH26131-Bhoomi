@@ -42,6 +42,16 @@ class AlertRespondIn(BaseModel):
 
 
 class AlertRespondOut(BaseModel):
+    """docs/API_CONTRACT.md §10.
+
+    escalated / case_id added for the inspection-tier branch: a target the
+    camera cannot settle has no diagnose path, so `found` opens a Problem and
+    escalates directly instead. Same two fields, same meaning, as §11's
+    FollowUpRespondOut — one convention for "this response sometimes also
+    opens a case," not a second one invented here."""
+
     alert_id: uuid.UUID
     outcome: AlertOutcome
     diagnose_suggested: bool
+    escalated: bool = False
+    case_id: uuid.UUID | None = None

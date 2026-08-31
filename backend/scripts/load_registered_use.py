@@ -13,18 +13,31 @@ re-running corrects rows rather than duplicating them.
 -----------------------------------------------------------------------------
 This loader VALIDATES AND REFUSES. It never coerces, defaults or guesses.
 
-A row missing pesticide_class, phi_days, source or last_verified is rejected and
-reported, not filled in. The reasoning is the advisory ladder's, from
-docs/API_CONTRACT.md §8: a chemical rung missing its PHI is omitted entirely
-rather than shipped incomplete. A half-populated row in this table is worse than
-an absent one, because this table vetoes pesticide use — an absent row yields
-NOT_IN_RECORDS ("Ask an expert before using it"), which is honest, while a row
-with a guessed phi_days yields a confident PHI verdict about a chemical going
-onto a field.
+A row missing pesticide_class, phi_days, source, source_dated or last_verified
+is rejected and reported, not filled in. The reasoning is the advisory
+ladder's, from docs/API_CONTRACT.md §8: a chemical rung missing its PHI is
+omitted entirely rather than shipped incomplete. A half-populated row in this
+table is worse than an absent one, because this table vetoes pesticide use —
+an absent row yields NOT_IN_RECORDS ("Ask an expert before using it"), which
+is honest, while a row with a guessed phi_days yields a confident PHI verdict
+about a chemical going onto a field.
+
+reentry_hours is the one exception, deliberately not in that list (migration
+0011): a source stating a PHI but silent on re-entry is common, and the row
+loads with reentry_hours = NULL rather than being refused for an omission
+that belongs to the source, not the row. services/registered_use.py's
+for_advisory() is what excludes an incomplete row from ever composing a
+chemical rung — it needs the row to exist in the table to do that.
 
 A row with no `source` is not auditable. It cannot be traced back to CIB&RC or
 the state package of practices, so it cannot be defended, so it does not belong
 in a table whose output a farmer acts on.
+
+source_dated and last_verified are different facts, both required. source_dated
+is the date the SOURCE DOCUMENT carries — a CIB&RC major-use table dated
+30.09.2012 stays dated 2012 forever. last_verified is the date someone checked
+that source still applies. Writing last_verified into a field a reader takes as
+"still current" is how a 2012 document reads as current in 2026.
 -----------------------------------------------------------------------------
 """
 
@@ -58,10 +71,18 @@ REQUIRED = (
     "pesticide_class",
     "dosage_text",
     "phi_days",
-    "reentry_hours",
     "source",
+    "source_dated",
     "last_verified",
 )
+
+# reentry_hours is deliberately absent from REQUIRED: a source that states a
+# PHI without stating a re-entry period is common (CIB&RC major-use tables
+# and PPQS labels both do this), and the row should load with
+# reentry_hours = NULL rather than be refused for an omission that is the
+# source's, not the row's. See migration 0011 and for_advisory() in
+# services/registered_use.py, which is what excludes an incomplete row from
+# a chemical rung -- it needs the row to exist in order to exclude it.
 
 
 @dataclass
@@ -83,13 +104,13 @@ def _parse_int(raw: str, field_name: str, reasons: list[str]) -> int | None:
     return value
 
 
-def _parse_date(raw: str, reasons: list[str]) -> date | None:
+def _parse_date(raw: str, field_name: str, reasons: list[str]) -> date | None:
     for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
         try:
             return datetime.strptime(raw, fmt).date()
         except ValueError:
             continue
-    reasons.append(f"last_verified is not a date ({raw!r})")
+    reasons.append(f"{field_name} is not a date ({raw!r})")
     return None
 
 
@@ -130,8 +151,15 @@ def validate(row: dict[str, str], line: int) -> tuple[dict | None, Refusal | Non
         if cleaned.get("reentry_hours")
         else None
     )
+    source_dated = (
+        _parse_date(cleaned["source_dated"], "source_dated", reasons)
+        if cleaned.get("source_dated")
+        else None
+    )
     verified = (
-        _parse_date(cleaned["last_verified"], reasons) if cleaned.get("last_verified") else None
+        _parse_date(cleaned["last_verified"], "last_verified", reasons)
+        if cleaned.get("last_verified")
+        else None
     )
 
     if reasons:
@@ -148,7 +176,9 @@ def validate(row: dict[str, str], line: int) -> tuple[dict | None, Refusal | Non
         "phi_days": phi,
         "reentry_hours": reentry,
         "source": cleaned["source"],
+        "source_dated": source_dated,
         "last_verified": verified,
+        "restriction_note": cleaned.get("restriction_note") or None,
     }, None
 
 

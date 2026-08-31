@@ -255,8 +255,17 @@ Confirmation(id, case_id, problem_id, agronomist_id,
     --   against the label the model never predicted — the inverse of the truth.
     -- treatment is what the agronomist instructed, distinct from notes.
 
-CorpusDoc(id, title, source, reviewed_on, target, crop,
-          content, embedding: vector(1024))
+CorpusDoc(id, doc_id, title, source, reviewed_on, target, crop,
+          content, authoritative: bool, embedding: vector(1024))
+    -- doc_id (migration 0009) is the source document's stable slug, distinct
+    --   from id, which identifies one chunk. The corpus loader's idempotency
+    --   is delete-then-reinsert per (doc_id, target); id is not stable across
+    --   reloads.
+    -- authoritative (migration 0009) is false on a chunk sourced from a
+    --   Chemical Management section written from training knowledge and
+    --   flagged unverified against any registration table. A chemical rung
+    --   must never be composed from a chunk where this is false -- see the
+    --   composition-time check below.
 
 DistinguishingCue(id, cue_text, question_text, discriminates:
                   [label_a, label_b], answer_yes_implies: label,

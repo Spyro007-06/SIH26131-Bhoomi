@@ -436,8 +436,20 @@ Contract rules:
 **`POST /alerts/{id}/respond`**
 ```json
 // req  { "outcome": "found", "image_asset_id": "a_9" }
-// res  { "alert_id": "al_1", "outcome": "found", "diagnose_suggested": true }
+
+// res, diagnosable target:
+{ "alert_id": "al_1", "outcome": "found", "diagnose_suggested": true,
+  "escalated": false, "case_id": null }
+
+// res, inspection-tier target -- no diagnose path exists, so `found` opens a
+// Problem with the alert's target and escalates directly instead:
+{ "alert_id": "al_2", "outcome": "found", "diagnose_suggested": false,
+  "escalated": true, "case_id": "c_9" }
 ```
+`escalated` / `case_id` follow the same convention §11's `FollowUpRespondOut`
+already uses for "this response sometimes also opens a case" — added when
+the inspection-tier branch was built (V3 phase 3), not a new convention.
+
 Clients keep the alert card non-dismissible until this is called.
 
 ---
