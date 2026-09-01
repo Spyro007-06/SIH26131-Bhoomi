@@ -42,6 +42,12 @@ class ErrorCode(StrEnum):
     OCR_UNREADABLE = "OCR_UNREADABLE"
     PRODUCT_NOT_IN_RECORDS = "PRODUCT_NOT_IN_RECORDS"
     AGRONOMIST_UNAVAILABLE = "AGRONOMIST_UNAVAILABLE"
+    VOICE_PROVIDER_UNAVAILABLE = "VOICE_PROVIDER_UNAVAILABLE"
+    """Added S3 (voice/providers.py): a Sarvam HTTP call failed (non-200 or a
+    transport error). Distinct from AGRONOMIST_UNAVAILABLE, which carries a
+    specific escalation meaning clients may branch on — this is an unrelated
+    upstream-provider failure. docs/API_CONTRACT.md §0's stable-codes list
+    needs the same addition; flagged for whoever owns that doc edit."""
     FIXTURES_DISABLED = "FIXTURES_DISABLED"
     """The server is configured so that test fixtures are not served.
 
@@ -66,6 +72,7 @@ DEFAULT_STATUS: dict[ErrorCode, int] = {
     ErrorCode.OCR_UNREADABLE: status.HTTP_200_OK,
     ErrorCode.PRODUCT_NOT_IN_RECORDS: status.HTTP_200_OK,
     ErrorCode.AGRONOMIST_UNAVAILABLE: status.HTTP_503_SERVICE_UNAVAILABLE,
+    ErrorCode.VOICE_PROVIDER_UNAVAILABLE: status.HTTP_503_SERVICE_UNAVAILABLE,
     # 409: the request conflicts with the server's current configuration, and
     # will keep conflicting until that configuration changes. Not 403 (identity
     # is irrelevant) and not 400 (the request is well formed).
