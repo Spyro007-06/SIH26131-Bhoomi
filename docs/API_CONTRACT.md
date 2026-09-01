@@ -169,6 +169,19 @@ Below the ASR confidence floor, `parsed_intent` is omitted and the client re-pro
 ```
 `location` is **required**. Spread alerts and the hotspot map are inoperable without it.
 
+`POST /farms` and `PATCH /farms/{id}` both additionally accept `input_source`
+(`"typed" | "voice"`, default `"typed"`) and `confirmed` (`bool`, default
+`false`). When `input_source` is `"voice"`, `confirmed` must be `true` or
+the whole write is refused (`VALIDATION_FAILED`, 422) — PRD F9's read-back
+guarantee, made structural: a voice-derived crop or growth stage cannot be
+saved until the farmer has heard it read back and confirmed it. Whole-request
+granularity, not per-field — if anything in the payload came from voice, the
+client marks the whole request `voice`; a farmer editing a spoken value
+before saving is a typed correction, sent as `"typed"` (or omitted). Neither
+field is stored — the guarantee lives at the write boundary, and an
+unconfirmed voice value can never reach the database, so there is nothing to
+record after the fact.
+
 ```
 GET   /farms/{id}            → full profile
 PATCH /farms/{id}            → update onboarding fields

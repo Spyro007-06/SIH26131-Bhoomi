@@ -10,14 +10,43 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.contracts.enums import Crop, GrowthStageKey
 from app.contracts.farm import GeoPoint
 
+# Read-back guarantee, structural rather than client convention. PRD F9: a
+# voice-derived consequential value must be read back and confirmed before it
+# is saved. Whole-request granularity, not per-field -- if anything in the
+# payload came from voice, the client marks the whole request voice, and
+# everything in it needs confirmation before it saves; a farmer editing a
+# spoken value before saving makes it a typed correction, sent as "typed" (or
+# omitted). `input_source` and `confirmed` are validated here and travel no
+# further: neither is a column on Farm. The guarantee lives at the write
+# boundary -- an unconfirmed voice value cannot be persisted, so recording
+# that a persisted one WAS confirmed adds state without adding information.
+# Same reasoning as not storing sowing_date's derived days-after-sowing,
+# above.
+VOICE_CONFIRMATION_FIELDS = frozenset({"input_source", "confirmed"})
 
-class FarmCreate(BaseModel):
+
+class _VoiceConfirmationMixin(BaseModel):
+    input_source: Literal["typed", "voice"] = "typed"
+    confirmed: bool = False
+
+    @model_validator(mode="after")
+    def _voice_input_must_be_confirmed(self) -> _VoiceConfirmationMixin:
+        if self.input_source == "voice" and not self.confirmed:
+            raise ValueError(
+                "input_source is 'voice' but confirmed is not true -- read the "
+                "value back to the farmer and confirm it before saving."
+            )
+        return self
+
+
+class FarmCreate(_VoiceConfirmationMixin):
     """`location` is required. docs/API_CONTRACT.md §5: "Spread alerts and the
     hotspot map are inoperable without it." Omitting it is a 422 through the
     error envelope, not a null column."""
@@ -39,7 +68,7 @@ class FarmCreate(BaseModel):
     location: GeoPoint
 
 
-class FarmUpdate(BaseModel):
+class FarmUpdate(_VoiceConfirmationMixin):
     """PATCH — onboarding fields only.
 
     `location` is deliberately absent. Moving a farm invalidates every spread

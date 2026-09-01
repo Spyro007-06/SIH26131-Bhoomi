@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.contracts.farm import SRID, GeoPoint
 from app.core.models import Alert, Farm, FollowUp, Problem
 from app.core.schemas.farms import (
+    VOICE_CONFIRMATION_FIELDS,
     FarmCreate,
     FarmOut,
     FarmSummaryOut,
@@ -118,9 +119,16 @@ async def update_farm(
     principal: Principal = Depends(current_principal),
     session: AsyncSession = Depends(get_session),
 ) -> FarmOut:
-    """Update onboarding fields. Location is not one of them — see FarmUpdate."""
+    """Update onboarding fields. Location is not one of them — see FarmUpdate.
+
+    `input_source` / `confirmed` are validated by the schema (voice input must
+    be confirmed or the request never reaches this body) and travel no
+    further — excluded here so they are never passed to `setattr` against a
+    model with no such columns. See VOICE_CONFIRMATION_FIELDS.
+    """
     farm = await _load_owned(farm_id, principal, session)
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    updates = payload.model_dump(exclude_unset=True, exclude=VOICE_CONFIRMATION_FIELDS)
+    for field, value in updates.items():
         setattr(farm, field, value)
     await session.commit()
     await session.refresh(farm)
