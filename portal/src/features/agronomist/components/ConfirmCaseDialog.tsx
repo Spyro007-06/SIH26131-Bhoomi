@@ -64,21 +64,21 @@ export function ConfirmCaseDialog({
       onClick={() => !isPending && onClose()}
     >
       <div
-        className="relative w-full max-w-lg rounded-xl border border-bhoomi-border bg-bhoomi-white p-6 shadow-2xl space-y-5"
+        className="relative w-full max-w-lg rounded-2xl border border-bhoomi-border bg-bhoomi-surface p-6 shadow-2xl space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bhoomi-green-100 text-bhoomi-green-800">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-bhoomi-primary-light text-bhoomi-primary border border-bhoomi-primary/20">
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
-              <h2 id="confirm-dialog-title" className="text-lg font-bold text-bhoomi-text">
+              <h2 id="confirm-dialog-title" className="text-lg font-bold text-bhoomi-text-primary">
                 Confirm Model Diagnosis
               </h2>
-              <p className="text-xs text-bhoomi-text-secondary">
-                Validating case <span className="font-mono font-medium">{caseId}</span>
+              <p className="text-xs text-bhoomi-text-muted">
+                Validating case <span className="font-mono font-medium text-bhoomi-text-secondary">{caseId}</span>
               </p>
             </div>
           </div>
@@ -88,21 +88,21 @@ export function ConfirmCaseDialog({
             onClick={onClose}
             disabled={isPending}
             aria-label="Close dialog"
-            className="text-bhoomi-text-secondary hover:text-bhoomi-text disabled:opacity-50"
+            className="text-bhoomi-text-muted hover:text-bhoomi-text-primary disabled:opacity-50 p-1 rounded-lg transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Diagnosis Highlight */}
-        <div className="rounded-lg border border-bhoomi-green-600/30 bg-bhoomi-surface-soft/60 p-3">
-          <span className="text-[11px] font-semibold text-bhoomi-green-900 block uppercase tracking-wider">
+        <div className="rounded-xl border border-bhoomi-primary/20 bg-bhoomi-primary-soft p-3.5">
+          <span className="text-[11px] font-bold text-bhoomi-primary block uppercase tracking-wider">
             Confirmed Diagnosis
           </span>
-          <p className="text-base font-bold text-bhoomi-green-950 mt-0.5">
+          <p className="text-base font-bold text-bhoomi-text-primary mt-0.5">
             {formatTargetLabel(targetLabel)}
           </p>
-          <span className="font-mono text-[10px] text-bhoomi-green-800/80">
+          <span className="font-mono text-[10px] text-bhoomi-text-muted">
             wire: {targetLabel}
           </span>
         </div>
@@ -110,7 +110,7 @@ export function ConfirmCaseDialog({
         {/* Form Fields */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="treatment-input" className="block text-xs font-semibold text-bhoomi-text mb-1">
+            <label htmlFor="treatment-input" className="block text-xs font-bold text-bhoomi-text-secondary mb-1">
               Prescribed Treatment (Optional)
             </label>
             <textarea
@@ -120,12 +120,12 @@ export function ConfirmCaseDialog({
               onChange={(e) => setTreatment(e.target.value)}
               disabled={isPending}
               placeholder="e.g. Apply Tricyclazole 75% WP @ 0.6 g/L with 48h drainage..."
-              className="w-full rounded-lg border border-bhoomi-border bg-bhoomi-white p-2.5 text-xs text-bhoomi-text placeholder:text-bhoomi-text-secondary/50 focus:border-bhoomi-green-600 focus:outline-none focus:ring-1 focus:ring-bhoomi-green-600 disabled:opacity-50"
+              className="w-full rounded-xl border border-bhoomi-border bg-bhoomi-surface p-2.5 text-xs text-bhoomi-text-primary placeholder:text-bhoomi-text-muted/60 focus:border-bhoomi-primary focus:outline-none focus:ring-2 focus:ring-bhoomi-primary/20 disabled:opacity-50 transition-all"
             />
           </div>
 
           <div>
-            <label htmlFor="notes-input" className="block text-xs font-semibold text-bhoomi-text mb-1">
+            <label htmlFor="notes-input" className="block text-xs font-bold text-bhoomi-text-secondary mb-1">
               Agronomist Remarks / Notes (Optional)
             </label>
             <textarea
@@ -135,19 +135,19 @@ export function ConfirmCaseDialog({
               onChange={(e) => setNotes(e.target.value)}
               disabled={isPending}
               placeholder="Internal case observations or severity verification notes..."
-              className="w-full rounded-lg border border-bhoomi-border bg-bhoomi-white p-2.5 text-xs text-bhoomi-text placeholder:text-bhoomi-text-secondary/50 focus:border-bhoomi-green-600 focus:outline-none focus:ring-1 focus:ring-bhoomi-green-600 disabled:opacity-50"
+              className="w-full rounded-xl border border-bhoomi-border bg-bhoomi-surface p-2.5 text-xs text-bhoomi-text-primary placeholder:text-bhoomi-text-muted/60 focus:border-bhoomi-primary focus:outline-none focus:ring-2 focus:ring-bhoomi-primary/20 disabled:opacity-50 transition-all"
             />
           </div>
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-600" />
               <span>{error.message || 'Failed to submit confirmation. Please try again.'}</span>
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-bhoomi-border">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-bhoomi-border">
             <Button
               type="button"
               variant="outline"
@@ -166,7 +166,7 @@ export function ConfirmCaseDialog({
               className="gap-1.5"
             >
               <CheckCircle2 className="h-4 w-4" />
-              Confirm Case
+              <span>Confirm Case</span>
             </Button>
           </div>
         </form>

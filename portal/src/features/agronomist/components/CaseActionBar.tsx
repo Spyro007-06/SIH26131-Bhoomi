@@ -18,22 +18,22 @@ export function CaseActionBar({
 }: CaseActionBarProps) {
   if (isResolved) {
     return (
-      <div className="sticky bottom-0 z-20 flex items-center justify-between border-t border-bhoomi-green-600/30 bg-bhoomi-green-900/95 px-6 py-3.5 text-bhoomi-cream shadow-lg backdrop-blur-md rounded-xl">
-        <div className="flex items-center gap-2 text-xs font-medium">
-          <CheckCircle2 className="h-4 w-4 text-bhoomi-green-400" />
-          <span>This case has been resolved and confirmed.</span>
+      <div className="sticky bottom-0 z-20 flex items-center justify-between border border-bhoomi-primary/30 bg-bhoomi-primary-dark/95 px-6 py-4 text-white shadow-xl backdrop-blur-md rounded-2xl">
+        <div className="flex items-center gap-2 text-xs font-semibold">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          <span>This case has been resolved and confirmed in the central database.</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="sticky bottom-0 z-20 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-bhoomi-border bg-bhoomi-white/95 px-6 py-3.5 shadow-lg backdrop-blur-md rounded-xl">
+    <div className="sticky bottom-0 z-20 flex flex-col sm:flex-row items-center justify-between gap-3 border border-bhoomi-border bg-bhoomi-surface/95 px-6 py-4 shadow-xl backdrop-blur-md rounded-2xl">
       <div className="text-xs text-bhoomi-text-secondary hidden sm:block">
-        <span className="font-semibold text-bhoomi-text">Expert Decision:</span> Choose an action after inspecting all evidence.
+        <span className="font-bold text-bhoomi-text-primary">Agronomist Action:</span> Choose a decision after reviewing all field evidence.
       </div>
 
-      <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+      <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
         {/* Request Info Button */}
         <Button
           type="button"
@@ -44,7 +44,7 @@ export function CaseActionBar({
           className="gap-1.5 text-xs flex-1 sm:flex-initial"
         >
           <HelpCircle className="h-4 w-4 text-blue-600" />
-          Request Information
+          <span>Request Information</span>
         </Button>
 
         {/* Correct Button */}
@@ -54,10 +54,10 @@ export function CaseActionBar({
           size="sm"
           onClick={onCorrectClick}
           disabled={isPending}
-          className="gap-1.5 text-xs flex-1 sm:flex-initial border-amber-500/40 text-amber-900 hover:bg-amber-50"
+          className="gap-1.5 text-xs flex-1 sm:flex-initial border-amber-400 text-amber-900 hover:bg-amber-50"
         >
           <Edit3 className="h-4 w-4 text-amber-600" />
-          Correct Diagnosis
+          <span>Correct Diagnosis</span>
         </Button>
 
         {/* Confirm Button */}
@@ -67,10 +67,10 @@ export function CaseActionBar({
           size="sm"
           onClick={onConfirmClick}
           disabled={isPending}
-          className="gap-1.5 text-xs flex-1 sm:flex-initial bg-bhoomi-green-800 hover:bg-bhoomi-green-900 text-bhoomi-cream shadow-sm"
+          className="gap-1.5 text-xs flex-1 sm:flex-initial shadow-sm font-semibold"
         >
-          <CheckCircle2 className="h-4 w-4 text-bhoomi-green-300" />
-          Confirm Diagnosis
+          <CheckCircle2 className="h-4 w-4" />
+          <span>Confirm Diagnosis</span>
         </Button>
       </div>
     </div>

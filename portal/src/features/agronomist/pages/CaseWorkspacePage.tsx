@@ -17,6 +17,7 @@ import { ConfirmCaseDialog } from '../components/ConfirmCaseDialog';
 import { CorrectCaseDialog } from '../components/CorrectCaseDialog';
 import { RequestInfoDialog } from '../components/RequestInfoDialog';
 import { ResolutionSuccessModal } from '../components/ResolutionSuccessModal';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { isBhoomiApiError } from '@/lib/api/errors';
 import { CaseConfirmRequest, CaseConfirmResponse, CaseRequestInfoRequest } from '@/types/api';
@@ -70,17 +71,21 @@ export function CaseWorkspacePage() {
   // Loading Skeleton State
   if (isLoading) {
     return (
-      <div className="space-y-6 animate-pulse pb-16">
-        <div className="h-12 w-1/3 bg-bhoomi-surface-soft rounded-lg" />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="space-y-6 pb-20 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between border-b border-bhoomi-border pb-4">
+          <Skeleton className="h-8 w-64 rounded-xl" />
+          <Skeleton className="h-6 w-32 rounded-full" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-7 space-y-6">
-            <div className="h-32 bg-bhoomi-surface-soft rounded-xl" />
-            <div className="h-40 bg-bhoomi-surface-soft rounded-xl" />
-            <div className="h-80 bg-bhoomi-surface-soft rounded-xl" />
+            <Skeleton className="h-36 rounded-2xl" />
+            <Skeleton className="h-28 rounded-2xl" />
+            <Skeleton className="h-80 rounded-2xl" />
+            <Skeleton className="h-44 rounded-2xl" />
           </div>
           <div className="lg:col-span-5 space-y-6">
-            <div className="h-64 bg-bhoomi-surface-soft rounded-xl" />
-            <div className="h-44 bg-bhoomi-surface-soft rounded-xl" />
+            <Skeleton className="h-64 rounded-2xl" />
+            <Skeleton className="h-44 rounded-2xl" />
           </div>
         </div>
       </div>
@@ -91,22 +96,22 @@ export function CaseWorkspacePage() {
   if (isError || !caseBundle) {
     if (isBhoomiApiError(error) && error.isNotFound()) {
       return (
-        <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-bhoomi-border bg-bhoomi-white space-y-4 my-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-800">
+        <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-bhoomi-border bg-bhoomi-surface shadow-card space-y-4 my-8 max-w-lg mx-auto">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-800 border border-amber-300">
             <SearchX className="h-7 w-7" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-bhoomi-text">Case Not Found</h2>
-            <p className="text-xs text-bhoomi-text-secondary max-w-sm">
-              The case identifier <span className="font-mono font-medium">{caseId}</span> does not exist or has been archived.
+            <h2 className="text-xl font-bold text-bhoomi-text-primary">Case Not Found</h2>
+            <p className="text-xs text-bhoomi-text-muted max-w-sm">
+              The case identifier <span className="font-mono font-semibold text-bhoomi-text-secondary">{caseId}</span> does not exist or has been archived.
             </p>
           </div>
           <Link
             to="/agronomist/cases"
-            className="inline-flex items-center gap-2 rounded-lg bg-bhoomi-green-800 px-4 py-2 text-xs font-semibold text-bhoomi-cream hover:bg-bhoomi-green-900 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 rounded-xl bg-bhoomi-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-bhoomi-primary-dark transition-colors shadow-sm"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Case Queue
+            <span>Back to Case Queue</span>
           </Link>
         </div>
       );
@@ -163,8 +168,8 @@ export function CaseWorkspacePage() {
           />
         </div>
 
-        {/* Right Column: AI Hypotheses & Gate Context */}
-        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
+        {/* Right Column: AI Hypotheses & Gate Context (Sticky on Desktop) */}
+        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
           {/* Model Hypotheses */}
           <HypothesesPanel hypotheses={caseBundle.model_hypotheses} />
 

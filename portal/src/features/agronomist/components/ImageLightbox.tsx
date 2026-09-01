@@ -44,7 +44,7 @@ export function ImageLightbox({
       role="dialog"
       aria-modal="true"
       aria-label="Image Lightbox"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 sm:p-6 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 sm:p-6 backdrop-blur-md animate-in fade-in duration-200"
       onClick={onClose}
     >
       {/* Lightbox Container */}
@@ -55,7 +55,7 @@ export function ImageLightbox({
         {/* Top Control Bar */}
         <div className="flex w-full items-center justify-between text-white/90 mb-3 px-2">
           <div className="flex items-center gap-3 text-xs">
-            <span className="font-mono bg-white/10 px-2.5 py-1 rounded">
+            <span className="font-mono bg-white/10 px-2.5 py-1 rounded-lg border border-white/20">
               Asset: {currentImage.asset_id}
             </span>
             {currentImage.at && <span>Captured: {formatDateTime(currentImage.at)}</span>}
@@ -75,7 +75,7 @@ export function ImageLightbox({
         </div>
 
         {/* Main Image Frame */}
-        <div className="relative flex items-center justify-center max-h-[75vh] w-full overflow-hidden rounded-lg bg-black/60 border border-white/10">
+        <div className="relative flex items-center justify-center max-h-[75vh] w-full overflow-hidden rounded-2xl bg-black/60 border border-white/10 shadow-2xl">
           <img
             src={currentImage.url}
             alt={`Field sample asset ${currentImage.asset_id}`}
