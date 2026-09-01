@@ -1,6 +1,7 @@
 import { tokenStorage } from '@/lib/auth/token-storage';
 import { ApiErrorEnvelope } from '@/types/api';
 import { BhoomiApiError } from './errors';
+import { handleDemoMockResponse } from './demo-data';
 
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
@@ -46,8 +47,15 @@ export class ApiClient {
   ): string {
     const base = this.getBaseUrl();
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
-    const url = new URL(`${base}${cleanEndpoint}`, origin);
+    const isAbsolute = base.startsWith('http://') || base.startsWith('https://');
+
+    let url: URL;
+    if (isAbsolute) {
+      url = new URL(`${base}${cleanEndpoint}`);
+    } else {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+      url = new URL(`${base}${cleanEndpoint}`, origin);
+    }
 
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -57,11 +65,17 @@ export class ApiClient {
       });
     }
 
+    if (isAbsolute) {
+      return url.toString();
+    }
     return url.pathname + url.search;
   }
 
   public async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { body, params, headers = {}, skipAuth = false, signal, ...restOptions } = options;
+    const { body, params, headers = {}, skipAuth = false, signal, method = 'GET', ...restOptions } = options;
+
+    const token = tokenStorage.getToken();
+    const isDemoToken = !!token && token.startsWith('demo_jwt_token_');
 
     const requestHeaders: Record<string, string> = {
       Accept: 'application/json',
@@ -72,11 +86,8 @@ export class ApiClient {
       requestHeaders['Content-Type'] = 'application/json';
     }
 
-    if (!skipAuth) {
-      const token = tokenStorage.getToken();
-      if (token && token.trim().length > 0) {
-        requestHeaders['Authorization'] = `Bearer ${token.trim()}`;
-      }
+    if (!skipAuth && token && token.trim().length > 0) {
+      requestHeaders['Authorization'] = `Bearer ${token.trim()}`;
     }
 
     const url = this.buildUrl(endpoint, params);
@@ -85,6 +96,7 @@ export class ApiClient {
     try {
       response = await fetch(url, {
         ...restOptions,
+        method,
         signal,
         headers: requestHeaders,
         body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -93,10 +105,19 @@ export class ApiClient {
       if (err instanceof Error && err.name === 'AbortError') {
         throw err; // Re-throw standard AbortError
       }
+      if (isDemoToken) {
+        const demoData = handleDemoMockResponse<T>(endpoint, method);
+        if (demoData !== null) return demoData;
+      }
       throw BhoomiApiError.fromNetworkError(err);
     }
 
     if (!response.ok) {
+      if (isDemoToken && (response.status === 404 || response.status === 401 || response.status === 500)) {
+        const demoData = handleDemoMockResponse<T>(endpoint, method);
+        if (demoData !== null) return demoData;
+      }
+
       let errorEnvelope: ApiErrorEnvelope | null = null;
       try {
         const data = await response.json();
