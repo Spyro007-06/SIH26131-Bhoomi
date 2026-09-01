@@ -30,12 +30,12 @@ export function DashboardHeader({ title, subtitle }: DashboardHeaderProps) {
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-bhoomi-border pb-5">
       <div>
         <div className="flex items-center gap-2.5">
-          <h1 className="text-2xl font-bold tracking-tight text-bhoomi-text">
-            {title || 'Official Surveillance Dashboard'}
+          <h1 className="text-2xl font-bold tracking-tight text-bhoomi-text-primary">
+            {title || 'Agriculture Officials Dashboard'}
           </h1>
-          <Badge variant="primary" size="sm" className="hidden sm:inline-flex gap-1 bg-bhoomi-green-100 text-bhoomi-green-900 border-bhoomi-green-500/30">
-            <ShieldCheck className="h-3.5 w-3.5 text-bhoomi-green-700" />
-            Confirmed Operations
+          <Badge variant="primary" size="sm" className="hidden sm:inline-flex gap-1">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>Confirmed Operations</span>
           </Badge>
         </div>
         <p className="text-xs text-bhoomi-text-secondary mt-1">
@@ -44,9 +44,9 @@ export function DashboardHeader({ title, subtitle }: DashboardHeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 text-xs text-bhoomi-text-secondary bg-bhoomi-surface-soft px-2.5 py-1.5 rounded-lg border border-bhoomi-border">
-          <Activity className="h-3.5 w-3.5 text-bhoomi-green-600 animate-pulse" />
-          <span className="font-medium text-bhoomi-text">Surveillance Active</span>
+        <div className="flex items-center gap-1.5 text-xs text-bhoomi-primary bg-bhoomi-primary-light px-3 py-1.5 rounded-full border border-bhoomi-primary/20">
+          <Activity className="h-3.5 w-3.5 text-bhoomi-primary animate-pulse" />
+          <span className="font-semibold">Surveillance Active</span>
         </div>
 
         <Button
@@ -58,7 +58,7 @@ export function DashboardHeader({ title, subtitle }: DashboardHeaderProps) {
           className="gap-1.5 text-xs"
           aria-label="Refresh dashboard data"
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${isBusy ? 'animate-spin text-bhoomi-green-700' : ''}`} />
+          <RefreshCw className={`h-3.5 w-3.5 ${isBusy ? 'animate-spin text-bhoomi-primary' : ''}`} />
           <span>{isBusy ? 'Refreshing...' : 'Refresh'}</span>
         </Button>
       </div>
