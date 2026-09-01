@@ -23,7 +23,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="w-full space-y-1.5">
         {label && (
-          <label htmlFor={selectId} className="block text-sm font-medium text-bhoomi-text">
+          <label
+            htmlFor={selectId}
+            className="block text-xs font-semibold uppercase tracking-wider text-bhoomi-text-secondary"
+          >
             {label}
           </label>
         )}
@@ -34,10 +37,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           aria-invalid={!!error}
           aria-describedby={error ? errorId : undefined}
           className={cn(
-            'flex h-10 w-full rounded-lg border bg-bhoomi-white px-3 py-2 text-sm text-bhoomi-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bhoomi-green-600 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 transition-colors',
+            'flex h-10 w-full rounded-xl border bg-bhoomi-surface px-3.5 py-2 text-sm text-bhoomi-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bhoomi-primary/20 focus-visible:border-bhoomi-primary disabled:cursor-not-allowed disabled:opacity-50 transition-colors shadow-xs',
             error
-              ? 'border-bhoomi-danger focus-visible:ring-bhoomi-danger'
-              : 'border-bhoomi-border hover:border-bhoomi-border-strong',
+              ? 'border-bhoomi-danger focus-visible:ring-bhoomi-danger/20 focus-visible:border-bhoomi-danger'
+              : 'border-bhoomi-border-strong hover:border-bhoomi-text-muted',
             className
           )}
           {...props}

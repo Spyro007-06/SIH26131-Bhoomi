@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils/cn';
 
 export const Table = forwardRef<HTMLTableElement, HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto rounded-lg border border-bhoomi-border">
+    <div className="relative w-full overflow-auto rounded-2xl border border-bhoomi-border bg-bhoomi-surface shadow-xs">
       <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
     </div>
   )
@@ -16,7 +16,7 @@ export const TableHeader = forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn('bg-bhoomi-surface-soft/60 border-b border-bhoomi-border', className)}
+    className={cn('bg-bhoomi-canvas border-b border-bhoomi-border', className)}
     {...props}
   />
 ));
@@ -36,7 +36,7 @@ export const TableFooter = forwardRef<
 >(({ className, ...props }, ref) => (
   <tfoot
     ref={ref}
-    className={cn('bg-bhoomi-surface-soft font-medium border-t border-bhoomi-border', className)}
+    className={cn('bg-bhoomi-canvas font-medium border-t border-bhoomi-border', className)}
     {...props}
   />
 ));
@@ -47,7 +47,7 @@ export const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTable
     <tr
       ref={ref}
       className={cn(
-        'border-b border-bhoomi-border/60 transition-colors hover:bg-bhoomi-surface-soft/40 data-[state=selected]:bg-bhoomi-surface-soft',
+        'border-b border-slate-100 transition-colors hover:bg-bhoomi-canvas/80 data-[state=selected]:bg-bhoomi-primary-soft',
         className
       )}
       {...props}
@@ -63,7 +63,7 @@ export const TableHead = forwardRef<
   <th
     ref={ref}
     className={cn(
-      'h-11 px-4 text-left align-middle font-semibold text-bhoomi-text-secondary text-xs uppercase tracking-wider',
+      'h-11 px-4 text-left align-middle font-bold text-bhoomi-text-muted text-[11px] uppercase tracking-wider',
       className
     )}
     {...props}
@@ -75,7 +75,7 @@ export const TableCell = forwardRef<
   HTMLTableCellElement,
   TdHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => (
-  <td ref={ref} className={cn('p-4 align-middle text-bhoomi-text', className)} {...props} />
+  <td ref={ref} className={cn('p-4 align-middle text-bhoomi-text-primary', className)} {...props} />
 ));
 TableCell.displayName = 'TableCell';
 
@@ -83,6 +83,6 @@ export const TableCaption = forwardRef<
   HTMLTableCaptionElement,
   HTMLAttributes<HTMLTableCaptionElement>
 >(({ className, ...props }, ref) => (
-  <caption ref={ref} className={cn('mt-4 text-sm text-bhoomi-text-secondary', className)} {...props} />
+  <caption ref={ref} className={cn('mt-4 text-sm text-bhoomi-text-muted', className)} {...props} />
 ));
 TableCaption.displayName = 'TableCaption';

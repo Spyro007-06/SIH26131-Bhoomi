@@ -14,8 +14,10 @@ export function LoadingState({ message = 'Loading...', className }: LoadingState
         className
       )}
     >
-      <Loader2 className="h-8 w-8 animate-spin text-bhoomi-green-700" />
-      {message && <p className="mt-3 text-sm font-medium text-bhoomi-text-secondary">{message}</p>}
+      <Loader2 className="h-8 w-8 animate-spin text-bhoomi-primary" />
+      {message && (
+        <p className="mt-3 text-sm font-medium text-bhoomi-text-secondary">{message}</p>
+      )}
     </div>
   );
 }

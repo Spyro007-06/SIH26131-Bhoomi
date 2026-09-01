@@ -6,7 +6,7 @@ export type SkeletonProps = HTMLAttributes<HTMLDivElement>;
 export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
-      className={cn('animate-pulse rounded-md bg-bhoomi-surface-soft border border-bhoomi-border/30', className)}
+      className={cn('animate-pulse rounded-xl bg-slate-100 border border-slate-200/50', className)}
       {...props}
     />
   );

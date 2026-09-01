@@ -29,17 +29,19 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center p-8 text-center rounded-card border border-red-200 bg-red-50/50 min-h-[220px]',
+        'flex flex-col items-center justify-center p-8 text-center rounded-2xl border border-rose-200 bg-rose-50/50 min-h-[220px]',
         className
       )}
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-bhoomi-danger mb-3">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 mb-3 shadow-xs">
         <AlertCircle className="h-6 w-6" />
       </div>
-      <h3 className="text-base font-semibold text-bhoomi-text">{title}</h3>
-      <p className="mt-1 text-sm text-bhoomi-text-secondary max-w-sm">{errorMessage}</p>
+      <h3 className="text-base font-semibold text-bhoomi-text-primary">{title}</h3>
+      <p className="mt-1 text-sm text-bhoomi-text-secondary max-w-sm leading-relaxed">
+        {errorMessage}
+      </p>
       {errorCode && (
-        <span className="mt-2 inline-block rounded bg-red-100 px-2 py-0.5 font-mono text-xs text-bhoomi-danger font-medium">
+        <span className="mt-2 inline-block rounded-md bg-rose-100 px-2.5 py-0.5 font-mono text-xs text-rose-700 font-semibold">
           {errorCode}
         </span>
       )}
