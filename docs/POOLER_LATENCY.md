@@ -19,6 +19,14 @@ Re-running the failing test alone always passes. The full backend suite
 (286 tests as of this writing) takes 5–13 minutes depending on whether the
 flake hits, against ~1–2 seconds of actual test logic per DB-touching test.
 
+**Rate varies a lot within one day.** Morning runs this same day saw roughly
+one failure in a few hundred tests. A run later the same day against a
+19-test file hit the identical failure signature once — a much higher
+apparent rate in that smaller sample. Consistent with a network-path or
+pooler-side cause rather than a fixed per-connection probability: whatever
+is dropping connections is itself intermittent at a coarser timescale than
+"one in N attempts."
+
 ## What was ruled out, and how
 
 **Stale pooled connections reused across a dead event loop.** The first
@@ -72,8 +80,13 @@ note — tracked separately by the project owner.
 `backend/tests/conftest.py`'s `db_session` fixture retries connection
 **acquisition** (opening the connection and beginning the outer
 transaction) up to 3 times with a short backoff, specifically on
-`ConnectionDoesNotExistError` or `ConnectionResetError` from asyncpg. It
-does **not** retry a failure that occurs after acquisition succeeds, mid-test
+`ConnectionDoesNotExistError` or `ConnectionResetError` from asyncpg. Each
+attempt is also wrapped in a 15-second `asyncio.wait_for` timeout: a dropped
+connection raises promptly and retries cleanly, but a connection that goes
+half-open (accepted at the TCP level, never answers) does not raise at
+all — without a bound, that hangs the whole suite instead of retrying.
+`asyncio.TimeoutError` is treated the same as a dropped connection for retry
+purposes. It does **not** retry a failure that occurs after acquisition succeeds, mid-test
 — that would mask a test actually failing, not paper over a connect-time
 network blip. It does **not** touch `app/db.py` or production request
 handling: a retry on the request path would silently mask a real outage
