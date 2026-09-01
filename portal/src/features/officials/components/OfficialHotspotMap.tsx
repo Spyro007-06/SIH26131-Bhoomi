@@ -1,9 +1,9 @@
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { useOfficialHotspots } from '../hooks';
 import { HotspotMapBounds } from './HotspotMapBounds';
-import { formatTargetLabel } from '@/lib/utils/labels';
+import { formatTargetLabel } from '@/lib/utils/formatters';
 import { formatDate } from '@/lib/utils/dates';
-import { AlertCircle, RefreshCw, Map as MapIcon } from 'lucide-react';
+import { AlertCircle, RefreshCw, Map as MapIcon, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -22,12 +22,12 @@ export function OfficialHotspotMap() {
 
   if (isLoading) {
     return (
-      <div className="w-full h-[500px] lg:h-[600px] bg-white rounded-xl border border-bhoomi-border shadow-sm flex flex-col overflow-hidden relative">
-        <Skeleton className="absolute inset-0 rounded-xl" />
-        <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-10">
-          <div className="flex flex-col items-center gap-2 text-bhoomi-text-secondary">
-            <RefreshCw className="h-8 w-8 animate-spin text-bhoomi-green-600" />
-            <p className="font-medium">Loading confirmed hotspot data...</p>
+      <div className="w-full h-[520px] lg:h-[620px] bg-bhoomi-surface rounded-2xl border border-bhoomi-border shadow-card flex flex-col overflow-hidden relative">
+        <Skeleton className="absolute inset-0 rounded-2xl" />
+        <div className="absolute inset-0 flex items-center justify-center bg-bhoomi-surface/60 backdrop-blur-xs z-10">
+          <div className="flex flex-col items-center gap-2.5 p-6 rounded-2xl bg-bhoomi-surface/90 border border-bhoomi-border shadow-lg">
+            <RefreshCw className="h-7 w-7 animate-spin text-bhoomi-primary" />
+            <p className="font-semibold text-sm text-bhoomi-text-primary">Loading confirmed hotspot data...</p>
           </div>
         </div>
       </div>
@@ -36,19 +36,19 @@ export function OfficialHotspotMap() {
 
   if (isError) {
     return (
-      <div className="w-full h-[500px] lg:h-[600px] bg-white rounded-xl border border-red-100 shadow-sm flex flex-col items-center justify-center p-6 text-center gap-4">
-        <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mb-2">
+      <div className="w-full h-[520px] lg:h-[620px] bg-bhoomi-surface rounded-2xl border border-red-200 shadow-card flex flex-col items-center justify-center p-6 text-center gap-4">
+        <div className="h-12 w-12 rounded-2xl bg-red-100 border border-red-200 flex items-center justify-center">
           <AlertCircle className="h-6 w-6 text-red-600" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-bhoomi-text">Unable to load confirmed hotspot data.</h3>
-          <p className="text-sm text-bhoomi-text-secondary mt-1">
+          <h3 className="text-base font-bold text-bhoomi-text-primary">Unable to load confirmed hotspot data.</h3>
+          <p className="text-xs text-bhoomi-text-muted mt-1 max-w-sm">
             Confirmed hotspot data is temporarily unavailable. 
-            {error instanceof Error && <span className="block mt-1 text-xs opacity-70">{error.message}</span>}
+            {error instanceof Error && <span className="block mt-1 text-xs text-red-700 font-mono">{error.message}</span>}
           </p>
         </div>
-        <Button onClick={() => refetch()} className="mt-2" variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
+        <Button onClick={() => refetch()} className="mt-2 text-xs" variant="outline">
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
           Retry
         </Button>
       </div>
@@ -58,13 +58,13 @@ export function OfficialHotspotMap() {
   const points = data?.points || [];
 
   return (
-    <div className="w-full h-[500px] lg:h-[600px] bg-white rounded-xl border border-bhoomi-border shadow-sm flex flex-col overflow-hidden relative">
+    <div className="w-full h-[520px] lg:h-[620px] bg-bhoomi-surface rounded-2xl border border-bhoomi-border shadow-card flex flex-col overflow-hidden relative">
       {points.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center bg-bhoomi-surface/90 backdrop-blur-sm z-[400] pointer-events-none">
-          <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-lg border border-bhoomi-border max-w-sm text-center">
-            <MapIcon className="h-10 w-10 text-bhoomi-text-tertiary mb-3" />
-            <h3 className="text-base font-semibold text-bhoomi-text">No confirmed hotspots available.</h3>
-            <p className="text-sm text-bhoomi-text-secondary mt-1">
+        <div className="absolute inset-0 flex items-center justify-center bg-bhoomi-surface/90 backdrop-blur-xs z-[400] pointer-events-none">
+          <div className="flex flex-col items-center p-6 bg-bhoomi-surface rounded-2xl shadow-xl border border-bhoomi-border max-w-sm text-center">
+            <MapIcon className="h-10 w-10 text-bhoomi-text-muted mb-3" />
+            <h3 className="text-base font-bold text-bhoomi-text-primary">No confirmed hotspots available.</h3>
+            <p className="text-xs text-bhoomi-text-muted mt-1">
               There are currently no confirmed agricultural outbreak records matching this criteria.
             </p>
           </div>
@@ -96,7 +96,6 @@ export function OfficialHotspotMap() {
 
           const radius = calculateRadius(point.confirmed_count);
           const formattedLabel = formatTargetLabel(point.label);
-          // Use a stable key; if no ID is returned in the API, lat-lng-label is a good composite key
           const markerKey = `${point.lat}-${point.lng}-${point.label}`;
 
           return (
@@ -107,36 +106,39 @@ export function OfficialHotspotMap() {
               pathOptions={{
                 color: CONFIRMED_HOTSPOT_COLOR,
                 fillColor: CONFIRMED_HOTSPOT_COLOR,
-                fillOpacity: 0.7,
+                fillOpacity: 0.75,
                 weight: 2,
               }}
             >
               <Popup className="bhoomi-map-popup">
-                <div className="min-w-[200px] p-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="flex h-2 w-2 rounded-full bg-bhoomi-green-600"></span>
-                    <h4 className="font-semibold text-sm text-bhoomi-text">Confirmed Outbreak</h4>
+                <div className="min-w-[210px] p-1.5 font-sans">
+                  <div className="flex items-center gap-1.5 pb-2 border-b border-bhoomi-border mb-2.5">
+                    <span className="flex h-2 w-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                    <h4 className="font-bold text-xs text-bhoomi-text-primary uppercase tracking-wider flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5 text-bhoomi-primary" />
+                      Confirmed Outbreak
+                    </h4>
                   </div>
                   
-                  <div className="space-y-2 mt-3">
+                  <div className="space-y-2">
                     <div>
-                      <span className="block text-xs font-medium text-bhoomi-text-secondary uppercase tracking-wider">Disease / Pest</span>
-                      <span className="block text-sm text-bhoomi-text font-medium">{formattedLabel}</span>
+                      <span className="block text-[11px] font-bold text-bhoomi-text-muted uppercase tracking-wider">Disease / Pest</span>
+                      <span className="block text-xs text-bhoomi-text-primary font-bold">{formattedLabel}</span>
                     </div>
                     
                     <div>
-                      <span className="block text-xs font-medium text-bhoomi-text-secondary uppercase tracking-wider">Confirmed Cases</span>
-                      <span className="block text-sm text-bhoomi-text font-medium">{point.confirmed_count} records</span>
+                      <span className="block text-[11px] font-bold text-bhoomi-text-muted uppercase tracking-wider">Confirmed Cases</span>
+                      <span className="block text-xs font-mono font-bold text-bhoomi-primary">{point.confirmed_count} records</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-bhoomi-border/60">
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-bhoomi-border/70">
                       <div>
-                        <span className="block text-[10px] font-medium text-bhoomi-text-tertiary uppercase">First Seen</span>
-                        <span className="block text-xs text-bhoomi-text-secondary">{formatDate(point.first_seen)}</span>
+                        <span className="block text-[10px] font-bold text-bhoomi-text-muted uppercase tracking-wider">First Seen</span>
+                        <span className="block text-[11px] text-bhoomi-text-secondary">{formatDate(point.first_seen)}</span>
                       </div>
                       <div>
-                        <span className="block text-[10px] font-medium text-bhoomi-text-tertiary uppercase">Last Seen</span>
-                        <span className="block text-xs text-bhoomi-text-secondary">{formatDate(point.last_seen)}</span>
+                        <span className="block text-[10px] font-bold text-bhoomi-text-muted uppercase tracking-wider">Last Seen</span>
+                        <span className="block text-[11px] text-bhoomi-text-secondary">{formatDate(point.last_seen)}</span>
                       </div>
                     </div>
                   </div>
@@ -148,15 +150,15 @@ export function OfficialHotspotMap() {
       </MapContainer>
       
       {points.length > 0 && (
-        <div className="absolute bottom-4 left-4 z-[400] bg-white/95 backdrop-blur shadow-sm border border-bhoomi-border rounded-lg p-3 text-xs flex flex-col gap-2">
-          <div className="font-medium text-bhoomi-text border-b border-bhoomi-border pb-1 mb-1">Legend</div>
+        <div className="absolute bottom-4 left-4 z-[400] bg-bhoomi-surface/95 backdrop-blur-sm shadow-card border border-bhoomi-border rounded-xl p-3 text-xs flex flex-col gap-2">
+          <div className="font-bold text-xs uppercase tracking-wider text-bhoomi-text-muted border-b border-bhoomi-border pb-1 mb-0.5">Legend</div>
           <div className="flex items-center gap-2 text-bhoomi-text-secondary">
             <span className="block h-3 w-3 rounded-full" style={{ backgroundColor: CONFIRMED_HOTSPOT_COLOR }}></span>
-            <span>Confirmed outbreak location</span>
+            <span className="font-medium text-xs text-bhoomi-text-primary">Confirmed outbreak location</span>
           </div>
           <div className="flex items-center gap-2 text-bhoomi-text-secondary">
-            <span className="block h-3 w-3 rounded-full border border-bhoomi-green-700 bg-transparent" style={{ borderColor: CONFIRMED_HOTSPOT_COLOR }}></span>
-            <span>Size scales with count</span>
+            <span className="block h-3 w-3 rounded-full border border-emerald-800 bg-transparent" style={{ borderColor: CONFIRMED_HOTSPOT_COLOR }}></span>
+            <span className="text-xs text-bhoomi-text-muted">Size scales with count</span>
           </div>
         </div>
       )}
