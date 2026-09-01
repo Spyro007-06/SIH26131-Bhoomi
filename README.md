@@ -1,130 +1,77 @@
-# Bhoomi 
+<h1 align="center">
+  <br>
+  <!-- Replace the src link with the raw link to your actual logo in the repo -->
+  <img src="https://via.placeholder.com/200x200.png?text=Bhoomi+Logo" alt="Bhoomi" width="200">
+  <br>
+  Bhoomi
+  <br>
+</h1>
 
-**SIH26131** · Government of Maharashtra · early detection and management of crop
-diseases and pest infestations.
+<h4 align="center">Official Submission for <a href="https://sih.gov.in/" target="_blank">Smart India Hackathon 2024</a></h4>
 
-A crop-health system that refuses to guess. A deterministic confidence gate sits
-in front of every consequential response: above the gate it composes advice from
-retrieved sources, in the ambiguous band it asks the farmer one distinguishing
-question, and below the floor it sends the case to a human. Pesticide verdicts
-are a table lookup, never a model output.
-
-## The three stacks
-
-```
-backend/    Python · FastAPI · Postgres+PostGIS+pgvector    the API
-app/        Flutter · Android                               farmer app
-portal/     React · Vite · Tailwind · Leaflet               agronomist + officials
-docs/       frozen specifications, shared by all three
-```
-
-> **Name collision, on purpose.** Root `app/` is the **Flutter** app.
-> `backend/app/` is the **Python** package. Both names come from frozen docs —
-> `docs/DESIGN.md` §3 calls the Flutter module `app/`, and the Phase 0 layout
-> calls the Python package `app/` — so the prefix disambiguates rather than a
-> rename. Scope repo-wide greps to one stack.
-
-## Ownership
-
-From `docs/DESIGN.md` §3 and `worksplitV1`. Review routing is in
-[`CODEOWNERS`](CODEOWNERS).
-
-| Directory | Owner | Delivers |
-|---|---|---|
-| `backend/app/core/` | Shreekumar | schema, CRUD, risk engine, alerts, spread, follow-up, confirmation |
-| `backend/app/vision/` | Suchit | classifier, OCR extraction |
-| `backend/app/intelligence/` | Thaariha | gate, Doubt Doctor, RAG, verdicts, case bundle |
-| `backend/app/voice/` | Shruthi | ASR, TTS, translate-before-embed |
-| `backend/app/contracts/` | team — **frozen** | C1, C2, C3 and every wire enum |
-| `app/` | Tharun (Santheesh support) | Flutter farmer app |
-| `portal/` | Santheesh | agronomist portal (F12), officials dashboard (F15) |
-
-Modules talk through typed functions, not by reaching into each other's tables.
-`backend/app/core/` is the only package that touches the database.
-
-## Specifications — frozen
-
-- [`docs/PRD.md`](docs/PRD.md) — what and why, the fifteen features, the demo scenario
-- [`docs/DESIGN.md`](docs/DESIGN.md) — architecture, data model, the three algorithms
-- [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) — wire format, enums, error codes, invariants
-
-Contributors read [`CLAUDE.md`](CLAUDE.md) first: it carries module ownership and
-the rules that are not negotiable.
+<p align="center">
+  <a href="#-problem-statement">Problem Statement</a> •
+  <a href="#-key-features">Features</a> •
+  <a href="#-tech-stack">Tech Stack</a> •
+  <a href="#-installation-and-setup">Installation</a> •
+  <a href="#-team">Team</a>
+</p>
 
 ---
 
-## Running each stack
+## 🎯 Problem Statement
 
-### backend/
+- **Problem ID:** `[e.g., SIH131]` 
+- **Problem Title:** `[Insert the exact title from the SIH Portal]`
+- **Ministry/Organization:** `[e.g., Ministry of Agriculture / Ministry of Earth Sciences]`
 
-Requires Docker and **Python 3.11**.
-
-```bash
-cd backend
-docker compose up -d
-python -m venv .venv && .venv/Scripts/pip install -e ".[dev]"   # Windows
-# python -m venv .venv && .venv/bin/pip install -e ".[dev]"     # Linux / macOS
-cp .env.example .env
-alembic upgrade head
-uvicorn app.main:app --reload
-```
-
-`docker compose up -d` brings up Postgres 16 with PostGIS and pgvector, MinIO,
-and a sidecar that creates the `bhoomi-assets` bucket. The sidecar shows as
-`exited (0)` when it has done its job — that is success, not a crash.
-
-```bash
-curl localhost:8000/api/v1/health
-```
-
-```json
-{
-  "status": "ok",
-  "app_env": "local",
-  "api_version": "v1",
-  "flags": { "VISION_MODEL": "stub", "ASR_PROVIDER": "stub", "LLM_ENABLED": false },
-  "thresholds": { "GATE": 0.7, "FLOOR": 0.45, "MARGIN": 0.15, "RAG_THRESHOLD": 0.6 }
-}
-```
-
-The flags are in the body deliberately. You can tell from the port whether a stub
-is serving, without trusting a config file on a laptop that may not be the one
-answering.
-
-```bash
-pytest
-ruff check app tests alembic
-```
-
-### app/
-
-Not scaffolded yet — the tree is directories and a README. See
-[`app/README.md`](app/README.md).
-
-```bash
-cd app && flutter create . --project-name bhoomi
-```
-
-### portal/
-
-Not scaffolded yet. See [`portal/README.md`](portal/README.md).
-
-```bash
-npm create vite@latest portal -- --template react-ts
-```
+**Description:**
+> [Briefly explain the core problem provided by the ministry. What is the current bottleneck? What is the expected outcome of the solution?]
 
 ---
 
-## Verification standard
+## 💡 Our Solution: Bhoomi
 
-`docs/DESIGN.md` §13, and the one required field on every pull request:
+Bhoomi is a **[Web/Mobile/AI]** application designed to **[solve X by doing Y]**. It bridges the gap between **[Stakeholder A]** and **[Stakeholder B]** by leveraging **[Key Technology, e.g., Machine Learning, Blockchain, IoT]**.
 
-> A feature is verified when a live HTTP response is pasted showing the expected
-> output. Import success, build success, and "I ran it" are not verification.
-> Before trusting any curl result, confirm which process is answering on the port
-> and when it started; a stale server from a previous session has previously made
-> working fixes appear broken for hours.
+### 🌟 Key Features
+- **[Feature 1 - e.g., Real-time Dashboard]:** [Brief description of what this does and how it helps]
+- **[Feature 2 - e.g., AI-Powered Predictions]:** [Brief description]
+- **[Feature 3 - e.g., Multilingual Support]:** [Crucial for Indian demographics! Explain how it works]
+- **[Feature 4 - e.g., Offline Mode]:** [Brief description]
+- **[Feature 5 - e.g., Secure Role-based Access]:** [Brief description]
 
-## Licence
+---
 
-See [`LICENSE`](LICENSE).
+## 🛠 Tech Stack
+
+*(Delete or add badges based on what your team actually used)*
+
+**Frontend:**
+- ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+- ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+
+**Backend:**
+- ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+- ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+
+**Database:**
+- ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
+
+**Cloud & DevOps:**
+- ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
+- ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+
+---
+
+## ⚙️ System Architecture
+
+*(SIH Judges highly value architectural diagrams. You can replace the Mermaid code below with an actual image if you have one by using `<img src="./assets/architecture.png">`)*
+
+```mermaid
+graph TD;
+    A[User/Farmer] -->|Access Portal| B(Frontend);
+    B -->|API Request| C{Backend API Gateway};
+    C -->|Fetch/Store Data| D[(Database)];
+    C -->|Run ML Model| E[AI Microservice];
+    E -->|Predictions| C;
