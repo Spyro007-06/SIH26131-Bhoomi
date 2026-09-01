@@ -1,34 +1,64 @@
 :root {
-  /* BHOOMI Primary Greens */
-  --bhoomi-green-900: #14532D;
-  --bhoomi-green-800: #166534;
-  --bhoomi-green-700: #15803D;
-  --bhoomi-green-600: #2E7D32;
-  --bhoomi-green-500: #66BB6A;
+  /* ============================================================
+     BHOOMI Enterprise Design Tokens
+     ============================================================ */
 
-  /* BHOOMI Soft Tones */
-  --bhoomi-green-100: #E8F5E9;
-  --bhoomi-green-50: #F1F8E9;
+  /* Brand Primary */
+  --bhoomi-primary: #2E7D32;
+  --bhoomi-primary-dark: #1B5E20;
+  --bhoomi-primary-light: #EAF4EA;
+  --bhoomi-primary-soft: #F3F8F3;
 
-  /* BHOOMI Neutrals */
-  --bhoomi-white: #FFFFFF;
-  --bhoomi-background: #FAFCF8;
-  --bhoomi-surface-soft: #F5F7F2;
-  --bhoomi-border: #E5E7E3;
-  --bhoomi-border-strong: #D1D5D1;
-  --bhoomi-text: #17201A;
-  --bhoomi-text-secondary: #374151;
+  /* Surfaces & Workspace Canvas */
+  --bhoomi-canvas: #F8FAFC;
+  --bhoomi-surface: #FFFFFF;
+  --bhoomi-surface-soft: #F1F5F9;
+  --bhoomi-surface-hover: #F8FAFC;
 
-  /* BHOOMI Semantic */
-  --bhoomi-success: #2E7D32;
-  --bhoomi-warning: #D97706;
-  --bhoomi-danger: #C62828;
+  /* Borders & Dividers */
+  --bhoomi-border: #E2E8F0;
+  --bhoomi-border-strong: #CBD5E1;
+
+  /* Typography */
+  --bhoomi-text-primary: #0F172A;
+  --bhoomi-text-secondary: #475569;
+  --bhoomi-text-muted: #64748B;
+  --bhoomi-text-disabled: #94A3B8;
+
+  /* Semantic Status Tokens */
+  --bhoomi-success: #16A34A;
+  --bhoomi-success-soft: #ECFDF3;
+  --bhoomi-warning: #F59E0B;
+  --bhoomi-warning-soft: #FFF7DB;
+  --bhoomi-danger: #DC2626;
+  --bhoomi-danger-soft: #FEF2F2;
   --bhoomi-info: #2563EB;
+  --bhoomi-info-soft: #EFF6FF;
+  --bhoomi-escalation: #9333EA;
+  --bhoomi-escalation-soft: #FAF5FF;
 
-  /* BHOOMI Cream Accent */
+  /* Backward Compatibility Mappings */
+  --bhoomi-green-900: #1B5E20;
+  --bhoomi-green-800: #1B5E20;
+  --bhoomi-green-700: #2E7D32;
+  --bhoomi-green-600: #2E7D32;
+  --bhoomi-green-500: #4CAF50;
+  --bhoomi-green-100: #EAF4EA;
+  --bhoomi-green-50: #F3F8F3;
+
+  --bhoomi-white: #FFFFFF;
+  --bhoomi-background: #F8FAFC;
+  --bhoomi-text: #0F172A;
   --bhoomi-cream: #FAF7EF;
 
-  /* Radii & Shadows */
-  --radius-card: 14px;
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-card: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
   --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
 }

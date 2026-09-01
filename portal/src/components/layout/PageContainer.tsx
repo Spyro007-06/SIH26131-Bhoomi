@@ -17,15 +17,21 @@ export function PageContainer({
   className,
 }: PageContainerProps) {
   return (
-    <div className={cn('flex-1 p-8 max-w-7xl mx-auto w-full space-y-6', className)}>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-bhoomi-border/60 pb-5">
+    <div className={cn('flex-1 p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6', className)}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-bhoomi-border pb-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-bhoomi-text">{title}</h1>
-          {subtitle && <p className="mt-1 text-sm text-bhoomi-text-secondary">{subtitle}</p>}
+          <h1 className="text-2xl font-bold tracking-tight text-bhoomi-text-primary">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="mt-1 text-sm text-bhoomi-text-secondary leading-relaxed">
+              {subtitle}
+            </p>
+          )}
         </div>
         {actions && <div className="flex items-center gap-3">{actions}</div>}
       </div>
-      <main>{children}</main>
+      <main className="min-w-0">{children}</main>
     </div>
   );
 }
