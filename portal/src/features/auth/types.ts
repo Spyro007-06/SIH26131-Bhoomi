@@ -11,5 +11,7 @@ export interface AuthState {
 
 export interface AuthContextType extends AuthState {
   login: (credentials: LoginRequest) => Promise<LoginResponse>;
+  loginDemo: (role?: 'official' | 'agronomist') => UserProfile;
   logout: () => void;
 }
+

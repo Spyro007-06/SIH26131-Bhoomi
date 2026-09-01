@@ -49,6 +49,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response;
   };
 
+  const loginDemo = useCallback((role: 'official' | 'agronomist' = 'official'): UserProfile => {
+    const demoUser: UserProfile = {
+      id: role === 'official' ? 'demo-official-001' : 'demo-agronomist-001',
+      role,
+      name: role === 'official' ? 'Official Demo Officer' : 'Dr. Suresh Patil (Demo)',
+      email: role === 'official' ? 'official.demo@bhoomi.gov.in' : 'spatil.demo@kvk.gov.in',
+    };
+    const demoToken = `demo_jwt_token_${role}_${Date.now()}`;
+    tokenStorage.setToken(demoToken);
+    tokenStorage.setUser(demoUser);
+    setToken(demoToken);
+    setUser(demoUser);
+    return demoUser;
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -57,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!token && !!user,
         isLoading,
         login,
+        loginDemo,
         logout,
       }}
     >

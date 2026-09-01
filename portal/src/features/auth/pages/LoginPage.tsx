@@ -4,7 +4,7 @@ import { useAuth } from '@/features/auth/hooks';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
-import { Sprout, AlertCircle, WifiOff } from 'lucide-react';
+import { Sprout, AlertCircle, WifiOff, Zap } from 'lucide-react';
 import { isBhoomiApiError } from '@/lib/api/errors';
 import { loginRequestSchema } from '../validation';
 import { ZodError } from 'zod';
@@ -19,7 +19,7 @@ export function LoginPage() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login } = useAuth();
+  const { login, loginDemo } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -41,6 +41,12 @@ export function LoginPage() {
     }
 
     return defaultPath;
+  };
+
+  const handleDemoLogin = (role: 'official' | 'agronomist') => {
+    loginDemo(role);
+    const targetPath = role === 'official' ? '/official' : '/agronomist/cases';
+    navigate(targetPath, { replace: true });
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -162,10 +168,44 @@ export function LoginPage() {
               />
             </CardContent>
 
-            <CardFooter className="pt-2">
+            <CardFooter className="flex flex-col gap-3 pt-2">
               <Button type="submit" className="w-full" isLoading={isSubmitting}>
                 Sign In to Workspace
               </Button>
+
+              <div className="relative w-full my-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-bhoomi-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-bhoomi-text-secondary font-medium">
+                    Demo Fast Access
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 w-full">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="w-full flex items-center justify-center gap-1.5 text-xs"
+                  onClick={() => handleDemoLogin('official')}
+                >
+                  <Zap className="h-3.5 w-3.5 text-amber-600" />
+                  Official Dashboard
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full flex items-center justify-center gap-1.5 text-xs"
+                  onClick={() => handleDemoLogin('agronomist')}
+                >
+                  <Sprout className="h-3.5 w-3.5 text-bhoomi-green-700" />
+                  Agronomist Queue
+                </Button>
+              </div>
             </CardFooter>
           </form>
         </Card>
@@ -179,3 +219,4 @@ export function LoginPage() {
     </div>
   );
 }
+
