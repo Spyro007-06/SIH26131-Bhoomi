@@ -24,10 +24,12 @@ Order, and it matters (docs/DESIGN.md §8):
   3. glossary-pin domain terms to the target_label vocabulary
   4. length guard: refuse empty/degenerate text rather than embed a near-zero vector
 
-S0 caveat: `StubTranslator` (providers.py) is an identity passthrough — step 1
-is a no-op until S3 wires live Mayura. In S0 it is step 3 (glossary.py) that
-actually fixes the Devanagari trap for the one domain term the glossary knows
-(करपा -> blast); it is not yet a general-purpose translator.
+Provider caveat: step 1 only translates for real when the live Sarvam
+provider is selected (S3, merged) — `StubTranslator` (providers.py) stays an
+identity passthrough, and with the stub selected it is step 3 (glossary.py)
+that fixes the Devanagari trap for the one domain term the glossary knows
+(करपा -> blast), not yet a general-purpose translator. `ASR_PROVIDER=stub` is
+still this project's default; see .env.example.
 """
 
 from __future__ import annotations
@@ -50,8 +52,6 @@ def to_embedding_text(text: str, lang: str) -> str:
     a script it does not recognise.
 
     Raises:
-        NotImplementedError: when the live Sarvam translator is selected; that
-            call is implemented in S3.
         ValueError: the pipeline produced degenerate (empty) output. The
             caller (intelligence/rag.py, not yet implemented) decides whether
             to translate this into a BhoomiError at the API boundary — there
