@@ -17,23 +17,23 @@ export function QueuePagination({
   }
 
   return (
-    <div className="flex justify-center pt-6 pb-2">
+    <div className="flex justify-center pt-4 pb-2">
       <Button
-        variant="outline"
+        variant="secondary"
         onClick={onLoadMore}
         disabled={isFetchingNextPage}
-        className="min-w-[180px] gap-2 shadow-xs"
+        className="min-w-[200px] gap-2 shadow-xs"
         aria-label="Load more cases"
       >
         {isFetchingNextPage ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin text-bhoomi-green-800" />
-            Loading more...
+            <Loader2 className="h-4 w-4 animate-spin text-bhoomi-primary shrink-0" />
+            <span>Loading more cases...</span>
           </>
         ) : (
           <>
-            <ChevronDown className="h-4 w-4 text-bhoomi-green-800" />
-            Load More Cases
+            <ChevronDown className="h-4 w-4 text-bhoomi-primary shrink-0" />
+            <span>Load More Cases</span>
           </>
         )}
       </Button>
