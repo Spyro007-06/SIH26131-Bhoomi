@@ -1,0 +1,34 @@
+:root {
+  /* BHOOMI Primary Greens */
+  --bhoomi-green-900: #14532D;
+  --bhoomi-green-800: #166534;
+  --bhoomi-green-700: #15803D;
+  --bhoomi-green-600: #2E7D32;
+  --bhoomi-green-500: #66BB6A;
+
+  /* BHOOMI Soft Tones */
+  --bhoomi-green-100: #E8F5E9;
+  --bhoomi-green-50: #F1F8E9;
+
+  /* BHOOMI Neutrals */
+  --bhoomi-white: #FFFFFF;
+  --bhoomi-background: #FAFCF8;
+  --bhoomi-surface-soft: #F5F7F2;
+  --bhoomi-border: #E5E7E3;
+  --bhoomi-border-strong: #D1D5D1;
+  --bhoomi-text: #17201A;
+  --bhoomi-text-secondary: #374151;
+
+  /* BHOOMI Semantic */
+  --bhoomi-success: #2E7D32;
+  --bhoomi-warning: #D97706;
+  --bhoomi-danger: #C62828;
+  --bhoomi-info: #2563EB;
+
+  /* BHOOMI Cream Accent */
+  --bhoomi-cream: #FAF7EF;
+
+  /* Radii & Shadows */
+  --radius-card: 14px;
+  --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+}
