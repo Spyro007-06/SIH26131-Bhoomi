@@ -66,12 +66,16 @@ IMPLEMENTED = {
     # itself is NOT implemented; the gate it needs still raises
     # NotImplementedError. See routers/diagnose.py's module docstring.
     "routers/diagnose.py",
-    # Corpus ingestion loader (this commit). "services/corpus.py" is the
-    # retrieval-side authoritative filter -- NOT a router, schema or service
-    # that a phase brief scaffolded as a placeholder; it is a new module
-    # written to answer Part 2's "make the retrieval path exclude
-    # non-authoritative chunks" requirement.
+    # Corpus ingestion loader. "services/corpus.py" is the retrieval-side
+    # authoritative filter -- NOT a router, schema or service that a phase
+    # brief scaffolded as a placeholder; it is a new module written to answer
+    # Part 2's "make the retrieval path exclude non-authoritative chunks"
+    # requirement.
     "services/corpus.py",
+    # V3 phase 3, Part 5: the inspection-tier alert-response fix. Not a phase
+    # brief's scaffolded placeholder either -- a new module, same reasoning as
+    # services/corpus.py above.
+    "services/alerts.py",
 }
 
 
@@ -132,6 +136,7 @@ def test_the_expected_modules_exist() -> None:
         "aggregates.py",
         "escalation.py",
         "corpus.py",
+        "alerts.py",
     }
 
 
