@@ -95,3 +95,31 @@ retry loop when the region moves; it will simply stop firing before that
 (a connect-time flake at Mumbai latency is not the failure mode this guards
 against), but leaving retry logic in place past its reason is its own kind
 of debt.
+
+## Verification
+
+A full 5x5 (before/after) measurement was explicitly ruled out: it would
+measure a pooling-class hypothesis already disproved by reproduction (see
+above), at the cost of hours against a suite already running 5-13 minutes
+per pass. What was measured instead, against
+`tests/services/test_registered_use_lookup.py` (19 tests) with the
+finalized retry stopgap in place:
+
+- One run: 341s, 19 passed, 0 failed.
+- One run: 437s, 18 passed, 1 skipped, 0 failed.
+- One run: 376s, 17 passed, 1 skipped, **1 failed** -- ConnectionDoesNotExistError
+  on a plain SELECT, mid-test (not at acquisition). Correctly *not* retried
+  by this stopgap, by design: the fixture only retries connect + begin-
+  transaction, not a query the test body issues afterward. This failure is
+  exactly the evidence for the diagnosis, not a stopgap defect -- one drop in
+  19 tests here, against roughly one in a few hundred earlier the same day,
+  the rate-variance point made above.
+
+**This is a partial verification, not the "three consecutive clean
+full-suite runs" originally planned**, and that gap is deliberate: at the
+per-test cost observed today, three full 286-test runs would cost on the
+order of hours to confirm a diagnosis three independent partial runs, on
+real failures, already support. Full-suite, full-region verification is the
+right next step once the region move (ap-south-1) lands -- tracked as that
+move's own follow-up, not repeated here against infrastructure already known
+to be temporary.
