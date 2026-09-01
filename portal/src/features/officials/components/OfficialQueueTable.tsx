@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/Table';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, MapPin } from 'lucide-react';
 import { formatTargetLabel, formatDateTime } from '@/lib/utils/formatters';
 import type { OfficialQueueItem } from '@/types/api';
 
@@ -22,18 +22,18 @@ export function OfficialQueueTable({ items }: OfficialQueueTableProps) {
   }
 
   return (
-    <Card className="border-bhoomi-border bg-white shadow-sm overflow-hidden">
-      <CardHeader className="pb-3 border-b border-bhoomi-border/60">
+    <Card className="rounded-2xl border border-bhoomi-border bg-bhoomi-surface shadow-card overflow-hidden">
+      <CardHeader className="pb-3 border-b border-bhoomi-border/70 bg-bhoomi-canvas/40">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
           <div>
-            <CardTitle className="text-base font-bold text-bhoomi-text">
+            <CardTitle className="text-base font-bold text-bhoomi-text-primary">
               Official Confirmation Records
             </CardTitle>
-            <p className="text-xs text-bhoomi-text-secondary mt-0.5">
+            <p className="text-xs text-bhoomi-text-muted mt-0.5">
               Live cases awaiting expert agronomist validation and official confirmation
             </p>
           </div>
-          <Badge variant="outline" className="text-xs self-start sm:self-auto font-mono text-bhoomi-text-secondary">
+          <Badge variant="outline" className="text-xs self-start sm:self-auto font-mono text-bhoomi-text-muted">
             {items.length} Records
           </Badge>
         </div>
@@ -58,10 +58,10 @@ export function OfficialQueueTable({ items }: OfficialQueueTableProps) {
               const isModerateSeverity = item.severity?.toLowerCase() === 'moderate';
 
               return (
-                <TableRow key={item.case_id} className="hover:bg-bhoomi-surface-soft/50">
+                <TableRow key={item.case_id} className="hover:bg-bhoomi-primary-soft/40 transition-colors">
                   {/* Case ID */}
-                  <TableCell className="font-mono text-xs font-semibold text-bhoomi-text">
-                    <span className="bg-bhoomi-surface-soft px-2 py-1 rounded border border-bhoomi-border/60">
+                  <TableCell className="font-mono text-xs font-bold text-bhoomi-text-primary">
+                    <span className="bg-bhoomi-canvas px-2.5 py-1 rounded-lg border border-bhoomi-border inline-block shadow-xs">
                       {item.case_id}
                     </span>
                   </TableCell>
@@ -69,10 +69,10 @@ export function OfficialQueueTable({ items }: OfficialQueueTableProps) {
                   {/* Predicted Diagnosis */}
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-bhoomi-text">
+                      <span className="text-xs font-bold text-bhoomi-text-primary">
                         {formatTargetLabel(item.predicted_label)}
                       </span>
-                      <span className="text-[11px] font-mono text-bhoomi-text-tertiary">
+                      <span className="text-[11px] font-mono text-bhoomi-text-muted">
                         {item.predicted_label}
                       </span>
                     </div>
@@ -84,43 +84,46 @@ export function OfficialQueueTable({ items }: OfficialQueueTableProps) {
                       <span
                         className={`font-mono font-bold text-xs ${
                           item.confidence >= 0.8
-                            ? 'text-bhoomi-green-900'
+                            ? 'text-bhoomi-primary-dark'
                             : item.confidence < 0.6
-                            ? 'text-amber-700'
-                            : 'text-bhoomi-text'
+                            ? 'text-amber-800'
+                            : 'text-bhoomi-text-primary'
                         }`}
                       >
                         {confidencePercent}%
                       </span>
-                      <span className="text-[10px] text-bhoomi-text-tertiary">model estimate</span>
+                      <span className="text-[10px] text-bhoomi-text-muted">model estimate</span>
                     </div>
                   </TableCell>
 
                   {/* Region */}
-                  <TableCell className="capitalize text-xs font-medium text-bhoomi-text">
-                    {item.region}
+                  <TableCell className="capitalize text-xs font-semibold text-bhoomi-text-secondary">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3 text-bhoomi-text-muted" />
+                      <span>{item.region}</span>
+                    </div>
                   </TableCell>
 
                   {/* Severity Badge */}
                   <TableCell className="text-center">
                     {isHighSeverity ? (
-                      <Badge variant="danger" size="sm" className="font-medium gap-1 text-[11px]">
+                      <Badge variant="danger" size="sm" className="font-semibold gap-1 text-[11px]">
                         <AlertTriangle className="h-3 w-3" />
                         <span className="capitalize">{item.severity}</span>
                       </Badge>
                     ) : isModerateSeverity ? (
-                      <Badge variant="warning" size="sm" className="font-medium capitalize text-[11px]">
+                      <Badge variant="warning" size="sm" className="font-semibold capitalize text-[11px]">
                         {item.severity}
                       </Badge>
                     ) : (
-                      <Badge variant="outline" size="sm" className="font-medium capitalize text-[11px]">
+                      <Badge variant="outline" size="sm" className="font-semibold capitalize text-[11px]">
                         {item.severity}
                       </Badge>
                     )}
                   </TableCell>
 
                   {/* Logged At */}
-                  <TableCell className="text-right text-xs text-bhoomi-text-secondary whitespace-nowrap">
+                  <TableCell className="text-right text-xs text-bhoomi-text-muted whitespace-nowrap font-mono">
                     {formatDateTime(item.created_at)}
                   </TableCell>
                 </TableRow>
