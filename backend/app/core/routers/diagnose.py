@@ -3,29 +3,55 @@
 OWNER: Thaariha + Suchit; orchestration by Shreekumar
 
 Serves:
-    POST /farms/{id}/diagnose -- NOT implemented here. Its frozen response
-        (docs/API_CONTRACT.md §6) requires a `gate` object composed by
-        app.intelligence.gate.decide(), which raises NotImplementedError
-        (owner Thaariha). Building it is out of scope for this file for now.
+    POST /farms/{id}/diagnose -- the orchestration (this file): load farm
+        context, classify, apply the prior, call app.intelligence.gate.decide()
+        (owner Thaariha, unmodified here), and branch. Two of the gate's three
+        branches produce a real, complete response (escalate; clarify with no
+        matching cue, which is the only clarify path reachable while
+        DistinguishingCue is empty). advise, and clarify with a cue actually
+        found, are real reachable states this build does not compose a
+        response for -- 501 NOT_IMPLEMENTED, not a bug: F7's advisory
+        composer and F4's Doubt Doctor question flow are Thaariha's and are
+        not built here. See _resolve_topk() and diagnose_farm() below.
 
     POST /vision/classify -- Phase 1 exception, vision fixture / test mode
-        (owner Suchit). This is a deliberately separate, interim path: it
-        returns contract C1 (TopK) unmodified and untouched by any gate logic,
-        so Thaariha (and anyone downstream) can drive all three gate bands by
-        header before decide() exists. It is not the diagnose contract and
-        must not be mistaken for it -- fold it into the real handler, or
-        remove it, once F2 lands.
+        (owner Suchit). Returns contract C1 (TopK) unmodified and untouched
+        by any gate logic, so any caller can drive all three gate bands by
+        header. diagnose_farm() below reads the SAME header through the same
+        _resolve_topk() this endpoint uses -- one fixture resolution, not two
+        copies of the dict that could drift apart.
 
-Specified by: docs/API_CONTRACT.md §6, docs/DESIGN.md §6.
+Specified by: docs/API_CONTRACT.md §6, docs/DESIGN.md §6, §7.
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Header
+import uuid
+
+from fastapi import APIRouter, Depends, Header
+from sqlalchemy import ARRAY, Text, cast, select
+from sqlalchemy.dialects.postgresql import array as pg_array
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.contracts.enums import GateOutcome, GateReasonCode, ProblemStatus, TargetLabel
 from app.contracts.vision import Prediction, TopK
-from app.errors import FixturesDisabled, ValidationFailed
+from app.core.models import Case, Diagnosis, DistinguishingCue, Farm, Problem, User
+from app.core.schemas.diagnose import DiagnoseIn, DiagnoseOut, EscalationOut, GateOut
+from app.core.services import prior as prior_service
+from app.core.services.alerts import TARGET_PROBLEM_TYPES
+from app.core.services.escalation import escalate
+from app.db import get_session
+from app.deps import Principal, current_principal
+from app.errors import (
+    BhoomiError,
+    ErrorCode,
+    FixturesDisabled,
+    Forbidden,
+    NotFound,
+    ValidationFailed,
+)
+from app.intelligence.gate import decide
 
 # _stub_topk, not classify(): the no-header path must return the stub without
 # handing invented bytes to a classifier. Reaching into Suchit's module for the
@@ -97,10 +123,7 @@ _FIXTURES: dict[str, TopK] = {
 }
 
 
-@router.post("/vision/classify", response_model=TopK)
-async def classify_vision_fixture(
-    x_vision_fixture: str | None = Header(default=None),
-) -> TopK:
+def _resolve_topk(x_vision_fixture: str | None) -> TopK:
     """Return a fixture TopK selected by the X-Vision-Fixture header.
 
     No header returns the inert stub distribution, unchanged, in every mode.
@@ -114,6 +137,9 @@ async def classify_vision_fixture(
     An unrecognised name is a 422 rather than a fall-through. Falling through
     handed back the stub's near-uniform distribution, which reads as a broken
     gate rather than as a typo in the header.
+
+    Shared by classify_vision_fixture() and diagnose_farm() -- one fixture
+    resolution for both, so they cannot drift apart.
     """
     if x_vision_fixture is None:
         return _stub_topk()
@@ -132,3 +158,231 @@ async def classify_vision_fixture(
         )
 
     return _FIXTURES[x_vision_fixture]
+
+
+@router.post("/vision/classify", response_model=TopK)
+async def classify_vision_fixture(
+    x_vision_fixture: str | None = Header(default=None),
+) -> TopK:
+    """Phase 1 vision fixture / test mode. See _resolve_topk()."""
+    return _resolve_topk(x_vision_fixture)
+
+
+# ===========================================================================
+# POST /farms/{id}/diagnose -- the orchestration
+# ===========================================================================
+
+
+async def _load_owned_farm(farm_id: uuid.UUID, principal: Principal, session: AsyncSession) -> Farm:
+    """Same ownership rule as farms.py and alerts.py's local copies: a farmer
+    sees only their own farm, agronomists and officials see any farm."""
+    farm = await session.get(Farm, farm_id)
+    if farm is None:
+        raise NotFound("That farm does not exist.")
+    if principal.role == "farmer" and farm.farmer_id != principal.subject:
+        raise Forbidden("That farm belongs to a different account.")
+    return farm
+
+
+async def _upsert_open_problem(
+    session: AsyncSession, farm_id: uuid.UUID, label: TargetLabel
+) -> Problem:
+    """Reuse the open Problem for this farm+label if one exists, rather than
+    creating a duplicate on every diagnose call against the same suspected
+    issue. A different label (a genuinely different problem on the same
+    farm) still gets its own row -- scoped per label, not per farm."""
+    existing = (
+        await session.execute(
+            select(Problem).where(
+                Problem.farm_id == farm_id,
+                Problem.label == label,
+                Problem.status == ProblemStatus.OPEN,
+            )
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        return existing
+
+    problem = Problem(
+        farm_id=farm_id, problem_type=TARGET_PROBLEM_TYPES[label], label=label
+    )
+    session.add(problem)
+    await session.flush()
+    return problem
+
+
+async def _find_discriminating_cue(
+    session: AsyncSession, label_a: str, label_b: str
+) -> DistinguishingCue | None:
+    """docs/DESIGN.md §7: a cue whose `discriminates` pair is exactly
+    {label_a, label_b}, order-independent. `@>` (Postgres array-contains):
+    the left array contains every element of the right one; combined with
+    the DB CHECK that `discriminates` is always exactly 2 elements, containing
+    both labels is sufficient to guarantee an exact-set match -- no third
+    label can be present. Built with `.op("@>")` against a real Postgres
+    ARRAY literal rather than the ORM's `.contains()`: `discriminates` is
+    typed as the dialect-generic `ARRAY(Text)` (docs/DESIGN.md §5's model),
+    and the generic type's `.contains()` raises NotImplementedError -- it
+    only supports the dialect-specific `postgresql.ARRAY` type, which the
+    frozen model does not use. The literal is explicitly cast to `text[]`:
+    left uninferred, asyncpg binds Python strings as `varchar[]`, and
+    Postgres has no `text[] @> varchar[]` operator -- "operator does not
+    exist," not a permission or logic error."""
+    needle = cast(pg_array([label_a, label_b]), ARRAY(Text))
+    stmt = select(DistinguishingCue).where(DistinguishingCue.discriminates.op("@>")(needle))
+    return (await session.execute(stmt)).scalars().first()
+
+
+def _agronomist_slug(user: User) -> str:
+    """"agronomist:kvk_nashik"-style display string for Case.assigned_to --
+    docs/API_CONTRACT.md §12/§13's rendered form of a real FK row (see
+    Case.assigned_to's docstring). No dedicated organisation/KVK column
+    exists on User, so this derives from the email domain -- the only
+    crafted example available is seed/farms.py's
+    agronomist@kvk-nashik.example -> "agronomist:kvk_nashik". Revisit if a
+    real KVK/organisation field is ever added to User."""
+    if not user.email:
+        return f"agronomist:{user.id}"
+    domain = user.email.split("@", 1)[-1]
+    slug = domain.split(".", 1)[0].replace("-", "_")
+    return f"agronomist:{slug}"
+
+
+async def _escalation_out(session: AsyncSession, case: Case) -> EscalationOut:
+    assigned_to = None
+    if case.assigned_to is not None:
+        agronomist = await session.get(User, case.assigned_to)
+        if agronomist is not None:
+            assigned_to = _agronomist_slug(agronomist)
+    return EscalationOut(
+        case_id=case.id,
+        assigned_to=assigned_to,
+        queue_position=case.queue_position,
+        eta_minutes=case.eta_minutes,
+    )
+
+
+@router.post(
+    "/farms/{farm_id}/diagnose", response_model=DiagnoseOut, response_model_exclude_none=True
+)
+async def diagnose_farm(
+    farm_id: uuid.UUID,
+    payload: DiagnoseIn,
+    x_vision_fixture: str | None = Header(default=None),
+    principal: Principal = Depends(current_principal),
+    session: AsyncSession = Depends(get_session),
+) -> DiagnoseOut:
+    """The gated diagnose path. docs/API_CONTRACT.md §6, docs/DESIGN.md §6, §7.
+
+    escalate and clarify-with-no-cue-found are the only branches this build
+    produces a full response for. advise, and clarify-with-a-cue-found, are
+    real reachable gate outcomes this build refuses rather than fabricates a
+    response for -- 501 NOT_IMPLEMENTED. See the module docstring.
+
+    The Problem and Diagnosis rows are written regardless of which branch is
+    reached, including the two 501 branches: a real classification event
+    happened and is recorded before the response is decided, not only when
+    this build knows how to finish answering it.
+    """
+    farm = await _load_owned_farm(farm_id, principal, session)
+
+    topk = _resolve_topk(x_vision_fixture)
+
+    biases = {
+        prediction.label: await prior_service.bias_for(
+            session, farm.region, farm.crop.value, farm.growth_stage, prediction.label
+        )
+        for prediction in topk.predictions
+    }
+    topk = prior_service.apply(topk, biases)
+
+    # The corpus has zero loaded rows -- every delivered row was refused on
+    # source_dated (seed/corpus/SOURCES_NEEDED.md). retrieval_score is
+    # honestly None, not a value invented to make the advise branch reachable.
+    retrieval_score: float | None = None
+
+    decision = decide(topk, retrieval_score)
+
+    top1 = topk.predictions[0]
+    target_label = TargetLabel(top1.label)
+    problem = await _upsert_open_problem(session, farm.id, target_label)
+
+    session.add(
+        Diagnosis(
+            problem_id=problem.id,
+            image_asset_id=payload.image_asset_id,
+            topk=topk.model_dump(),
+            gate_outcome=GateOutcome(decision.outcome),
+            gate_confidence=decision.confidence,
+            reason_code=GateReasonCode(decision.reason_code),
+            model_version=topk.model_version,
+            is_stub=topk.is_stub,
+        )
+    )
+    await session.flush()
+
+    if decision.outcome == "escalate":
+        case = await escalate(session, problem.id, reason=f"gate: {decision.reason_code}")
+        await session.commit()
+        return DiagnoseOut(
+            gate=GateOut(
+                outcome=decision.outcome,
+                confidence=decision.confidence,
+                threshold_applied=decision.threshold_applied,
+                reason_code=decision.reason_code,
+                alternatives=decision.alternatives,
+                is_stub=topk.is_stub,
+            ),
+            problem_id=problem.id,
+            problem_type=problem.problem_type,
+            escalation=await _escalation_out(session, case),
+        )
+
+    if decision.outcome == "clarify":
+        top2 = topk.predictions[1]
+        cue = await _find_discriminating_cue(session, top1.label, top2.label)
+        if cue is None:
+            # docs/DESIGN.md §7: "not found -> escalate". reason_code stays
+            # AMBIGUOUS -- honest about why this escalated -- while outcome
+            # reports what actually happened, so the response still satisfies
+            # "outcome determines which field is present" (escalation, not a
+            # half-built clarification with no question to ask).
+            case = await escalate(
+                session, problem.id, reason="clarify: no discriminating cue found"
+            )
+            await session.commit()
+            return DiagnoseOut(
+                gate=GateOut(
+                    outcome="escalate",
+                    confidence=decision.confidence,
+                    threshold_applied=decision.threshold_applied,
+                    reason_code=decision.reason_code,
+                    alternatives=decision.alternatives,
+                    is_stub=topk.is_stub,
+                ),
+                problem_id=problem.id,
+                problem_type=problem.problem_type,
+                escalation=await _escalation_out(session, case),
+            )
+
+        await session.commit()
+        raise BhoomiError(
+            ErrorCode.NOT_IMPLEMENTED,
+            "A discriminating cue exists for this pair, but rendering the "
+            "Doubt Doctor question is not built in this orchestration.",
+            details={"cue_id": str(cue.id)},
+        )
+
+    # advise: unreachable while the corpus is empty under the intended
+    # design (decide() should refuse for NO_RELEVANT_SOURCE first) -- reached
+    # here only because the deployed gate.decide() is still the Phase 2
+    # implementation and does not consult retrieval_score at all. Refused
+    # regardless of why it was reached: composing an advisory is F7's, not
+    # built here.
+    await session.commit()
+    raise BhoomiError(
+        ErrorCode.NOT_IMPLEMENTED,
+        "The gate reached 'advise', but composing an advisory is not built "
+        "in this orchestration.",
+        details={"reason_code": decision.reason_code},
+    )

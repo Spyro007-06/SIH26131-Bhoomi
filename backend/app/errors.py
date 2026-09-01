@@ -56,6 +56,17 @@ class ErrorCode(StrEnum):
     is irrelevant: with VISION_MODEL=real nobody may pull a fixture, and with
     VISION_MODEL=stub everybody may. It is a server configuration state, so it
     gets a code that says so and a 409 rather than a 403."""
+    NOT_IMPLEMENTED = "NOT_IMPLEMENTED"
+    """Added wiring POST /farms/{id}/diagnose: the gate genuinely reached a
+    branch (advise; or clarify with a matching DistinguishingCue found) whose
+    response this build does not compose. Both are real, reachable states, not
+    bugs — the composer (F7) and the Doubt Doctor question flow (F4) are
+    Thaariha's and are not built here. Distinct from FIXTURES_DISABLED (a
+    server configuration state) and from every gate reason code: those are
+    conditions the GATE decided, delivered as a normal 200 docs/API_CONTRACT.md
+    §6 response; this is the API declining to build a response it cannot yet
+    compose honestly. 501, not 200 — this is not a designed outcome to render,
+    it is missing software."""
 
 
 # Default HTTP status per code. A code may override per-raise, but the default
@@ -77,6 +88,7 @@ DEFAULT_STATUS: dict[ErrorCode, int] = {
     # will keep conflicting until that configuration changes. Not 403 (identity
     # is irrelevant) and not 400 (the request is well formed).
     ErrorCode.FIXTURES_DISABLED: status.HTTP_409_CONFLICT,
+    ErrorCode.NOT_IMPLEMENTED: status.HTTP_501_NOT_IMPLEMENTED,
 }
 # The gate outcomes default to 200 deliberately. "I am not confident, here is an
 # expert" is a successful, designed response — not an HTTP failure. They appear

@@ -61,11 +61,18 @@ IMPLEMENTED = {
     "services/confirmation.py",
     "services/prior.py",
     "services/aggregates.py",
-    # Phase 1 exception (2026-08-31): POST /vision/classify only -- the fixture
-    # / test-mode endpoint for the vision stub. POST /farms/{id}/diagnose
-    # itself is NOT implemented; the gate it needs still raises
-    # NotImplementedError. See routers/diagnose.py's module docstring.
+    # Phase 1 exception (2026-08-31): POST /vision/classify, the fixture /
+    # test-mode endpoint for the vision stub.
+    #
+    # POST /farms/{id}/diagnose itself landed later, in the same file --
+    # escalate and clarify-with-no-cue-found are fully built; advise and
+    # clarify-with-a-cue-found return 501 (F7's composer and F4's question
+    # flow are Thaariha's). See routers/diagnose.py's module docstring.
     "routers/diagnose.py",
+    # schemas/diagnose.py: the response shapes for the above. Same reasoning
+    # as routers/diagnose.py -- built alongside it, not a phase-scaffolded
+    # placeholder.
+    "schemas/diagnose.py",
     # Corpus ingestion loader. "services/corpus.py" is the retrieval-side
     # authoritative filter -- NOT a router, schema or service that a phase
     # brief scaffolded as a placeholder; it is a new module written to answer
