@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/config/demo_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -8,6 +9,7 @@ import '../../../providers/auth_providers.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
 import '../../../widgets/app_text_field.dart';
+import '../../../widgets/language_selector_button.dart';
 import 'otp_verify_screen.dart';
 
 /// Phone authentication entrypoint screen for Bhoomi Farmer App.
@@ -88,6 +90,152 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
     }
   }
 
+  void _showDemoConfirmationModal(BuildContext context) {
+    final strings = ref.read(stringsProvider);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.ricePaper,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.l24,
+              vertical: AppSpacing.l20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.s8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.forest.withValues(alpha: 0.3)),
+                      ),
+                      child: const Icon(
+                        Icons.agriculture_rounded,
+                        color: AppColors.forest,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.m12),
+                    Expanded(
+                      child: Text(
+                        strings.demoModalTitle,
+                        style: AppTypography.sectionTitle.copyWith(
+                          color: AppColors.primaryDark,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.m16),
+                Text(
+                  strings.demoModalDesc,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.soilCharcoal,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.m16),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.m16),
+                  decoration: BoxDecoration(
+                    color: AppColors.warmSurface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildDemoDetailRow(
+                        icon: Icons.person_rounded,
+                        text: strings.demoFarmerNameLabel,
+                      ),
+                      const SizedBox(height: AppSpacing.s8),
+                      _buildDemoDetailRow(
+                        icon: Icons.grass_rounded,
+                        text: strings.demoFarmNameLabel,
+                      ),
+                      const SizedBox(height: AppSpacing.s8),
+                      _buildDemoDetailRow(
+                        icon: Icons.location_on_rounded,
+                        text: strings.demoLocationLabel,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.l24),
+                AppButton.primary(
+                  label: strings.enterDemoButton,
+                  size: AppButtonSize.large,
+                  isFullWidth: true,
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    _handleDemoLogin();
+                  },
+                  leadingIcon: const Icon(Icons.login_rounded, color: Colors.white, size: 20),
+                ),
+                const SizedBox(height: AppSpacing.s10),
+                AppButton.ghost(
+                  label: strings.cancel,
+                  size: AppButtonSize.normal,
+                  isFullWidth: true,
+                  onPressed: () => Navigator.of(ctx).pop(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDemoDetailRow({required IconData icon, required String text}) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.forest),
+        const SizedBox(width: AppSpacing.s8),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.primaryDark,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleDemoLogin() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await ref.read(authStateProvider.notifier).loginAsDemo();
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final strings = ref.watch(stringsProvider);
@@ -100,54 +248,61 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.l20,
-                vertical: AppSpacing.xl28,
+                vertical: AppSpacing.m16,
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - (AppSpacing.xl28 * 2),
+                  minHeight: constraints.maxHeight - (AppSpacing.m16 * 2),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Top Section: Brand & Welcome
+                    // Header Section
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: AppSpacing.m16),
-                        // App Logo Emblem
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryLight,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.forest, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.eco_rounded,
-                            size: 36,
-                            color: AppColors.forest,
-                          ),
+
+                        // App Logo Emblem & Global Language Selector
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.forest, width: 2),
+                              ),
+                              child: const Icon(
+                                Icons.eco_rounded,
+                                size: 36,
+                                color: AppColors.forest,
+                              ),
+                            ),
+                            const Flexible(
+                              child: LanguageSelectorButton(),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: AppSpacing.l20),
 
-                        // Welcome Heading
+                        // Welcome Headlines
                         Text(
                           strings.welcomeTitle,
-                          style: AppTypography.title.copyWith(
+                          style: AppTypography.screenTitle.copyWith(
                             color: AppColors.primaryDark,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.s8),
-
-                        // Subtitle
                         Text(
                           strings.phoneSubtitle,
-                          style: AppTypography.body.copyWith(
-                            color: AppColors.fieldSlate,
-                            height: 1.4,
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.soilCharcoal.withValues(alpha: 0.8),
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xl32),
@@ -240,6 +395,24 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
                             size: 20,
                           ),
                         ),
+                        if (DemoConfig.isDemoMode) ...[
+                          const SizedBox(height: AppSpacing.s8),
+                          Center(
+                            child: TextButton.icon(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () => _showDemoConfirmationModal(context),
+                              icon: const Text('🌾', style: TextStyle(fontSize: 16)),
+                              label: Text(
+                                strings.tryDemoAccount,
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.forest,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: AppSpacing.m16),
                         Center(
                           child: Text(

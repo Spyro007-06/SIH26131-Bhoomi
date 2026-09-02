@@ -64,6 +64,9 @@ class FakeBoundaryAuthRepo extends AuthRepository {
   Future<OtpRequestResponse> requestOtp({required String phone}) => throw UnimplementedError();
 
   @override
+  Future<OtpVerifyResponse> loginAsDemo({String demoCode = 'SIH2026'}) => throw UnimplementedError();
+
+  @override
   Future<OtpVerifyResponse> verifyOtp({required String requestId, required String otp}) =>
       throw UnimplementedError();
 }

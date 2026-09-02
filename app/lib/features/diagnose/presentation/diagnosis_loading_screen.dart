@@ -8,6 +8,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../providers/farm_providers.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../widgets/app_button.dart';
+import '../../../widgets/language_selector_button.dart';
 import 'diagnosis_controller.dart';
 import 'advisory_result_screen.dart';
 import 'escalation_status_screen.dart';
@@ -79,6 +80,9 @@ class _DiagnosisLoadingScreenState extends ConsumerState<DiagnosisLoadingScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: diagState.isError,
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -132,7 +136,7 @@ class _DiagnosisLoadingScreenState extends ConsumerState<DiagnosisLoadingScreen>
                       // Tactile loading spinner
                       AppLoading(
                         message: diagState.isUploading
-                            ? 'Uploading photo to secure storage...'
+                            ? strings.uploadingPhoto
                             : strings.loading,
                       ),
                     ],

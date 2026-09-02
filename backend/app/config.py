@@ -215,6 +215,10 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 30
     otp_expire_seconds: int = 300
 
+    demo_mode: bool = True
+    """Enable dedicated demo account endpoint for SIH demonstrations.
+    Defaults to True in local/dev; can be set to False via DEMO_MODE=false in production."""
+
     dev_fixed_otp: str | None = None
     """Local-only escape hatch so the demo does not need an SMS provider.
 

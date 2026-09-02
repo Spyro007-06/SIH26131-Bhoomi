@@ -9,6 +9,7 @@ import '../../../providers/auth_providers.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
 import '../../../widgets/app_text_field.dart';
+import '../../../widgets/language_selector_button.dart';
 
 /// OTP Verification Screen for Bhoomi Farmer App.
 class OtpVerifyScreen extends ConsumerStatefulWidget {
@@ -163,6 +164,9 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
           tooltip: strings.changeNumber,
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(

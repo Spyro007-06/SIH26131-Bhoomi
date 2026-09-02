@@ -10,6 +10,8 @@ import '../../../widgets/app_error_state.dart';
 import '../../../widgets/app_card.dart';
 import '../../../widgets/app_status_badge.dart';
 import '../../../widgets/spoken_summary_player.dart';
+import '../../../widgets/language_selector_button.dart';
+import '../../../widgets/farmer_contextual_voice_action.dart';
 
 /// Comprehensive Case File Problem Detail Screen.
 class ProblemDetailScreen extends ConsumerWidget {
@@ -42,6 +44,9 @@ class ProblemDetailScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: problemAsync.when(
@@ -266,6 +271,11 @@ class ProblemDetailScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: AppSpacing.m12),
+                    FarmerContextualVoiceAction.outline(
+                      label: strings.voiceContextHistoryAsk,
+                      contextTopic: '${problem.label.replaceAll('_', ' ')} Record',
                     ),
                     const SizedBox(height: AppSpacing.l20),
                   ],

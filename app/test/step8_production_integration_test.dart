@@ -117,6 +117,27 @@ class MockStep8AuthRepo extends AuthRepository {
   }
 
   @override
+  Future<OtpVerifyResponse> loginAsDemo({String demoCode = 'SIH2026'}) async {
+    _isAuthed = true;
+    _user = const UserModel(
+      id: 'u_farmer_step8_demo',
+      phone: '+919999999999',
+      name: 'Ramesh Patil',
+      role: 'farmer',
+    );
+    await tokenStorage.saveTokens(
+      accessToken: 'jwt_access_step8_demo',
+      refreshToken: 'jwt_refresh_step8_demo',
+    );
+    await tokenStorage.saveUserData(_user!.toJson());
+    return OtpVerifyResponse(
+      accessToken: 'jwt_access_step8_demo',
+      refreshToken: 'jwt_refresh_step8_demo',
+      user: _user!,
+    );
+  }
+
+  @override
   Future<void> logout() async {
     _isAuthed = false;
     _user = null;

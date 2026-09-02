@@ -9,6 +9,7 @@ import '../../../models/diagnosis_models.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
 import '../../../widgets/stub_banner.dart';
+import '../../../widgets/language_selector_button.dart';
 
 /// Screen displayed when Confidence Gate outcome is 'escalate' or Doubt Doctor is unresolved.
 class EscalationStatusScreen extends ConsumerWidget {
@@ -52,6 +53,9 @@ class EscalationStatusScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

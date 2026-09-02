@@ -19,10 +19,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import OTP_MAX_ATTEMPTS, settings
-from app.contracts.enums import Role
+from app.contracts.enums import Crop, Role
 from app.core import security
-from app.core.models import OtpRequest, User
+from app.core.models import Farm, OtpRequest, User
 from app.core.schemas.auth import (
+    DemoLoginIn,
     LoginIn,
     OtpRequestIn,
     OtpRequestOut,
@@ -173,5 +174,55 @@ async def login(payload: LoginIn, session: AsyncSession = Depends(get_session)) 
         raise BhoomiError(
             ErrorCode.FORBIDDEN, "This account signs in with a phone number instead."
         )
+
+    return _tokens_for(user)
+
+
+@router.post("/demo", response_model=TokenOut)
+async def demo_login(
+    payload: DemoLoginIn | None = None,
+    session: AsyncSession = Depends(get_session),
+) -> TokenOut:
+    """Dedicated demo authentication endpoint for SIH demonstrations.
+
+    Gated by `settings.demo_mode` (or app_env == 'local').
+    Mints valid tokens for the pre-seeded demo farmer (Ramesh Patil / +919999999999).
+    """
+    if not settings.demo_mode and settings.app_env != "local":
+        raise BhoomiError(ErrorCode.FORBIDDEN, "Demo mode is disabled in this environment.")
+
+    demo_code = payload.demo_code if payload else "SIH2026"
+    if demo_code != "SIH2026":
+        raise Unauthenticated("Invalid demo authorization code.")
+
+    demo_phone = "+919999999999"
+    user = (
+        await session.execute(select(User).where(User.phone == demo_phone))
+    ).scalar_one_or_none()
+
+    if user is None:
+        # Create standard demo farmer
+        user = User(
+            role=Role.FARMER,
+            phone=demo_phone,
+            name="Ramesh Patil",
+        )
+        session.add(user)
+        await session.flush()
+
+        # Seed pre-populated demo farm
+        wkt = "SRID=4326;POINT(73.74140 19.99730)"
+        farm = Farm(
+            farmer_id=user.id,
+            crop=Crop.PADDY,
+            variety="Indrayani",
+            growth_stage="tillering",
+            region="Nashik",
+            location=wkt,
+            sowing_date=(datetime.now(UTC) - timedelta(days=50)).date(),
+        )
+        session.add(farm)
+        await session.commit()
+        await session.refresh(user)
 
     return _tokens_for(user)

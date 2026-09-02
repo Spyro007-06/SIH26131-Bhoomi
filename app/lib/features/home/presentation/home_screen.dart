@@ -16,7 +16,8 @@ import '../../../widgets/risk_card.dart';
 import '../../../widgets/followup_card.dart';
 import '../../onboarding/presentation/farm_setup_screen.dart';
 import '../../timeline/presentation/problem_detail_screen.dart';
-import '../../../widgets/voice_query_sheet.dart';
+import '../../../widgets/farmer_voice_assistant.dart';
+import '../../../widgets/language_selector_button.dart';
 
 /// Central Home Dashboard for Bhoomi Farmer App.
 class HomeScreen extends ConsumerWidget {
@@ -69,54 +70,155 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header: Dynamic Greeting & App Title
+                // 1. Header: Personal Greeting, Bhoomi Partner Info & Global Language Selector
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _getGreeting(strings),
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.fieldSlate,
-                            fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getGreeting(strings),
+                            style: AppTypography.subheading.copyWith(
+                              color: AppColors.primaryDark,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          strings.appName,
-                          style: AppTypography.title.copyWith(
-                            color: AppColors.primaryDark,
-                            fontWeight: FontWeight.w800,
+                          const SizedBox(height: 2),
+                          Text(
+                            '${strings.appName} · ${strings.greetingPartnerSubtitle}',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.fieldSlate,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    // Language Chip Indicator
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.m12,
-                        vertical: AppSpacing.s6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.forest.withValues(alpha: 0.3)),
-                      ),
-                      child: Text(
-                        strings.language.label,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.forest,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        ],
                       ),
                     ),
+                    const SizedBox(width: AppSpacing.s8),
+                    // Global Language Selector Button
+                    const LanguageSelectorButton(),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.l20),
 
-                // Active Farm Context Card
+                // =========================================================================
+                // 2. PRIMARY VOICE AREA: 🎤 TALK TO BHOOMI (MAIN INTERACTION HERO)
+                // =========================================================================
+                Semantics(
+                  label: '${strings.voiceHeroTitle}. ${strings.voiceHeroSubtitleFull}',
+                  button: true,
+                  child: InkWell(
+                    borderRadius: AppRadius.card,
+                    onTap: () => FarmerVoiceAssistant.show(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.l16,
+                        vertical: AppSpacing.l20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.warmSurface,
+                        borderRadius: AppRadius.card,
+                        border: Border.all(color: AppColors.forest, width: 2.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.forest.withValues(alpha: 0.16),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // 68dp Interactive Tactile Microphone
+                          Container(
+                            width: 68,
+                            height: 68,
+                            decoration: BoxDecoration(
+                              color: AppColors.forest,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.forest.withValues(alpha: 0.35),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.mic_rounded,
+                              color: AppColors.pureWhite,
+                              size: 36,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.m12),
+
+                          // Clear Hierarchy: Title + Subtitle
+                          Text(
+                            strings.voiceHeroTitle,
+                            style: AppTypography.sectionTitle.copyWith(
+                              color: AppColors.forest,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 22,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: AppSpacing.xs4),
+                          Text(
+                            strings.voiceHeroSubtitleFull,
+                            style: AppTypography.body.copyWith(
+                              color: AppColors.soilCharcoal,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: AppSpacing.l16),
+
+                          // Prominent Primary CTA Action Button
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.m12,
+                              horizontal: AppSpacing.l16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.forest,
+                              borderRadius: AppRadius.button,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
+                                const SizedBox(width: AppSpacing.s8),
+                                Flexible(
+                                  child: Text(
+                                    strings.voiceHeroCta,
+                                    style: AppTypography.button.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: AppSpacing.l16),
+
+                // =========================================================================
+                // 3. COMPACT FARM STATUS CARD
+                // =========================================================================
                 if (activeFarmId == null || activeFarmId.isEmpty)
                   AppCard(
                     padding: const EdgeInsets.all(AppSpacing.l16),
@@ -165,15 +267,14 @@ class HomeScreen extends ConsumerWidget {
                   summaryAsync.when(
                     data: (summary) {
                       if (summary != null) {
-                        return Column(
-                          children: [
-                            FarmHealthCard(
-                              health: summary.health,
-                              cropName: '${summary.farm.crop} (${summary.farm.variety ?? "Indrayani"})',
-                              growthStage: summary.farm.growthStage,
-                              region: summary.farm.region,
-                            ),
-                          ],
+                        return FarmHealthCard(
+                          health: summary.health,
+                          cropName: '${summary.farm.crop} (${summary.farm.variety ?? "Indrayani"})',
+                          growthStage: summary.farm.growthStage,
+                          region: summary.farm.region,
+                          openProblems: summary.openProblems,
+                          pendingFollowups: summary.pendingFollowups,
+                          activeAlerts: summary.activeAlerts,
                         );
                       }
                       return FarmHealthCard(
@@ -206,19 +307,21 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
 
-                const SizedBox(height: AppSpacing.l20),
+                const SizedBox(height: AppSpacing.l16),
 
-                // Hero "Check Crop" Action Card (Primary Feature CTA)
+                // =========================================================================
+                // 4. SECONDARY CROP CHECK ACTION: 📷 SHOW BHOOMI YOUR CROP
+                // =========================================================================
                 GestureDetector(
                   onTap: onCheckCropPressed,
                   child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.l20),
+                    padding: const EdgeInsets.all(AppSpacing.l16),
                     decoration: BoxDecoration(
                       color: AppColors.forest,
                       borderRadius: AppRadius.card,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.forest.withValues(alpha: 0.2),
+                          color: AppColors.forest.withValues(alpha: 0.25),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -227,8 +330,8 @@ class HomeScreen extends ConsumerWidget {
                     child: Row(
                       children: [
                         Container(
-                          width: 52,
-                          height: 52,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
@@ -236,7 +339,7 @@ class HomeScreen extends ConsumerWidget {
                           child: const Icon(
                             Icons.camera_alt_rounded,
                             color: Colors.white,
-                            size: 28,
+                            size: 26,
                           ),
                         ),
                         const SizedBox(width: AppSpacing.l16),
@@ -246,12 +349,12 @@ class HomeScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 strings.checkCropBannerTitle,
-                                style: AppTypography.bodyMedium.copyWith(
+                                style: AppTypography.subheading.copyWith(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               Text(
                                 strings.checkCropBannerAction,
                                 style: AppTypography.bodySmall.copyWith(
@@ -267,68 +370,6 @@ class HomeScreen extends ConsumerWidget {
                           size: 18,
                         ),
                       ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: AppSpacing.m12),
-
-                // Voice Assistant Quick Query Card
-                Semantics(
-                  label: strings.semanticsVoiceMic,
-                  button: true,
-                  child: InkWell(
-                    borderRadius: AppRadius.card,
-                    onTap: () => VoiceQuerySheet.show(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.l16,
-                        vertical: AppSpacing.m12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.warmSurface,
-                        borderRadius: AppRadius.card,
-                        border: Border.all(color: AppColors.forest.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: const BoxDecoration(
-                              color: AppColors.primaryLight,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.mic_rounded,
-                              color: AppColors.forest,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.m12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  strings.semanticsVoiceMic,
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.forest,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Text(
-                                  strings.voiceListeningPrompt,
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.fieldSlate,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right_rounded, color: AppColors.fieldSlate),
-                        ],
-                      ),
                     ),
                   ),
                 ),

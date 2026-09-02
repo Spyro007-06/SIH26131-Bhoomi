@@ -1,4 +1,5 @@
 import '../core/constants/api_endpoints.dart';
+import '../core/constants/demo_fixtures.dart';
 import '../core/network/api_client.dart';
 import '../core/storage/token_storage.dart';
 import '../models/auth_models.dart';
@@ -9,6 +10,7 @@ abstract class AuthRepository {
     required String requestId,
     required String otp,
   });
+  Future<OtpVerifyResponse> loginAsDemo({String demoCode = 'SIH2026'});
   /// Local-only operation: deletes tokens and session data from secure storage.
   /// Does not make an HTTP request (API_CONTRACT has no logout endpoint).
   Future<void> logout();
@@ -54,6 +56,37 @@ class AuthRepositoryImpl implements AuthRepository {
     );
     await _tokenStorage.saveUserData(result.user.toJson());
     return result;
+  }
+
+  @override
+  Future<OtpVerifyResponse> loginAsDemo({String demoCode = 'SIH2026'}) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.authDemo,
+        data: {'demo_code': demoCode},
+      );
+      final result = OtpVerifyResponse.fromJson(response as Map<String, dynamic>);
+      await _tokenStorage.saveTokens(
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      );
+      await _tokenStorage.saveUserData(result.user.toJson());
+      return result;
+    } catch (_) {
+      // Offline Demo Fallback: ensure presentations continue seamlessly without internet
+      final fallbackUser = DemoFixtures.demoUser;
+      final fallbackResult = OtpVerifyResponse(
+        accessToken: 'bhoomi_demo_access_token_${DateTime.now().millisecondsSinceEpoch}',
+        refreshToken: 'bhoomi_demo_refresh_token',
+        user: fallbackUser,
+      );
+      await _tokenStorage.saveTokens(
+        accessToken: fallbackResult.accessToken,
+        refreshToken: fallbackResult.refreshToken,
+      );
+      await _tokenStorage.saveUserData(fallbackUser.toJson());
+      return fallbackResult;
+    }
   }
 
   /// Local session clearing only: resets secure tokens, cached user, and active farm context.

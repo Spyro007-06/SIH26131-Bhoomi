@@ -111,6 +111,27 @@ class MockStep7AuthRepo extends AuthRepository {
   }
 
   @override
+  Future<OtpVerifyResponse> loginAsDemo({String demoCode = 'SIH2026'}) async {
+    _isAuthenticated = true;
+    _currentUser = const UserModel(
+      id: 'u_farmer_step7',
+      phone: '+919999999999',
+      name: 'Ramesh Patil',
+      role: 'farmer',
+    );
+    await tokenStorage.saveTokens(
+      accessToken: 'valid_access_jwt',
+      refreshToken: 'valid_refresh_jwt',
+    );
+    await tokenStorage.saveUserData(_currentUser!.toJson());
+    return OtpVerifyResponse(
+      accessToken: 'valid_access_jwt',
+      refreshToken: 'valid_refresh_jwt',
+      user: _currentUser!,
+    );
+  }
+
+  @override
   Future<void> logout() async {
     _isAuthenticated = false;
     _currentUser = null;

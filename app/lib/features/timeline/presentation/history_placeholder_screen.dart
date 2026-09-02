@@ -5,6 +5,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../widgets/app_empty_state.dart';
+import '../../../widgets/language_selector_button.dart';
 
 /// Farm Timeline and Case File history placeholder screen for Step 3.
 class HistoryPlaceholderScreen extends ConsumerWidget {
@@ -26,6 +27,9 @@ class HistoryPlaceholderScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: const SafeArea(
         child: Padding(

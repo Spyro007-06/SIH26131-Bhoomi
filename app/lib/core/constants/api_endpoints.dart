@@ -1,9 +1,10 @@
 /// Centralized API endpoint paths for Bhoomi v2 backend.
 /// Base path is `/api/v1` (API_CONTRACT §0).
 abstract final class ApiEndpoints {
-  // Authentication (OTP only for Farmer App - API_CONTRACT §2)
+  // Authentication (OTP only for Farmer App - API_CONTRACT §2, plus SIH Demo)
   static const String authOtpRequest = '/auth/otp/request';
   static const String authOtpVerify = '/auth/otp/verify';
+  static const String authDemo = '/auth/demo';
 
   // Assets & Media
   static const String assetsPresign = '/assets/presign';

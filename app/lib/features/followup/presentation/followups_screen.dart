@@ -12,6 +12,7 @@ import '../../../widgets/app_loading.dart';
 import '../../../widgets/app_error_state.dart';
 import '../../../widgets/app_empty_state.dart';
 import '../../../widgets/followup_card.dart';
+import '../../../widgets/language_selector_button.dart';
 
 /// Closed-Loop Follow-Up Check-ins Screen.
 class FollowupsScreen extends ConsumerStatefulWidget {
@@ -89,6 +90,9 @@ class _FollowupsScreenState extends ConsumerState<FollowupsScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: followupsAsync.when(

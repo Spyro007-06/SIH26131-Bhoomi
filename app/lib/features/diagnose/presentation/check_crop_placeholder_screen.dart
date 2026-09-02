@@ -6,6 +6,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../widgets/app_card.dart';
 import '../../../widgets/stub_banner.dart';
+import '../../../widgets/language_selector_button.dart';
 
 /// Check Crop placeholder screen for Step 3.
 /// Visual entrypoint for the upcoming camera diagnosis workflow.
@@ -28,6 +29,9 @@ class CheckCropPlaceholderScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

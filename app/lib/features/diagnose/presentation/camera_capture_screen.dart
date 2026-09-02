@@ -8,6 +8,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/localization/locale_provider.dart';
 import 'diagnosis_controller.dart';
 import 'image_preview_screen.dart';
+import '../../../widgets/language_selector_button.dart';
 
 /// Farmer-friendly Camera Capture Screen for Crop Diagnosis.
 class CameraCaptureScreen extends ConsumerStatefulWidget {
@@ -23,6 +24,8 @@ class CameraCaptureScreen extends ConsumerStatefulWidget {
 }
 
 class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen> {
+  bool _isProcessingCapture = false;
+
   // Generate sample image bytes for demonstration / camera capture
   Uint8List _generateSampleLeafBytes() {
     return Uint8List.fromList([
@@ -33,26 +36,38 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen> {
     ]);
   }
 
-  void _onCapturePressed() {
+  Future<void> _onCapturePressed() async {
+    if (_isProcessingCapture) return;
+    setState(() => _isProcessingCapture = true);
+
     final sampleBytes = _generateSampleLeafBytes();
     ref.read(diagnosisControllerProvider.notifier).setImage(sampleBytes);
 
-    Navigator.of(context).push(
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ImagePreviewScreen(imageBytes: sampleBytes),
       ),
     );
+    if (mounted) {
+      setState(() => _isProcessingCapture = false);
+    }
   }
 
-  void _onGalleryPressed() {
+  Future<void> _onGalleryPressed() async {
+    if (_isProcessingCapture) return;
+    setState(() => _isProcessingCapture = true);
+
     final sampleBytes = _generateSampleLeafBytes();
     ref.read(diagnosisControllerProvider.notifier).setImage(sampleBytes);
 
-    Navigator.of(context).push(
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ImagePreviewScreen(imageBytes: sampleBytes),
       ),
     );
+    if (mounted) {
+      setState(() => _isProcessingCapture = false);
+    }
   }
 
   @override
@@ -82,6 +97,9 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(isDarkBackground: true),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -89,8 +107,8 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen> {
             // Top Farmer Instruction Banner
             Container(
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.l20,
-                vertical: AppSpacing.m12,
+                horizontal: AppSpacing.l16,
+                vertical: AppSpacing.s8,
               ),
               color: Colors.black.withValues(alpha: 0.4),
               child: Row(
@@ -112,20 +130,25 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen> {
 
             // Camera Viewfinder & Framing Guide
             Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.l24),
-                  child: AspectRatio(
-                    aspectRatio: 3 / 4,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        borderRadius: AppRadius.card,
-                        border: Border.all(
-                          color: AppColors.primaryLight.withValues(alpha: 0.6),
-                          width: 2,
-                        ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.m16,
+                        vertical: AppSpacing.s8,
                       ),
+                      child: AspectRatio(
+                        aspectRatio: 3 / 4,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: AppRadius.card,
+                            border: Border.all(
+                              color: AppColors.primaryLight.withValues(alpha: 0.6),
+                              width: 2,
+                            ),
+                          ),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
@@ -152,7 +175,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen> {
                                   ),
                                 ),
                                 child: Text(
-                                  'पाने / खोड चौकटीत ठेवा',
+                                  strings.cameraFrameGuide,
                                   style: AppTypography.caption.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,
@@ -188,14 +211,16 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen> {
                     ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
+          ),
+        ),
 
             // Bottom Controls Bar
             Container(
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xl32,
-                vertical: AppSpacing.l24,
+                horizontal: AppSpacing.l24,
+                vertical: AppSpacing.m12,
               ),
               color: Colors.black.withValues(alpha: 0.5),
               child: Row(

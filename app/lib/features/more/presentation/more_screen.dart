@@ -9,7 +9,10 @@ import '../../../core/localization/locale_provider.dart';
 import '../../../providers/auth_providers.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
+import '../../../widgets/language_selector_button.dart';
 import '../../referrals/presentation/referrals_screen.dart';
+import '../../onboarding/presentation/farm_setup_screen.dart';
+import '../../timeline/presentation/history_screen.dart';
 
 /// More Options & Farmer Settings Screen.
 class MoreScreen extends ConsumerWidget {
@@ -126,6 +129,9 @@ class MoreScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -193,6 +199,83 @@ class MoreScreen extends ConsumerWidget {
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
+                    // My Farm & Crop Profile
+                    ListTile(
+                      leading: const Icon(Icons.agriculture_rounded, color: AppColors.forest),
+                      title: Text(
+                        strings.myFarmOption,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.soilCharcoal,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.fieldSlate),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const FarmSetupScreen()),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, color: AppColors.border),
+
+                    // KVK & Helpline Referrals
+                    ListTile(
+                      leading: const Icon(Icons.contact_phone_rounded, color: AppColors.forest),
+                      title: Text(
+                        strings.referralsOption,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.soilCharcoal,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.fieldSlate),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ReferralsScreen()),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, color: AppColors.border),
+
+                    // Crop Check History
+                    ListTile(
+                      leading: const Icon(Icons.history_rounded, color: AppColors.forest),
+                      title: Text(
+                        strings.historyOption,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.soilCharcoal,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.fieldSlate),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => Scaffold(
+                              backgroundColor: AppColors.ricePaper,
+                              appBar: AppBar(
+                                backgroundColor: Colors.transparent,
+                                elevation: 0,
+                                leading: IconButton(
+                                  icon: const Icon(Icons.arrow_back_rounded, color: AppColors.forest),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                                title: Text(
+                                  strings.historyOption,
+                                  style: AppTypography.subheading.copyWith(
+                                    color: AppColors.primaryDark,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              body: const HistoryScreen(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, color: AppColors.border),
+
                     // Language Switcher
                     ListTile(
                       leading: const Icon(Icons.language_rounded, color: AppColors.forest),
@@ -218,25 +301,6 @@ class MoreScreen extends ConsumerWidget {
                         ],
                       ),
                       onTap: () => _showLanguageDialog(context, ref),
-                    ),
-                    const Divider(height: 1, color: AppColors.border),
-
-                    // KVK & Helpline Referrals
-                    ListTile(
-                      leading: const Icon(Icons.contact_phone_rounded, color: AppColors.forest),
-                      title: Text(
-                        strings.referralsOption,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.soilCharcoal,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.fieldSlate),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const ReferralsScreen()),
-                        );
-                      },
                     ),
                     const Divider(height: 1, color: AppColors.border),
 

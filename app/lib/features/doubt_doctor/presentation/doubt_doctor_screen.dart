@@ -10,6 +10,7 @@ import '../../../providers/repository_providers.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
 import '../../../widgets/stub_banner.dart';
+import '../../../widgets/language_selector_button.dart';
 import '../../diagnose/presentation/advisory_result_screen.dart';
 import '../../diagnose/presentation/escalation_status_screen.dart';
 
@@ -113,6 +114,9 @@ class _DoubtDoctorScreenState extends ConsumerState<DoubtDoctorScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

@@ -11,6 +11,7 @@ import '../../../providers/repository_providers.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_card.dart';
 import '../../../widgets/app_text_field.dart';
+import '../../../widgets/language_selector_button.dart';
 
 /// Farm Setup Screen with dynamic GPS Location integration.
 class FarmSetupScreen extends ConsumerStatefulWidget {
@@ -132,6 +133,9 @@ class _FarmSetupScreenState extends ConsumerState<FarmSetupScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

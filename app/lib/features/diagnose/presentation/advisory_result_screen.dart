@@ -12,6 +12,8 @@ import '../../../widgets/app_card.dart';
 import '../../../widgets/app_status_badge.dart';
 import '../../../widgets/stub_banner.dart';
 import '../../../widgets/advisory_ipm_card.dart';
+import '../../../widgets/language_selector_button.dart';
+import '../../../widgets/farmer_contextual_voice_action.dart';
 
 /// Screen displayed when Confidence Gate outcome is 'advise' or Doubt Doctor is resolved.
 class AdvisoryResultScreen extends ConsumerWidget {
@@ -79,6 +81,9 @@ class AdvisoryResultScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -214,6 +219,13 @@ class AdvisoryResultScreen extends ConsumerWidget {
                 }),
                 const SizedBox(height: AppSpacing.l20),
               ],
+
+              // Contextual Voice Assistant Action (Level 2 Contextual)
+              FarmerContextualVoiceAction.outline(
+                label: strings.voiceContextDiagnosis,
+                contextTopic: diagnosis?.label.replaceAll('_', ' ') ?? 'Crop Issue',
+              ),
+              const SizedBox(height: AppSpacing.m12),
 
               // Back to Home Button
               AppButton.primary(

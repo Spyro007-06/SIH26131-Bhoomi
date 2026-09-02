@@ -72,6 +72,39 @@ class AppStrings {
           ? 'कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें'
           : 'Please enter a valid 10-digit mobile number');
 
+  // Auth - Demo Mode
+  String get tryDemoAccount => language == AppLanguage.marathi
+      ? '🌾 डेमो खाते वापरून पहा'
+      : (language == AppLanguage.hindi
+          ? '🌾 डेमो खाता आज़माएँ'
+          : '🌾 Try Demo Account');
+
+  String get demoModalTitle => language == AppLanguage.marathi
+      ? '🌾 भूमी डेमो'
+      : (language == AppLanguage.hindi ? '🌾 भूमी डेमो' : '🌾 Bhoomi Demo');
+
+  String get demoModalDesc => language == AppLanguage.marathi
+      ? 'पूर्व-कॉन्फिगर केलेल्या शेतकरी प्रोफाइलसह भूमी ॲपचा अनुभव घ्या.'
+      : (language == AppLanguage.hindi
+          ? 'पहले से कॉन्फ़िगर की गई किसान प्रोफ़ाइल के साथ भूमी ऐप का अनुभव करें।'
+          : 'Experience the Bhoomi Farmer App using a pre-configured demo farmer.');
+
+  String get demoFarmerNameLabel => language == AppLanguage.marathi
+      ? 'शेतकरी: रमेश पाटील'
+      : (language == AppLanguage.hindi ? 'किसान: रमेश पाटिल' : 'Farmer: Ramesh Patil');
+
+  String get demoFarmNameLabel => language == AppLanguage.marathi
+      ? 'शेत: डेमो भात शेत (Demo Paddy Farm)'
+      : (language == AppLanguage.hindi ? 'खेत: डेमो धान खेत (Demo Paddy Farm)' : 'Farm: Demo Paddy Farm');
+
+  String get demoLocationLabel => language == AppLanguage.marathi
+      ? 'स्थान: नाशिक, महाराष्ट्र'
+      : (language == AppLanguage.hindi ? 'स्थान: नासिक, महाराष्ट्र' : 'Location: Nashik, Maharashtra');
+
+  String get enterDemoButton => language == AppLanguage.marathi
+      ? 'डेमो मध्ये प्रवेश करा'
+      : (language == AppLanguage.hindi ? 'डेमो में प्रवेश करें' : 'Enter Demo');
+
   // Auth - OTP
   String get verifyNumberTitle => language == AppLanguage.marathi
       ? 'नंबर पडताळणी करा'
@@ -207,6 +240,71 @@ class AppStrings {
           ? 'फिलहाल आपके क्षेत्र के लिए कोई गंभीर अलर्ट नहीं है।'
           : 'No active risk alerts for your region right now.');
 
+  // Low-Literacy Farmer UX Helpers
+  String get checkCropHeroTitle => language == AppLanguage.marathi
+      ? 'पिकाची तपासणी करा'
+      : (language == AppLanguage.hindi ? 'फसल की जांच करें' : 'Check My Crop');
+
+  String get checkCropHeroSubtitle => language == AppLanguage.marathi
+      ? 'फोटो काढून रोग ओळखा'
+      : (language == AppLanguage.hindi ? 'फोटो खींचकर रोग पहचानें' : 'Take photo to identify issue');
+
+  String get askVoiceQuickAction => language == AppLanguage.marathi
+      ? 'बोलून विचारा'
+      : (language == AppLanguage.hindi ? 'बोलकर पूछें' : 'Ask by Voice');
+
+  String get historyQuickAction => language == AppLanguage.marathi
+      ? 'मागील तपासणी'
+      : (language == AppLanguage.hindi ? 'पिछली जांच' : 'Past Checks');
+
+  String get helpQuickAction => language == AppLanguage.marathi
+      ? 'शेतकरी मदत'
+      : (language == AppLanguage.hindi ? 'किसान मदद' : 'Farmer Help');
+
+  String get simpleConfidenceHigh => language == AppLanguage.marathi
+      ? '🟢 जास्त खात्री'
+      : (language == AppLanguage.hindi ? '🟢 पूरी खात्री' : '🟢 High Confidence');
+
+  String get simpleConfidenceMedium => language == AppLanguage.marathi
+      ? '🟡 थोडी खात्री'
+      : (language == AppLanguage.hindi ? '🟡 थोड़ी खात्री' : '🟡 Check more');
+
+  String get simpleConfidenceLow => language == AppLanguage.marathi
+      ? '🔴 तज्ञांची मदत'
+      : (language == AppLanguage.hindi ? '🔴 विशेषज्ञ मदद' : '🔴 Expert Needed');
+
+  String get followupStatusImproved => language == AppLanguage.marathi
+      ? '🙂 सुधारणा झाली'
+      : (language == AppLanguage.hindi ? '🙂 सुधार हुआ' : '🙂 Improved');
+
+  String get followupStatusSame => language == AppLanguage.marathi
+      ? '😐 जैसे थे'
+      : (language == AppLanguage.hindi ? '😐 कोई बदलाव नहीं' : '😐 Same / No change');
+
+  String get followupStatusWorse => language == AppLanguage.marathi
+      ? '😟 जास्त खराब'
+      : (language == AppLanguage.hindi ? '😟 स्थिति बिगड़ी' : '😟 Worse');
+
+  String get speakAnswer => language == AppLanguage.marathi
+      ? 'बोलून सांगा'
+      : (language == AppLanguage.hindi ? 'बोलकर बताएं' : 'Speak Answer');
+
+  String get callNowButton => language == AppLanguage.marathi
+      ? 'थेट कॉल करा'
+      : (language == AppLanguage.hindi ? 'सीधे कॉल करें' : 'Call Now');
+
+  String get listenSpokenAudio => language == AppLanguage.marathi
+      ? '🔊 सल्ला ऐका'
+      : (language == AppLanguage.hindi ? '🔊 सलाह सुनें' : '🔊 Listen to Advisory');
+
+  String get todayStatusSafe => language == AppLanguage.marathi
+      ? 'पीक सुरक्षित आहे'
+      : (language == AppLanguage.hindi ? 'फसल सुरक्षित है' : 'Crop looks safe for now');
+
+  String get todayStatusAlert => language == AppLanguage.marathi
+      ? 'शेतात धोका आहे'
+      : (language == AppLanguage.hindi ? 'खेत में खतरा है' : 'Active field alert');
+
   String get pendingFollowupsHeader => language == AppLanguage.marathi
       ? 'पुढील तपासणी (फॉलो-अप)'
       : (language == AppLanguage.hindi
@@ -317,6 +415,12 @@ class AppStrings {
           ? 'किसान प्रोफ़ाइल'
           : 'Farmer Profile');
 
+  String get selectLanguageTitle => language == AppLanguage.marathi
+      ? 'भाषा निवडा / Select Language'
+      : (language == AppLanguage.hindi
+          ? 'भाषा चुनें / Select Language'
+          : 'Select Language / भाषा निवडा');
+
   String get languageOption => language == AppLanguage.marathi
       ? 'भाषा बदला (Change Language)'
       : (language == AppLanguage.hindi
@@ -332,6 +436,14 @@ class AppStrings {
   String get aboutOption => language == AppLanguage.marathi
       ? 'भूमीबद्दल माहिती'
       : (language == AppLanguage.hindi ? 'भूमी के बारे में' : 'About Bhoomi');
+
+  String get myFarmOption => language == AppLanguage.marathi
+      ? 'माझे शेत व पीक माहिती'
+      : (language == AppLanguage.hindi ? 'मेरा खेत और फसल' : 'My Farm & Crop Profile');
+
+  String get historyOption => language == AppLanguage.marathi
+      ? 'तपासणी व सल्ला इतिहास'
+      : (language == AppLanguage.hindi ? 'जांच व सलाह इतिहास' : 'Check & Advisory History');
 
   String get logoutButton => language == AppLanguage.marathi
       ? 'बाहेर पडा (Log Out)'
@@ -389,6 +501,12 @@ class AppStrings {
           ? 'पत्ती या तने पर लगे धब्बे साफ दिखें, ऐसी फोटो लें।'
           : 'Take a clear photo showing the affected leaf or stem.');
 
+  String get cameraFrameGuide => language == AppLanguage.marathi
+      ? 'पाने किंवा बाधित भाग चौकटीत ठेवा'
+      : (language == AppLanguage.hindi
+          ? 'पत्तियां या प्रभावित हिस्सा फ्रेम में रखें'
+          : 'Keep affected leaf/crop inside frame');
+
   String get captureButton => language == AppLanguage.marathi
       ? 'फोटो काढा'
       : (language == AppLanguage.hindi ? 'फोटो खींचें' : 'Capture Photo');
@@ -425,6 +543,12 @@ class AppStrings {
       : (language == AppLanguage.hindi
           ? 'कृपया थोड़ा इंतज़ार करें, लक्षणों की पहचान की जा रही है।'
           : 'Please wait a moment while symptoms are analyzed.');
+
+  String get uploadingPhoto => language == AppLanguage.marathi
+      ? 'फोटो सुरक्षित सर्व्हरवर पाठवत आहोत...'
+      : (language == AppLanguage.hindi
+          ? 'फोटो सुरक्षित सर्वर पर भेज रहे हैं...'
+          : 'Uploading photo securely...');
 
   // Confidence Gate - Advise Outcome
   String get diagnosisResultTitle => language == AppLanguage.marathi
@@ -720,6 +844,80 @@ class AppStrings {
   // =========================================================================
 
   // Voice Interaction System
+  String get greetingPartnerSubtitle => language == AppLanguage.marathi
+      ? 'तुमचा शेतकरी साथी'
+      : (language == AppLanguage.hindi ? 'आपका किसान साथी' : 'Your Farming Companion');
+
+  String get voiceHeroTitle => language == AppLanguage.marathi
+      ? 'बोलून विचारा'
+      : (language == AppLanguage.hindi ? 'बोलकर पूछें' : 'Ask Bhoomi');
+
+  String get voiceHeroSubtitle => language == AppLanguage.marathi
+      ? 'तुमच्या पिकाबद्दल विचारा'
+      : (language == AppLanguage.hindi ? 'अपनी फसल के बारे में पूछें' : 'Ask about your crop');
+
+  String get voiceHeroSubtitleFull => language == AppLanguage.marathi
+      ? 'तुमच्या पिकाबद्दल काहीही विचारा'
+      : (language == AppLanguage.hindi ? 'अपनी फसल के बारे में कुछ भी पूछें' : 'Ask anything about your crop');
+
+  String get voiceHeroCta => language == AppLanguage.marathi
+      ? 'बोलायला सुरुवात करा'
+      : (language == AppLanguage.hindi ? 'बोलना शुरू करें' : 'Start Speaking');
+
+  String get checkCropCardSubtitle => language == AppLanguage.marathi
+      ? 'फोटो काढून पिकाची समस्या जाणून घ्या'
+      : (language == AppLanguage.hindi ? 'फोटो खींचकर फसल की समस्या जानें' : 'Take a photo to identify crop issues');
+
+  String get checkCropCardCta => language == AppLanguage.marathi
+      ? 'तपासणी करा →'
+      : (language == AppLanguage.hindi ? 'जांच करें →' : 'Check Crop →');
+
+  String get voiceHeroBadge => language == AppLanguage.marathi
+      ? 'आवाज सहाय्यक'
+      : (language == AppLanguage.hindi ? 'आवाज़ सहायक' : 'Voice Assistant');
+
+  String get voiceTapToSpeak => language == AppLanguage.marathi
+      ? 'बोलण्यासाठी टॅप करा'
+      : (language == AppLanguage.hindi ? 'बोलने के लिए टैप करें' : 'Tap to speak');
+
+  String get voiceContextDiagnosis => language == AppLanguage.marathi
+      ? 'या समस्येबद्दल विचारा'
+      : (language == AppLanguage.hindi ? 'इस समस्या के बारे में पूछें' : 'Ask about this problem');
+
+  String get voiceContextAlert => language == AppLanguage.marathi
+      ? 'हा इशारा का आला?'
+      : (language == AppLanguage.hindi ? 'यह चेतावनी क्यों आई?' : 'Why did I get this alert?');
+
+  String get voiceContextAlertWhy => voiceContextAlert;
+
+  String get voiceContextAdvisoryExplain => language == AppLanguage.marathi
+      ? 'मला समजावून सांगा'
+      : (language == AppLanguage.hindi ? 'मुझे समझाइए' : 'Explain this to me');
+
+  String get voiceContextAdvisoryAsk => language == AppLanguage.marathi
+      ? 'आणखी काही विचारा'
+      : (language == AppLanguage.hindi ? 'और पूछें' : 'Ask another question');
+
+  String get voiceContextFollowupTell => language == AppLanguage.marathi
+      ? 'बोलून सांगा'
+      : (language == AppLanguage.hindi ? 'बोलकर बताएं' : 'Tell Bhoomi');
+
+  String get voiceContextFollowupPrompt => language == AppLanguage.marathi
+      ? 'पिकाची स्थिती आता कशी आहे?'
+      : (language == AppLanguage.hindi ? 'फसल की स्थिति अब कैसी है?' : 'How is the crop condition now?');
+
+  String get voiceContextHistoryListen => language == AppLanguage.marathi
+      ? 'पुन्हा ऐका'
+      : (language == AppLanguage.hindi ? 'दोबारा सुनें' : 'Listen again');
+
+  String get voiceContextHistoryAsk => language == AppLanguage.marathi
+      ? 'या तपासणीबद्दल विचारा'
+      : (language == AppLanguage.hindi ? 'इस जांच के बारे में पूछें' : 'Ask about this check');
+
+  String get voiceAboutContextPrefix => language == AppLanguage.marathi
+      ? 'विषय'
+      : (language == AppLanguage.hindi ? 'विषय' : 'Topic');
+
   String get voiceListeningPrompt => language == AppLanguage.marathi
       ? 'ऐकत आहे... बोला'
       : (language == AppLanguage.hindi ? 'सुन रहे हैं... बोलिए' : 'Listening... Speak now');
@@ -729,6 +927,12 @@ class AppStrings {
       : (language == AppLanguage.hindi
           ? 'आपके प्रश्न को समझ रहे हैं...'
           : 'Understanding your question...');
+
+  String get voiceProcessingSubtitle => language == AppLanguage.marathi
+      ? 'कृपया थोडा वेळ थांबा...'
+      : (language == AppLanguage.hindi
+          ? 'कृपया प्रतीक्षा करें...'
+          : 'Please wait, preparing advice...');
 
   String get voiceResultTitle => language == AppLanguage.marathi
       ? 'तुमचा प्रश्न'
@@ -760,7 +964,82 @@ class AppStrings {
 
   String get replaySpokenSummary => language == AppLanguage.marathi
       ? 'पुन्हा ऐका (Replay)'
-      : (language == AppLanguage.hindi ? 'फिर से सुनें (Replay)' : 'Replay Audio');
+      : (language == AppLanguage.hindi ? 'दोबारा सुनें (Replay)' : 'Replay Audio');
+
+  // Phase 2 Core Voice Experience Strings
+  String get voiceBhoomiAnswer => language == AppLanguage.marathi
+      ? 'Bhoomi चे उत्तर'
+      : (language == AppLanguage.hindi ? 'Bhoomi का जवाब' : "Bhoomi's Answer");
+
+  String get voiceAskAgain => language == AppLanguage.marathi
+      ? 'आणखी विचारा'
+      : (language == AppLanguage.hindi ? 'और पूछें' : 'Ask Another Question');
+
+  String get voiceSpeakInYourLanguage => language == AppLanguage.marathi
+      ? 'तुमच्या भाषेत बोला'
+      : (language == AppLanguage.hindi ? 'अपनी भाषा में बोलें' : 'Speak in your language');
+
+  String get voiceErrorNotUnderstood => language == AppLanguage.marathi
+      ? 'आवाज समजला नाही'
+      : (language == AppLanguage.hindi ? 'आवाज़ समझ नहीं आई' : 'Could not understand speech');
+
+  String get voiceErrorNotUnderstoodDesc => language == AppLanguage.marathi
+      ? 'कृपया थोडे हळू आणि स्पष्ट बोलून पुन्हा प्रयत्न करा.'
+      : (language == AppLanguage.hindi
+          ? 'कृपया थोड़ा धीरे और स्पष्ट बोलकर दोबारा प्रयास करें।'
+          : 'Please speak slowly and clearly, and try again.');
+
+  String get voiceTypeFallback => language == AppLanguage.marathi
+      ? 'टाइप करा'
+      : (language == AppLanguage.hindi ? 'टाइप करें' : 'Type instead');
+
+  String get voicePermissionTitle => language == AppLanguage.marathi
+      ? 'मायक्रोफोनची परवानगी आवश्यक आहे'
+      : (language == AppLanguage.hindi ? 'माइक्रोफ़ोन की अनुमति चाहिए' : 'Microphone Permission Required');
+
+  String get voicePermissionDesc => language == AppLanguage.marathi
+      ? 'Bhoomi ला तुमचा आवाज ऐकण्यासाठी मायक्रोफोनची परवानगी आवश्यक आहे.'
+      : (language == AppLanguage.hindi
+          ? 'Bhoomi को आपकी आवाज़ सुनने के लिए माइक्रोफ़ोन की अनुमति चाहिए।'
+          : 'Bhoomi needs microphone permission to listen to your question.');
+
+  String get voiceGrantPermission => language == AppLanguage.marathi
+      ? 'परवानगी द्या'
+      : (language == AppLanguage.hindi ? 'अनुमति दें' : 'Grant Permission');
+
+  String get voiceOpenSettings => language == AppLanguage.marathi
+      ? 'सेटिंग्ज उघडा'
+      : (language == AppLanguage.hindi ? 'सेटिंग्स खोलें' : 'Open Settings');
+
+  String get voiceServiceUnavailable => language == AppLanguage.marathi
+      ? 'आत्ता आवाजाची सेवा उपलब्ध नाही.'
+      : (language == AppLanguage.hindi ? 'अभी आवाज़ सेवा उपलब्ध नहीं है।' : 'Voice service is currently unavailable.');
+
+  String get voiceServiceUnavailableDesc => language == AppLanguage.marathi
+      ? 'कृपया पुन्हा प्रयत्न करा.'
+      : (language == AppLanguage.hindi ? 'कृपया दोबारा प्रयास करें।' : 'Please try again.');
+
+  String get voiceListenAnswer => language == AppLanguage.marathi
+      ? 'उत्तर ऐका'
+      : (language == AppLanguage.hindi ? 'जवाब सुनें' : 'Listen to Answer');
+
+  String get voicePauseAnswer => language == AppLanguage.marathi
+      ? 'ऐकणे थांबवा'
+      : (language == AppLanguage.hindi ? 'सुनना रोकें' : 'Pause Audio');
+
+  String get voiceReplayAnswer => language == AppLanguage.marathi
+      ? 'पुन्हा ऐका'
+      : (language == AppLanguage.hindi ? 'दोबारा सुनें' : 'Listen Again');
+
+  String get voiceEditQuestion => language == AppLanguage.marathi
+      ? 'प्रश्न बदला'
+      : (language == AppLanguage.hindi ? 'सवाल बदलें' : 'Edit Question');
+
+  String get voiceDefaultAnswer => language == AppLanguage.marathi
+      ? 'पिकावर करप्याची किंवा बुरशीची लक्षणे असू शकतात. नत्रयुक्त खतांचा अतिवापर टाळा, शेतातून पाण्याचा निचरा करा आणि ट्रायकोग्रामा किंवा सेंद्रिय उपायांचा वापर करा.'
+      : (language == AppLanguage.hindi
+          ? 'फसल पर झुलसा या फफूंद के लक्षण हो सकते हैं। नाइट्रोजन का अत्यधिक उपयोग न करें, जल निकासी करें और जैविक उपायों का उपयोग करें।'
+          : 'Crop may have blast or fungal symptoms. Avoid excess nitrogen fertilizer, ensure field drainage, and use organic IPM measures.');
 
   // Low Connectivity & Upload Failure Resilience
   String get presignFailedTitle => language == AppLanguage.marathi
@@ -825,5 +1104,43 @@ class AppStrings {
   String get semanticsStopAudio => language == AppLanguage.marathi
       ? 'आवाज थांबवा'
       : (language == AppLanguage.hindi ? 'आवाज़ रोकें' : 'Stop audio playback');
+
+  // Farm Health Card Pure Localized Strings
+  String get fieldHealthStatusTitle => language == AppLanguage.marathi
+      ? 'शेतातील पिकाची स्थिती'
+      : (language == AppLanguage.hindi ? 'खेत की फसल की स्थिति' : 'FIELD HEALTH STATUS');
+
+  String get trendImproving => language == AppLanguage.marathi
+      ? 'सुधारणा'
+      : (language == AppLanguage.hindi ? 'सुधार' : 'Improving');
+
+  String get trendNeedsAttention => language == AppLanguage.marathi
+      ? 'लक्ष द्या'
+      : (language == AppLanguage.hindi ? 'ध्यान दें' : 'Needs attention');
+
+  String get trendStable => language == AppLanguage.marathi
+      ? 'स्थिर'
+      : (language == AppLanguage.hindi ? 'स्थिर' : 'Stable');
+
+  String get statusIssuesLabel => language == AppLanguage.marathi
+      ? 'समस्या'
+      : (language == AppLanguage.hindi ? 'समस्याएं' : 'Issues');
+
+  String get statusFollowupLabel => language == AppLanguage.marathi
+      ? 'तपासणी'
+      : (language == AppLanguage.hindi ? 'जांच' : 'Follow-up');
+
+  String get statusAlertsLabel => language == AppLanguage.marathi
+      ? 'सूचना'
+      : (language == AppLanguage.hindi ? 'सूचनाएं' : 'Alerts');
+
+  String get statusAllClearLabel => language == AppLanguage.marathi
+      ? 'पीक सुरक्षित आहे'
+      : (language == AppLanguage.hindi ? 'फसल सुरक्षित है' : 'Crop is Safe');
+
+  String get defaultFarmName => language == AppLanguage.marathi
+      ? 'माझे भाताचे शेत'
+      : (language == AppLanguage.hindi ? 'मेरा धान का खेत' : 'My Paddy Field');
 }
+
 

@@ -119,6 +119,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<OtpVerifyResponse> loginAsDemo({String demoCode = 'SIH2026'}) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final authRepo = _ref.read(authRepositoryProvider);
+      final res = await authRepo.loginAsDemo(demoCode: demoCode);
+
+      // Auto-set the demo farm context for the demo session
+      await _ref.read(activeFarmIdProvider.notifier).setActiveFarmId('f_demo_01');
+
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        user: res.user,
+        isLoading: false,
+      );
+      return res;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+      rethrow;
+    }
+  }
+
   Future<void> logout() async {
     final authRepo = _ref.read(authRepositoryProvider);
     await authRepo.logout();

@@ -49,12 +49,19 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       const MoreScreen(),
     ];
 
-    return Scaffold(
-      backgroundColor: AppColors.ricePaper,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
-      ),
+    return PopScope(
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _currentIndex != 0) {
+          setState(() => _currentIndex = 0);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.ricePaper,
+        body: IndexedStack(
+          index: _currentIndex,
+          children: pages,
+        ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.warmSurface,
@@ -156,6 +163,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

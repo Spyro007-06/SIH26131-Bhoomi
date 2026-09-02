@@ -11,6 +11,7 @@ import '../../../widgets/app_error_state.dart';
 import '../../../widgets/app_empty_state.dart';
 import '../../../widgets/app_card.dart';
 import '../../../widgets/app_status_badge.dart';
+import '../../../widgets/language_selector_button.dart';
 import 'problem_detail_screen.dart';
 
 /// Chronological Crop Case File Timeline Screen.
@@ -67,6 +68,9 @@ class HistoryScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: timelineAsync.when(

@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../widgets/app_button.dart';
+import '../../../widgets/language_selector_button.dart';
 import 'diagnosis_loading_screen.dart';
 
 /// Image Preview & Confirmation Screen for Crop Diagnosis.
@@ -39,6 +40,9 @@ class ImagePreviewScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: Padding(

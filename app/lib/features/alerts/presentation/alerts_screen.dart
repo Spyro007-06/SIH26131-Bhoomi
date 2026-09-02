@@ -11,6 +11,8 @@ import '../../../widgets/app_loading.dart';
 import '../../../widgets/app_error_state.dart';
 import '../../../widgets/app_empty_state.dart';
 import '../../../widgets/risk_card.dart';
+import '../../../widgets/language_selector_button.dart';
+import '../../../widgets/farmer_contextual_voice_action.dart';
 
 /// Active Risk Alerts Surveillance Screen for Bhoomi Farmer App.
 class AlertsScreen extends ConsumerStatefulWidget {
@@ -88,6 +90,9 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: alertsAsync.when(
@@ -147,6 +152,11 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                         onRemindTomorrow: isResponded || isSubmitting
                             ? null
                             : () => _handleRespondToAlert(alert.id, 'snoozed'),
+                      ),
+                      const SizedBox(height: AppSpacing.s10),
+                      FarmerContextualVoiceAction.outline(
+                        label: strings.voiceContextAlertWhy,
+                        contextTopic: '${alert.target.replaceAll('_', ' ')} Alert',
                       ),
                       if (isResponded) ...[
                         const SizedBox(height: AppSpacing.s8),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bhoomi/core/theme/app_theme.dart';
+import 'package:bhoomi/core/localization/locale_provider.dart';
+import 'package:bhoomi/core/localization/app_strings.dart';
 import 'package:bhoomi/widgets/farm_health_card.dart';
 import 'package:bhoomi/widgets/risk_card.dart';
 import 'package:bhoomi/widgets/stub_banner.dart';
@@ -18,10 +21,18 @@ void main() {
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.resetPhysicalSize);
 
+      final notifier = LocaleNotifier(null);
+      notifier.state = AppLanguage.english;
+
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: const DesignShowcaseScreen(),
+        ProviderScope(
+          overrides: [
+            appLanguageProvider.overrideWith((ref) => notifier),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const DesignShowcaseScreen(),
+          ),
         ),
       );
       await tester.pump();
@@ -89,10 +100,18 @@ void main() {
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.resetPhysicalSize);
 
+      final notifier = LocaleNotifier(null);
+      notifier.state = AppLanguage.english;
+
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: const DesignShowcaseScreen(),
+        ProviderScope(
+          overrides: [
+            appLanguageProvider.overrideWith((ref) => notifier),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const DesignShowcaseScreen(),
+          ),
         ),
       );
       await tester.pump();
@@ -128,10 +147,18 @@ void main() {
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.resetPhysicalSize);
 
+      final notifier = LocaleNotifier(null);
+      notifier.state = AppLanguage.english;
+
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: const DesignShowcaseScreen(),
+        ProviderScope(
+          overrides: [
+            appLanguageProvider.overrideWith((ref) => notifier),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const DesignShowcaseScreen(),
+          ),
         ),
       );
       await tester.pump();
@@ -167,10 +194,18 @@ void main() {
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.resetPhysicalSize);
 
+      final notifier = LocaleNotifier(null);
+      notifier.state = AppLanguage.english;
+
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: const DesignShowcaseScreen(),
+        ProviderScope(
+          overrides: [
+            appLanguageProvider.overrideWith((ref) => notifier),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const DesignShowcaseScreen(),
+          ),
         ),
       );
       await tester.pump();

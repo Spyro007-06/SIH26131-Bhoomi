@@ -4,12 +4,14 @@ class UserModel {
   final String id;
   final String? phone;
   final String? email;
+  final String? name;
   final String role; // farmer | agronomist | official
 
   const UserModel({
     required this.id,
     this.phone,
     this.email,
+    this.name,
     required this.role,
   });
 
@@ -18,6 +20,7 @@ class UserModel {
       id: json['id'] as String,
       phone: json['phone'] as String?,
       email: json['email'] as String?,
+      name: json['name'] as String?,
       role: json['role'] as String? ?? 'farmer',
     );
   }
@@ -26,6 +29,7 @@ class UserModel {
         'id': id,
         if (phone != null) 'phone': phone,
         if (email != null) 'email': email,
+        if (name != null) 'name': name,
         'role': role,
       };
 }

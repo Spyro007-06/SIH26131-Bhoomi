@@ -11,6 +11,7 @@ import '../../../widgets/app_error_state.dart';
 import '../../../widgets/app_empty_state.dart';
 import '../../../widgets/app_card.dart';
 import '../../../widgets/app_button.dart';
+import '../../../widgets/language_selector_button.dart';
 
 /// KVK & Agricultural Support Referrals Directory Screen.
 class ReferralsScreen extends ConsumerWidget {
@@ -49,6 +50,9 @@ class ReferralsScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: const [
+          LanguageSelectorButton(),
+        ],
       ),
       body: SafeArea(
         child: referralsAsync.when(

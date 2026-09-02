@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_typography.dart';
 import '../core/theme/app_spacing.dart';
 import '../core/theme/app_radius.dart';
+import '../core/localization/locale_provider.dart';
+import '../core/localization/app_strings.dart';
 import 'app_button.dart';
+import 'farmer_contextual_voice_action.dart';
 
 /// Closed-Loop Follow-up Card (F10, PRD §5, API_CONTRACT §11).
 ///
 /// Principles:
 /// - Simple human question: "How is the crop doing now?"
 /// - 3 large tactile options: Improved, No change, Got worse.
+/// - Voice input action: "🎤 Tell Bhoomi (बोलून सांगा)" for natural spoken feedback.
 /// - Drives severity promotion and auto-escalation on deterioration.
-class FollowUpCard extends StatelessWidget {
-  final String question;
-  final String questionLocalized;
+class FollowUpCard extends ConsumerWidget {
+  final String? question;
+  final String? questionLocalized;
   final String target;
   final ValueChanged<String>? onResponse; // 'improved' | 'no_change' | 'got_worse'
   final VoidCallback? onAttachPhoto;
@@ -28,7 +33,16 @@ class FollowUpCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    AppStrings strings;
+    try {
+      strings = ref.watch(stringsProvider);
+    } catch (_) {
+      strings = AppStrings(AppLanguage.marathi);
+    }
+
+    final effectiveQuestion = question ?? strings.voiceContextFollowupPrompt;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.warmSurface,
@@ -87,22 +101,24 @@ class FollowUpCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  question,
+                  effectiveQuestion,
                   style: AppTypography.sectionTitle.copyWith(
                     color: AppColors.soilCharcoal,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  questionLocalized,
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.forest,
-                    fontWeight: FontWeight.w600,
+                if (questionLocalized != null && questionLocalized!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    questionLocalized!,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.forest,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(height: AppSpacing.l16),
 
-                // 3 Large options
+                // 3 Large Structured Options
                 Row(
                   children: [
                     Expanded(
@@ -133,11 +149,28 @@ class FollowUpCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.m12),
+
+                // Level 2 Contextual Voice Action: 🎤 Tell Bhoomi
+                FarmerContextualVoiceAction.outline(
+                  label: strings.voiceContextFollowupTell,
+                  contextTopic: '$target Follow-up',
+                  onQuerySubmitted: (spokenText) {
+                    final lower = spokenText.toLowerCase();
+                    if (lower.contains('सुधार') || lower.contains('चांगले') || lower.contains('better') || lower.contains('improved')) {
+                      onResponse?.call('improved');
+                    } else if (lower.contains('बिघड') || lower.contains('खराब') || lower.contains('worse')) {
+                      onResponse?.call('got_worse');
+                    } else {
+                      onResponse?.call('no_change');
+                    }
+                  },
+                ),
 
                 if (onAttachPhoto != null) ...[
-                  const SizedBox(height: AppSpacing.l16),
+                  const SizedBox(height: AppSpacing.s10),
                   AppButton.outline(
-                    label: 'Attach Current Photo (सध्याचा फोटो जोडा)',
+                    label: 'Attach Current Photo',
                     onPressed: onAttachPhoto,
                     isFullWidth: true,
                     size: AppButtonSize.small,
