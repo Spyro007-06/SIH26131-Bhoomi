@@ -161,7 +161,18 @@ def _resolve_topk(x_vision_fixture: str | None) -> TopK:
     return _FIXTURES[x_vision_fixture]
 
 
-@router.post("/vision/classify", response_model=TopK)
+@router.post(
+    "/vision/classify",
+    response_model=TopK,
+    responses={
+        **error_response(
+            409,
+            "An X-Vision-Fixture header was sent while VISION_MODEL=real -- "
+            "fixtures are not served against the real classifier.",
+        ),
+        **error_response(422, "X-Vision-Fixture named an unrecognised fixture."),
+    },
+)
 async def classify_vision_fixture(
     x_vision_fixture: str | None = Header(default=None),
 ) -> TopK:
