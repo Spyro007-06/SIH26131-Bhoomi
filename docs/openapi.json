@@ -747,7 +747,9 @@
           "AGRONOMIST_UNAVAILABLE",
           "VOICE_PROVIDER_UNAVAILABLE",
           "FIXTURES_DISABLED",
-          "NOT_IMPLEMENTED"
+          "NOT_IMPLEMENTED",
+          "METHOD_NOT_ALLOWED",
+          "INTERNAL_ERROR"
         ],
         "title": "ErrorCode",
         "type": "string"
