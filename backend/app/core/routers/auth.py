@@ -31,9 +31,14 @@ from app.core.schemas.auth import (
     UserOut,
 )
 from app.db import get_session
-from app.errors import BhoomiError, ErrorCode, Unauthenticated
+from app.errors import BhoomiError, ErrorCode, Unauthenticated, error_response
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# None of these three routes carry auth (they are how a caller GETS a
+# token), so 401/403 below mean "your code/credentials were wrong", never
+# "you are not signed in" -- current_principal is not on their signature.
+_MALFORMED = error_response(422, "The request body did not parse.")
 
 
 def _tokens_for(user: User) -> TokenOut:
@@ -46,7 +51,12 @@ def _tokens_for(user: User) -> TokenOut:
     )
 
 
-@router.post("/otp/request", response_model=OtpRequestOut, status_code=status.HTTP_200_OK)
+@router.post(
+    "/otp/request",
+    response_model=OtpRequestOut,
+    status_code=status.HTTP_200_OK,
+    responses={**_MALFORMED},
+)
 async def request_otp(
     payload: OtpRequestIn, session: AsyncSession = Depends(get_session)
 ) -> OtpRequestOut:
@@ -81,7 +91,18 @@ async def request_otp(
     return OtpRequestOut(request_id=otp.id, expires_in=settings.otp_expire_seconds)
 
 
-@router.post("/otp/verify", response_model=TokenOut)
+@router.post(
+    "/otp/verify",
+    response_model=TokenOut,
+    responses={
+        **error_response(
+            401,
+            "The code does not exist, has expired, has been used, has too many "
+            "failed attempts against it, or does not match.",
+        ),
+        **_MALFORMED,
+    },
+)
 async def verify_otp(
     payload: OtpVerifyIn, session: AsyncSession = Depends(get_session)
 ) -> TokenOut:
@@ -121,7 +142,19 @@ async def verify_otp(
     return _tokens_for(user)
 
 
-@router.post("/login", response_model=TokenOut)
+@router.post(
+    "/login",
+    response_model=TokenOut,
+    responses={
+        **error_response(401, "Email is unknown, has no password set, or the password is wrong."),
+        **error_response(
+            403,
+            "The account exists but is a farmer's -- farmers sign in with an "
+            "OTP, not §2's login.",
+        ),
+        **_MALFORMED,
+    },
+)
 async def login(payload: LoginIn, session: AsyncSession = Depends(get_session)) -> TokenOut:
     """Email and password, for `agronomist` and `official`. §2.
 

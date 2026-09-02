@@ -63,9 +63,36 @@ from app.core.schemas.problems import (
 )
 from app.db import get_session
 from app.deps import Principal, current_principal
-from app.errors import Forbidden, NotFound
+from app.errors import Forbidden, NotFound, error_response
 
 router = APIRouter(tags=["case file"])
+
+_UNAUTHENTICATED = error_response(401, "No, or an invalid, bearer token.")
+_MALFORMED = error_response(422, "A path or query parameter did not parse.")
+_NOT_A_FARMER = error_response(
+    403,
+    "The caller is not a farmer -- this case file is read by the farmer who "
+    "owns it (see the module docstring for where agronomist/official read "
+    "instead).",
+)
+# GET /farms/{id}/problems and GET /farms/{id}/timeline: both go through
+# _require_farmer THEN _owned_farm, so 403 has two distinct real causes on
+# these two routes -- one description naming both, since a route can only
+# declare one response per status code.
+_FARM_NOT_FOUND_OR_FORBIDDEN = {
+    **error_response(404, "That farm does not exist."),
+    **error_response(
+        403,
+        "Either the caller is not a farmer, or that farm belongs to a "
+        "different farmer's account.",
+    ),
+}
+# GET /problems/{id}: _owned_problem deliberately collapses "does not exist"
+# and "belongs to someone else" into the SAME 404 -- a 403 here would leak
+# that the id is real but not the caller's. See _owned_problem's docstring.
+_PROBLEM_NOT_FOUND = error_response(
+    404, "That problem does not exist, or belongs to a different account."
+)
 
 
 def _require_farmer(principal: Principal) -> None:
@@ -132,6 +159,7 @@ def _gate_from(diagnosis: Diagnosis) -> GateOut:
     # present and null when exhausted — a client loops until it sees null, and
     # omitting the key entirely breaks that loop. The omit-what-is-absent rule
     # applies to the detail endpoint, not to this envelope.
+    responses={**_UNAUTHENTICATED, **_FARM_NOT_FOUND_OR_FORBIDDEN, **_MALFORMED},
 )
 async def list_problems(
     farm_id: uuid.UUID,
@@ -197,6 +225,12 @@ async def list_problems(
     "/problems/{problem_id}",
     response_model=ProblemDetailOut,
     response_model_exclude_none=True,
+    responses={
+        **_UNAUTHENTICATED,
+        **_NOT_A_FARMER,
+        **_PROBLEM_NOT_FOUND,
+        **_MALFORMED,
+    },
 )
 async def get_problem(
     problem_id: uuid.UUID,
@@ -371,6 +405,7 @@ def _entry(at: datetime, kind: str, summary: str, problem_id, **payload) -> Time
     "/farms/{farm_id}/timeline",
     response_model=TimelineOut,
     # NOT exclude_none — see list_problems above, §0's next_cursor rule.
+    responses={**_UNAUTHENTICATED, **_FARM_NOT_FOUND_OR_FORBIDDEN, **_MALFORMED},
 )
 async def farm_timeline(
     farm_id: uuid.UUID,

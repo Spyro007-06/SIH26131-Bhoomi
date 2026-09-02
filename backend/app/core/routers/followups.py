@@ -30,9 +30,18 @@ from app.core.schemas.followups import (
 from app.core.services import followup as followup_service
 from app.db import get_session
 from app.deps import Principal, current_principal
-from app.errors import Forbidden, NotFound
+from app.errors import Forbidden, NotFound, error_response
 
 router = APIRouter(tags=["follow-up"])
+
+_UNAUTHENTICATED = error_response(401, "No, or an invalid, bearer token.")
+_MALFORMED = error_response(422, "A path, query or body parameter did not parse.")
+_FARM_NOT_FOUND_OR_FORBIDDEN = {
+    **error_response(404, "That farm does not exist."),
+    **error_response(
+        403, "The caller is a farmer and that farm belongs to a different account."
+    ),
+}
 
 
 async def _owned_farm(
@@ -46,7 +55,11 @@ async def _owned_farm(
     return farm
 
 
-@router.get("/farms/{farm_id}/followups/pending", response_model=PendingFollowUpListOut)
+@router.get(
+    "/farms/{farm_id}/followups/pending",
+    response_model=PendingFollowUpListOut,
+    responses={**_UNAUTHENTICATED, **_FARM_NOT_FOUND_OR_FORBIDDEN, **_MALFORMED},
+)
 async def pending_followups(
     farm_id: uuid.UUID,
     principal: Principal = Depends(current_principal),
@@ -88,7 +101,20 @@ async def pending_followups(
     )
 
 
-@router.post("/followups/{followup_id}/respond", response_model=FollowUpRespondOut)
+@router.post(
+    "/followups/{followup_id}/respond",
+    response_model=FollowUpRespondOut,
+    responses={
+        **_UNAUTHENTICATED,
+        **error_response(404, "That follow-up does not exist, or its problem does not."),
+        **error_response(
+            403,
+            "Either that follow-up's farm belongs to a different farmer's "
+            "account, or this check-in has already been answered.",
+        ),
+        **_MALFORMED,
+    },
+)
 async def respond_to_followup(
     followup_id: uuid.UUID,
     payload: FollowUpRespondIn,

@@ -30,7 +30,7 @@ from app.core.schemas.cases import CaseQueueItem, CaseQueueOut, ConfirmIn, Confi
 from app.core.services.confirmation import confirm_case
 from app.db import get_session
 from app.deps import Principal, require_role
-from app.errors import BhoomiError, ErrorCode, NotFound
+from app.errors import BhoomiError, ErrorCode, NotFound, error_response
 
 router = APIRouter(tags=["agronomist"])
 
@@ -40,8 +40,19 @@ router = APIRouter(tags=["agronomist"])
 # per-request dependency caching.
 AGRONOMIST_ONLY = Depends(require_role(Role.AGRONOMIST))
 
+_UNAUTHENTICATED = error_response(401, "No, or an invalid, bearer token.")
+_NOT_AN_AGRONOMIST = error_response(403, "The caller's role is not agronomist.")
 
-@router.get("/agronomist/case-queue", response_model=CaseQueueOut)
+
+@router.get(
+    "/agronomist/case-queue",
+    response_model=CaseQueueOut,
+    responses={
+        **_UNAUTHENTICATED,
+        **_NOT_AN_AGRONOMIST,
+        **error_response(422, "`status` is not a recognised case_status value."),
+    },
+)
 async def case_queue(
     status: CaseStatus = Query(default=CaseStatus.ASSIGNED),
     principal: Principal = AGRONOMIST_ONLY,
@@ -84,7 +95,21 @@ async def case_queue(
     )
 
 
-@router.post("/cases/{case_id}/confirm", response_model=ConfirmOut)
+@router.post(
+    "/cases/{case_id}/confirm",
+    response_model=ConfirmOut,
+    responses={
+        **_UNAUTHENTICATED,
+        **_NOT_AN_AGRONOMIST,
+        **error_response(404, "That case does not exist."),
+        **error_response(
+            422,
+            "The request body did not parse (including corrected_label "
+            "required/forbidden per verdict, ConfirmIn's own rule), OR that "
+            "case has already been resolved.",
+        ),
+    },
+)
 async def confirm(
     case_id: uuid.UUID,
     payload: ConfirmIn,

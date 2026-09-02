@@ -24,7 +24,7 @@ from app.core.models import Asset
 from app.core.schemas.assets import PresignIn, PresignOut
 from app.db import get_session
 from app.deps import Principal, current_principal
-from app.errors import NotFound
+from app.errors import NotFound, error_response
 
 router = APIRouter(prefix="/assets", tags=["assets"])
 
@@ -46,7 +46,15 @@ def _s3():
     )
 
 
-@router.post("/presign", response_model=PresignOut)
+@router.post(
+    "/presign",
+    response_model=PresignOut,
+    responses={
+        **error_response(401, "No, or an invalid, bearer token."),
+        **error_response(404, "`farm_id` was given but that farm does not exist."),
+        **error_response(422, "The request body did not parse."),
+    },
+)
 async def presign(
     payload: PresignIn,
     principal: Principal = Depends(current_principal),

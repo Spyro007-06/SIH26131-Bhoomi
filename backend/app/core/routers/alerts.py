@@ -29,9 +29,20 @@ from app.core.schemas.alerts import (
 from app.core.services import alerts as alerts_service
 from app.db import get_session
 from app.deps import Principal, current_principal
-from app.errors import Forbidden, NotFound
+from app.errors import Forbidden, NotFound, error_response
 
 router = APIRouter(tags=["alerts"])
+
+_UNAUTHENTICATED = error_response(401, "No, or an invalid, bearer token.")
+_MALFORMED = error_response(422, "A path, query or body parameter did not parse.")
+# _owned_farm: 403 only fires for a farmer whose own account does not match
+# -- agronomist/official may read any farm's alerts, by design.
+_FARM_NOT_FOUND_OR_FORBIDDEN = {
+    **error_response(404, "That farm does not exist."),
+    **error_response(
+        403, "The caller is a farmer and that farm belongs to a different account."
+    ),
+}
 
 
 async def _owned_farm(
@@ -58,7 +69,11 @@ def _as_out(alert: Alert) -> AlertOut:
     )
 
 
-@router.get("/farms/{farm_id}/alerts", response_model=AlertListOut)
+@router.get(
+    "/farms/{farm_id}/alerts",
+    response_model=AlertListOut,
+    responses={**_UNAUTHENTICATED, **_FARM_NOT_FOUND_OR_FORBIDDEN, **_MALFORMED},
+)
 async def list_alerts(
     farm_id: uuid.UUID,
     outcome: AlertOutcome | None = Query(default=None),
@@ -104,7 +119,18 @@ async def list_alerts(
     )
 
 
-@router.post("/alerts/{alert_id}/respond", response_model=AlertRespondOut)
+@router.post(
+    "/alerts/{alert_id}/respond",
+    response_model=AlertRespondOut,
+    responses={
+        **_UNAUTHENTICATED,
+        **error_response(404, "That alert does not exist, or its farm does not exist."),
+        **error_response(
+            403, "The caller is a farmer and that alert's farm belongs to a different account."
+        ),
+        **_MALFORMED,
+    },
+)
 async def respond_to_alert(
     alert_id: uuid.UUID,
     payload: AlertRespondIn,

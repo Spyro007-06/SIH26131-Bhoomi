@@ -34,14 +34,25 @@ from app.core.schemas.officials import (
 from app.core.services import aggregates
 from app.db import get_session
 from app.deps import Principal, require_role
+from app.errors import error_response
 
 router = APIRouter(prefix="/officials", tags=["officials"])
 
 # One guard object for the whole router — see the note in routers/cases.py.
 OFFICIAL_ONLY = Depends(require_role(Role.OFFICIAL))
 
+# Shared by all three routes: no path params, no ownership check, just the
+# role guard.
+_AUTH_ONLY = {
+    **error_response(401, "No, or an invalid, bearer token."),
+    **error_response(403, "The caller's role is not official."),
+}
+# hotspots and accuracy additionally take query parameters that parse
+# (region/crop/from/to); queue takes none, so it does not get this one.
+_STANDARD_RESPONSES = {**_AUTH_ONLY, **error_response(422, "A query parameter did not parse.")}
 
-@router.get("/hotspots", response_model=HotspotsOut)
+
+@router.get("/hotspots", response_model=HotspotsOut, responses=_STANDARD_RESPONSES)
 async def hotspots(
     region: str | None = Query(default=None),
     crop: str | None = Query(default=None),
@@ -70,7 +81,7 @@ async def hotspots(
     )
 
 
-@router.get("/accuracy", response_model=AccuracyOut)
+@router.get("/accuracy", response_model=AccuracyOut, responses=_STANDARD_RESPONSES)
 async def accuracy(
     from_: date | None = Query(default=None, alias="from"),
     to: date | None = Query(default=None),
@@ -91,7 +102,7 @@ async def accuracy(
     )
 
 
-@router.get("/queue", response_model=QueueOut)
+@router.get("/queue", response_model=QueueOut, responses=_AUTH_ONLY)
 async def queue(
     principal: Principal = OFFICIAL_ONLY,
     session: AsyncSession = Depends(get_session),
