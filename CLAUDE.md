@@ -233,6 +233,7 @@ alembic upgrade head
 uvicorn app.main:app --reload
 pytest
 ruff check app tests alembic
+python -m scripts.export_openapi   # regenerate docs/openapi.json after any route change
 ```
 
 `docker compose up -d` leaves `bhoomi-minio-bucket` in state `exited (0)`. That

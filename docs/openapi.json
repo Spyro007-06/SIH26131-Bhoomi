@@ -1,0 +1,3949 @@
+{
+  "components": {
+    "schemas": {
+      "AccuracyOut": {
+        "properties": {
+          "by_label": {
+            "items": {
+              "$ref": "#/components/schemas/AccuracyRowOut"
+            },
+            "title": "By Label",
+            "type": "array"
+          },
+          "window": {
+            "$ref": "#/components/schemas/AccuracyWindow"
+          }
+        },
+        "required": [
+          "by_label",
+          "window"
+        ],
+        "title": "AccuracyOut",
+        "type": "object"
+      },
+      "AccuracyRowOut": {
+        "properties": {
+          "accuracy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when nothing has been reviewed \u2014 not 0.0, which would read as a model that is wrong every time.",
+            "title": "Accuracy"
+          },
+          "confirmed": {
+            "title": "Confirmed",
+            "type": "integer"
+          },
+          "corrected": {
+            "title": "Corrected",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "confirmed",
+          "corrected"
+        ],
+        "title": "AccuracyRowOut",
+        "type": "object"
+      },
+      "AccuracyWindow": {
+        "properties": {
+          "from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From"
+          },
+          "to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To"
+          }
+        },
+        "title": "AccuracyWindow",
+        "type": "object"
+      },
+      "AdvisoryOut": {
+        "description": "docs/API_CONTRACT.md \u00a78. `what_to_avoid` precedes `ladder` in the object\nand must be rendered first and loudest by clients.",
+        "properties": {
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/CitationOut"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expert_trigger": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expert Trigger"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ladder": {
+            "items": {
+              "$ref": "#/components/schemas/LadderRungOut"
+            },
+            "title": "Ladder",
+            "type": "array"
+          },
+          "possible_issue": {
+            "title": "Possible Issue",
+            "type": "string"
+          },
+          "what_to_avoid": {
+            "title": "What To Avoid",
+            "type": "string"
+          },
+          "what_to_check": {
+            "title": "What To Check",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "possible_issue",
+          "what_to_check",
+          "what_to_avoid",
+          "ladder",
+          "created_at"
+        ],
+        "title": "AdvisoryOut",
+        "type": "object"
+      },
+      "AlertListOut": {
+        "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertOut"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "alerts"
+        ],
+        "title": "AlertListOut",
+        "type": "object"
+      },
+      "AlertOut": {
+        "description": "`inspection_tasks` is never empty \u2014 the CHECK constraint refuses to store\nan alert without at least one. docs/API_CONTRACT.md \u00a717 invariant 6.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inspection_tasks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inspection Tasks",
+            "type": "array"
+          },
+          "issued_at": {
+            "format": "date-time",
+            "title": "Issued At",
+            "type": "string"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AlertOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "risk_level": {
+            "title": "Risk Level",
+            "type": "string"
+          },
+          "spoken_summary": {
+            "description": "F9, owner Shruthi. Null until TTS text exists in-language.",
+            "title": "Spoken Summary",
+            "type": "null"
+          },
+          "target": {
+            "$ref": "#/components/schemas/TargetLabel"
+          },
+          "trigger_type": {
+            "$ref": "#/components/schemas/AlertTrigger"
+          }
+        },
+        "required": [
+          "id",
+          "trigger_type",
+          "target",
+          "risk_level",
+          "reason",
+          "inspection_tasks",
+          "issued_at"
+        ],
+        "title": "AlertOut",
+        "type": "object"
+      },
+      "AlertOutcome": {
+        "enum": [
+          "nothing_found",
+          "found",
+          "snoozed"
+        ],
+        "title": "AlertOutcome",
+        "type": "string"
+      },
+      "AlertRespondIn": {
+        "properties": {
+          "image_asset_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Asset Id"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/AlertOutcome"
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "title": "AlertRespondIn",
+        "type": "object"
+      },
+      "AlertRespondOut": {
+        "description": "docs/API_CONTRACT.md \u00a710.\n\nescalated / case_id added for the inspection-tier branch: a target the\ncamera cannot settle has no diagnose path, so `found` opens a Problem and\nescalates directly instead. Same two fields, same meaning, as \u00a711's\nFollowUpRespondOut \u2014 one convention for \"this response sometimes also\nopens a case,\" not a second one invented here.",
+        "properties": {
+          "alert_id": {
+            "format": "uuid",
+            "title": "Alert Id",
+            "type": "string"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "diagnose_suggested": {
+            "title": "Diagnose Suggested",
+            "type": "boolean"
+          },
+          "escalated": {
+            "default": false,
+            "title": "Escalated",
+            "type": "boolean"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/AlertOutcome"
+          }
+        },
+        "required": [
+          "alert_id",
+          "outcome",
+          "diagnose_suggested"
+        ],
+        "title": "AlertRespondOut",
+        "type": "object"
+      },
+      "AlertTrigger": {
+        "enum": [
+          "weather",
+          "seasonal",
+          "spread",
+          "combined"
+        ],
+        "title": "AlertTrigger",
+        "type": "string"
+      },
+      "AssetKind": {
+        "enum": [
+          "image",
+          "audio"
+        ],
+        "title": "AssetKind",
+        "type": "string"
+      },
+      "AssetOut": {
+        "properties": {
+          "asset_id": {
+            "format": "uuid",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "kind",
+          "content_type",
+          "at"
+        ],
+        "title": "AssetOut",
+        "type": "object"
+      },
+      "CaseQueueItem": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "eta_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta Minutes"
+          },
+          "farm_id": {
+            "format": "uuid",
+            "title": "Farm Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetLabel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "problem_id": {
+            "format": "uuid",
+            "title": "Problem Id",
+            "type": "string"
+          },
+          "queue_position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Position"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaseStatus"
+          }
+        },
+        "required": [
+          "case_id",
+          "problem_id",
+          "farm_id",
+          "region",
+          "status",
+          "created_at"
+        ],
+        "title": "CaseQueueItem",
+        "type": "object"
+      },
+      "CaseQueueOut": {
+        "properties": {
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/CaseQueueItem"
+            },
+            "title": "Cases",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cases"
+        ],
+        "title": "CaseQueueOut",
+        "type": "object"
+      },
+      "CaseStatus": {
+        "enum": [
+          "open",
+          "assigned",
+          "resolved"
+        ],
+        "title": "CaseStatus",
+        "type": "string"
+      },
+      "CitationOut": {
+        "properties": {
+          "doc_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Id"
+          },
+          "reviewed_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed On"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "CitationOut",
+        "type": "object"
+      },
+      "ConfirmIn": {
+        "description": "Both \u00a713 request shapes: confirming and correcting.",
+        "properties": {
+          "corrected_label": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetLabel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "treatment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/ConfirmationVerdict"
+          }
+        },
+        "required": [
+          "verdict"
+        ],
+        "title": "ConfirmIn",
+        "type": "object"
+      },
+      "ConfirmOut": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "confirmation_id": {
+            "format": "uuid",
+            "title": "Confirmation Id",
+            "type": "string"
+          },
+          "problem_status": {
+            "$ref": "#/components/schemas/ProblemStatus"
+          },
+          "spread_alerts_issued": {
+            "description": "Farms warned by the F6 fan-out: new alerts plus upgraded ones.",
+            "title": "Spread Alerts Issued",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaseStatus"
+          }
+        },
+        "required": [
+          "case_id",
+          "status",
+          "problem_status",
+          "confirmation_id",
+          "spread_alerts_issued"
+        ],
+        "title": "ConfirmOut",
+        "type": "object"
+      },
+      "ConfirmationVerdict": {
+        "enum": [
+          "confirmed",
+          "corrected"
+        ],
+        "title": "ConfirmationVerdict",
+        "type": "string"
+      },
+      "Crop": {
+        "description": "Four crops as of v3. docs/API_CONTRACT.md \u00a71.",
+        "enum": [
+          "paddy",
+          "cotton",
+          "soybean",
+          "jowar"
+        ],
+        "title": "Crop",
+        "type": "string"
+      },
+      "CueAnswer": {
+        "enum": [
+          "yes",
+          "no",
+          "unknown"
+        ],
+        "title": "CueAnswer",
+        "type": "string"
+      },
+      "DiagnoseIn": {
+        "description": "docs/API_CONTRACT.md \u00a76. `description_asset_id` / `description_text`\nare optional supplementary context (a voice note or typed note alongside\nthe photo) \u2014 unused by this build's orchestration, which does not touch\nNLU or retrieval, but accepted so a client sending them is not refused.",
+        "properties": {
+          "description_asset_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Asset Id"
+          },
+          "description_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Text"
+          },
+          "image_asset_id": {
+            "format": "uuid",
+            "title": "Image Asset Id",
+            "type": "string"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          }
+        },
+        "required": [
+          "image_asset_id",
+          "lang"
+        ],
+        "title": "DiagnoseIn",
+        "type": "object"
+      },
+      "DiagnoseOut": {
+        "description": "docs/API_CONTRACT.md \u00a76. `problem_type` is included on every branch \u2014\nthe frozen doc's clarify/escalate examples omit it, read as abbreviation\nrather than exclusion: Problem always has a type, and the field is\ngenuinely meaningful on every branch, not conditional on gate outcome.\n\n`escalation` is the only populated branch field this build ever produces.\n`spoken_summary` is Shruthi's (F9) and stays null until she wires it.",
+        "properties": {
+          "escalation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EscalationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gate": {
+            "$ref": "#/components/schemas/app__core__schemas__diagnose__GateOut"
+          },
+          "problem_id": {
+            "format": "uuid",
+            "title": "Problem Id",
+            "type": "string"
+          },
+          "problem_type": {
+            "$ref": "#/components/schemas/ProblemType"
+          },
+          "spoken_summary": {
+            "description": "F9, owner Shruthi. Null until wired.",
+            "title": "Spoken Summary",
+            "type": "null"
+          }
+        },
+        "required": [
+          "gate",
+          "problem_id",
+          "problem_type"
+        ],
+        "title": "DiagnoseOut",
+        "type": "object"
+      },
+      "DiagnosisOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "gate": {
+            "$ref": "#/components/schemas/app__core__schemas__problems__GateOut"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "image_asset_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Asset Id"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetLabel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "gate",
+          "model_version",
+          "created_at"
+        ],
+        "title": "DiagnosisOut",
+        "type": "object"
+      },
+      "EscalationOut": {
+        "description": "docs/API_CONTRACT.md \u00a76's escalation block.\n\n`assigned_to` is rendered \"agronomist:<slug>\" from the assigned User's\nemail domain (no dedicated column for this exists on User \u2014 see\napp/core/routers/diagnose.py's _agronomist_slug()). `None` when the\nqueue has no agronomist to assign, honestly, not a placeholder.",
+        "properties": {
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "eta_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta Minutes"
+          },
+          "queue_position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Position"
+          }
+        },
+        "required": [
+          "case_id",
+          "assigned_to",
+          "queue_position",
+          "eta_minutes"
+        ],
+        "title": "EscalationOut",
+        "type": "object"
+      },
+      "FarmCreate": {
+        "description": "`location` is required. docs/API_CONTRACT.md \u00a75: \"Spread alerts and the\nhotspot map are inoperable without it.\" Omitting it is a 422 through the\nerror envelope, not a null column.",
+        "properties": {
+          "confirmed": {
+            "default": false,
+            "title": "Confirmed",
+            "type": "boolean"
+          },
+          "crop": {
+            "$ref": "#/components/schemas/Crop",
+            "default": "paddy"
+          },
+          "growth_stage": {
+            "title": "Growth Stage",
+            "type": "string"
+          },
+          "input_source": {
+            "default": "typed",
+            "enum": [
+              "typed",
+              "voice"
+            ],
+            "title": "Input Source",
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/GeoPoint"
+          },
+          "region": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Region",
+            "type": "string"
+          },
+          "sowing_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional. The F5 phenology branch derives days-after-sowing from this on read; nothing stores that integer, because it would be wrong the next morning.",
+            "title": "Sowing Date"
+          },
+          "variety": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variety"
+          }
+        },
+        "required": [
+          "growth_stage",
+          "region",
+          "location"
+        ],
+        "title": "FarmCreate",
+        "type": "object"
+      },
+      "FarmOut": {
+        "description": "Full profile \u2014 `GET /farms/{id}`.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "crop": {
+            "$ref": "#/components/schemas/Crop"
+          },
+          "farmer_id": {
+            "format": "uuid",
+            "title": "Farmer Id",
+            "type": "string"
+          },
+          "growth_stage": {
+            "title": "Growth Stage",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/GeoPoint"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "sowing_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sowing Date"
+          },
+          "variety": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variety"
+          }
+        },
+        "required": [
+          "id",
+          "farmer_id",
+          "crop",
+          "variety",
+          "growth_stage",
+          "region",
+          "sowing_date",
+          "location",
+          "created_at"
+        ],
+        "title": "FarmOut",
+        "type": "object"
+      },
+      "FarmSummaryOut": {
+        "description": "The `farm` sub-object of \u00a75's create and summary responses.",
+        "properties": {
+          "crop": {
+            "$ref": "#/components/schemas/Crop"
+          },
+          "growth_stage": {
+            "title": "Growth Stage",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "crop",
+          "growth_stage",
+          "region"
+        ],
+        "title": "FarmSummaryOut",
+        "type": "object"
+      },
+      "FarmUpdate": {
+        "description": "PATCH \u2014 onboarding fields only.\n\n`location` is deliberately absent. Moving a farm invalidates every spread\nalert already issued against its coordinates, so it is not an onboarding\nedit; it would need its own endpoint and a decision about those alerts.",
+        "properties": {
+          "confirmed": {
+            "default": false,
+            "title": "Confirmed",
+            "type": "boolean"
+          },
+          "growth_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Growth Stage"
+          },
+          "input_source": {
+            "default": "typed",
+            "enum": [
+              "typed",
+              "voice"
+            ],
+            "title": "Input Source",
+            "type": "string"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "sowing_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sowing Date"
+          },
+          "variety": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variety"
+          }
+        },
+        "title": "FarmUpdate",
+        "type": "object"
+      },
+      "FollowUpOut": {
+        "properties": {
+          "due_at": {
+            "format": "date-time",
+            "title": "Due At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "responded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responded At"
+          },
+          "response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response"
+          }
+        },
+        "required": [
+          "id",
+          "due_at"
+        ],
+        "title": "FollowUpOut",
+        "type": "object"
+      },
+      "FollowUpRespondIn": {
+        "properties": {
+          "image_asset_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Asset Id"
+          },
+          "response": {
+            "$ref": "#/components/schemas/FollowupResponse"
+          }
+        },
+        "required": [
+          "response"
+        ],
+        "title": "FollowUpRespondIn",
+        "type": "object"
+      },
+      "FollowUpRespondOut": {
+        "description": "docs/API_CONTRACT.md \u00a711.\n\n`health` is F11 and belongs to Thaariha. Null, never a fabricated sentence \u2014\nthe same rule as the farm summary and for the same reason.",
+        "properties": {
+          "case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "escalated": {
+            "title": "Escalated",
+            "type": "boolean"
+          },
+          "health": {
+            "description": "F11, owner Thaariha.",
+            "title": "Health",
+            "type": "null"
+          },
+          "problem_id": {
+            "format": "uuid",
+            "title": "Problem Id",
+            "type": "string"
+          },
+          "severity_change": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SeverityChange"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "problem_id",
+          "escalated"
+        ],
+        "title": "FollowUpRespondOut",
+        "type": "object"
+      },
+      "FollowupResponse": {
+        "enum": [
+          "improved",
+          "no_change",
+          "got_worse"
+        ],
+        "title": "FollowupResponse",
+        "type": "string"
+      },
+      "GateOutcome": {
+        "enum": [
+          "advise",
+          "clarify",
+          "escalate"
+        ],
+        "title": "GateOutcome",
+        "type": "string"
+      },
+      "GateReasonCode": {
+        "enum": [
+          "ABOVE_GATE",
+          "AMBIGUOUS",
+          "BELOW_FLOOR",
+          "OUT_OF_SCOPE",
+          "NO_RELEVANT_SOURCE"
+        ],
+        "title": "GateReasonCode",
+        "type": "string"
+      },
+      "GeoPoint": {
+        "description": "A farm's location. Serialises as {\"lat\": ..., \"lng\": ...} per \u00a75 of the\nAPI contract; stored as geography(Point, 4326).",
+        "properties": {
+          "lat": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lng",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
+        ],
+        "title": "GeoPoint",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HomeSummaryOut": {
+        "description": "`GET /farms/{id}/summary` \u2014 the home screen in one call, \u00a75.\n\n`health` is F11 and belongs to **Thaariha**. It is null here, not a\nfabricated sentence: docs/API_CONTRACT.md \u00a712's rule against placeholder\nstrings exists because this project has shipped fake copy before, and\ndocs/API_CONTRACT.md \u00a75 is explicit that health is a sentence and a trend,\nwith no numeric score field. Inventing either would be the same mistake.\n\n`spoken_summary` is likewise null until F9 (Shruthi) can produce it in the\nfarmer's language. An English placeholder read aloud in Marathi is worse\nthan silence.",
+        "properties": {
+          "active_alerts": {
+            "title": "Active Alerts",
+            "type": "integer"
+          },
+          "farm": {
+            "$ref": "#/components/schemas/FarmSummaryOut"
+          },
+          "health": {
+            "description": "F11, owner Thaariha. Null until implemented \u2014 never a placeholder.",
+            "title": "Health",
+            "type": "null"
+          },
+          "open_problems": {
+            "title": "Open Problems",
+            "type": "integer"
+          },
+          "pending_followups": {
+            "title": "Pending Followups",
+            "type": "integer"
+          },
+          "spoken_summary": {
+            "description": "F9, owner Shruthi. Null until TTS text is available in-language.",
+            "title": "Spoken Summary",
+            "type": "null"
+          }
+        },
+        "required": [
+          "farm",
+          "open_problems",
+          "pending_followups",
+          "active_alerts"
+        ],
+        "title": "HomeSummaryOut",
+        "type": "object"
+      },
+      "HotspotPointOut": {
+        "properties": {
+          "confirmed_count": {
+            "title": "Confirmed Count",
+            "type": "integer"
+          },
+          "first_seen": {
+            "format": "date",
+            "title": "First Seen",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "last_seen": {
+            "format": "date",
+            "title": "Last Seen",
+            "type": "string"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "title": "Lng",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng",
+          "label",
+          "confirmed_count",
+          "first_seen",
+          "last_seen"
+        ],
+        "title": "HotspotPointOut",
+        "type": "object"
+      },
+      "HotspotsOut": {
+        "description": "Only confirmed cases appear. docs/API_CONTRACT.md \u00a717 invariant 10.",
+        "properties": {
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/HotspotPointOut"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "totals_by_label": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Totals By Label",
+            "type": "object"
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "title": "HotspotsOut",
+        "type": "object"
+      },
+      "LabelCheckOut": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ingredient": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingredient"
+          },
+          "ocr_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ocr Confidence"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "at"
+        ],
+        "title": "LabelCheckOut",
+        "type": "object"
+      },
+      "LadderRungOut": {
+        "description": "A chemical rung carries dosage, PHI and re-entry or is omitted entirely.\ndocs/API_CONTRACT.md \u00a78.",
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "dosage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dosage"
+          },
+          "phi_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phi Days"
+          },
+          "reentry_hours": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reentry Hours"
+          },
+          "tier": {
+            "enum": [
+              "cultural",
+              "biological",
+              "chemical"
+            ],
+            "title": "Tier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tier",
+          "action"
+        ],
+        "title": "LadderRungOut",
+        "type": "object"
+      },
+      "Lang": {
+        "description": "BCP-47 tags carried on requests where text is returned. \u00a70.",
+        "enum": [
+          "mr-IN",
+          "hi-IN",
+          "ta-IN",
+          "en-IN"
+        ],
+        "title": "Lang",
+        "type": "string"
+      },
+      "LoginIn": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginIn",
+        "type": "object"
+      },
+      "ObservationOut": {
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CueAnswer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "doubt_doctor",
+              "field_note"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "created_at"
+        ],
+        "title": "ObservationOut",
+        "type": "object"
+      },
+      "OtpRequestIn": {
+        "properties": {
+          "phone": {
+            "examples": [
+              "+919876543210"
+            ],
+            "maxLength": 20,
+            "minLength": 8,
+            "title": "Phone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone"
+        ],
+        "title": "OtpRequestIn",
+        "type": "object"
+      },
+      "OtpRequestOut": {
+        "properties": {
+          "expires_in": {
+            "description": "Seconds until the code stops working",
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "expires_in"
+        ],
+        "title": "OtpRequestOut",
+        "type": "object"
+      },
+      "OtpVerifyIn": {
+        "properties": {
+          "otp": {
+            "maxLength": 10,
+            "minLength": 4,
+            "title": "Otp",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "otp"
+        ],
+        "title": "OtpVerifyIn",
+        "type": "object"
+      },
+      "ParsedIntentOut": {
+        "properties": {
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "value"
+        ],
+        "title": "ParsedIntentOut",
+        "type": "object"
+      },
+      "PendingFollowUpListOut": {
+        "properties": {
+          "followups": {
+            "items": {
+              "$ref": "#/components/schemas/PendingFollowUpOut"
+            },
+            "title": "Followups",
+            "type": "array"
+          }
+        },
+        "required": [
+          "followups"
+        ],
+        "title": "PendingFollowUpListOut",
+        "type": "object"
+      },
+      "PendingFollowUpOut": {
+        "properties": {
+          "due_at": {
+            "format": "date-time",
+            "title": "Due At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetLabel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "overdue": {
+            "title": "Overdue",
+            "type": "boolean"
+          },
+          "problem_id": {
+            "format": "uuid",
+            "title": "Problem Id",
+            "type": "string"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProblemSeverity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "problem_id",
+          "due_at",
+          "overdue"
+        ],
+        "title": "PendingFollowUpOut",
+        "type": "object"
+      },
+      "Prediction": {
+        "description": "One candidate from the bounded label set.",
+        "properties": {
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "label": {
+            "description": "Pest species or disease, from the bounded set",
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "confidence"
+        ],
+        "title": "Prediction",
+        "type": "object"
+      },
+      "PresignIn": {
+        "properties": {
+          "content_type": {
+            "examples": [
+              "image/jpeg"
+            ],
+            "maxLength": 127,
+            "title": "Content Type",
+            "type": "string"
+          },
+          "farm_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farm Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AssetKind"
+          }
+        },
+        "required": [
+          "kind",
+          "content_type"
+        ],
+        "title": "PresignIn",
+        "type": "object"
+      },
+      "PresignOut": {
+        "properties": {
+          "asset_id": {
+            "format": "uuid",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "expires_in": {
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "method": {
+            "default": "PUT",
+            "title": "Method",
+            "type": "string"
+          },
+          "upload_url": {
+            "title": "Upload Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "upload_url",
+          "expires_in"
+        ],
+        "title": "PresignOut",
+        "type": "object"
+      },
+      "ProblemDetailOut": {
+        "description": "`GET /problems/{id}`.\n\nOptional sections are omitted when absent rather than emitted empty. A\nproblem that has never been diagnosed has no `diagnosis` key.",
+        "properties": {
+          "advisory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdvisoryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "diagnosis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiagnosisOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "farm_id": {
+            "format": "uuid",
+            "title": "Farm Id",
+            "type": "string"
+          },
+          "followups": {
+            "items": {
+              "$ref": "#/components/schemas/FollowUpOut"
+            },
+            "title": "Followups",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/AssetOut"
+            },
+            "title": "Images",
+            "type": "array"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetLabel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "label_checks": {
+            "items": {
+              "$ref": "#/components/schemas/LabelCheckOut"
+            },
+            "title": "Label Checks",
+            "type": "array"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationOut"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "opened_at": {
+            "format": "date-time",
+            "title": "Opened At",
+            "type": "string"
+          },
+          "problem_type": {
+            "$ref": "#/components/schemas/ProblemType"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProblemSeverity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProblemStatus"
+          }
+        },
+        "required": [
+          "id",
+          "farm_id",
+          "problem_type",
+          "status",
+          "opened_at"
+        ],
+        "title": "ProblemDetailOut",
+        "type": "object"
+      },
+      "ProblemListItem": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetLabel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "opened_at": {
+            "format": "date-time",
+            "title": "Opened At",
+            "type": "string"
+          },
+          "problem_type": {
+            "$ref": "#/components/schemas/ProblemType"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProblemSeverity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProblemStatus"
+          }
+        },
+        "required": [
+          "id",
+          "problem_type",
+          "status",
+          "opened_at"
+        ],
+        "title": "ProblemListItem",
+        "type": "object"
+      },
+      "ProblemListOut": {
+        "properties": {
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "problems": {
+            "items": {
+              "$ref": "#/components/schemas/ProblemListItem"
+            },
+            "title": "Problems",
+            "type": "array"
+          }
+        },
+        "required": [
+          "problems"
+        ],
+        "title": "ProblemListOut",
+        "type": "object"
+      },
+      "ProblemSeverity": {
+        "enum": [
+          "early",
+          "moderate",
+          "severe"
+        ],
+        "title": "ProblemSeverity",
+        "type": "string"
+      },
+      "ProblemStatus": {
+        "enum": [
+          "open",
+          "resolved"
+        ],
+        "title": "ProblemStatus",
+        "type": "string"
+      },
+      "ProblemType": {
+        "enum": [
+          "disease",
+          "pest"
+        ],
+        "title": "ProblemType",
+        "type": "string"
+      },
+      "QueueOut": {
+        "properties": {
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Status",
+            "type": "object"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "by_status",
+          "total"
+        ],
+        "title": "QueueOut",
+        "type": "object"
+      },
+      "Role": {
+        "enum": [
+          "farmer",
+          "agronomist",
+          "official"
+        ],
+        "title": "Role",
+        "type": "string"
+      },
+      "SeverityChange": {
+        "properties": {
+          "from": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProblemSeverity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "to": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProblemSeverity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "SeverityChange",
+        "type": "object"
+      },
+      "SynthesizeIn": {
+        "properties": {
+          "lang": {
+            "$ref": "#/components/schemas/Lang"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "lang"
+        ],
+        "title": "SynthesizeIn",
+        "type": "object"
+      },
+      "SynthesizeOut": {
+        "properties": {
+          "audio_url": {
+            "title": "Audio Url",
+            "type": "string"
+          },
+          "expires_in": {
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "is_stub": {
+            "description": "True -> the client must show a stub banner. docs/DESIGN.md \u00a712.",
+            "title": "Is Stub",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "audio_url",
+          "expires_in",
+          "is_stub"
+        ],
+        "title": "SynthesizeOut",
+        "type": "object"
+      },
+      "TargetLabel": {
+        "description": "The bounded label set. Anything outside it is out_of_scope, not a guess.\n\nNAMESPACED BY CROP, and that prefix is load-bearing. Bacterial blight exists\nin both cotton and soybean; anthracnose in both soybean and jowar. Unprefixed\nvalues would make a wrong-crop match something the system has to *filter*\nout. Prefixed, it is not expressible: there is no value a cotton farm and a\nsoybean farm can both hold.\n\nThaariha's corpus already uses this convention, so retrieval and the label\nset agree without a translation step.",
+        "enum": [
+          "paddy_blast",
+          "paddy_brown_spot",
+          "paddy_bacterial_leaf_blight",
+          "paddy_yellow_stem_borer",
+          "paddy_brown_planthopper",
+          "cotton_american_bollworm",
+          "cotton_pink_bollworm",
+          "cotton_whitefly",
+          "cotton_thrips",
+          "cotton_bacterial_blight",
+          "cotton_leaf_curl_virus",
+          "cotton_fusarium_wilt",
+          "soybean_stem_fly",
+          "soybean_girdle_beetle",
+          "soybean_defoliating_caterpillars",
+          "soybean_yellow_mosaic_virus",
+          "soybean_anthracnose",
+          "soybean_alternaria_leaf_spot",
+          "soybean_bacterial_blight",
+          "jowar_shoot_fly",
+          "jowar_stem_borer",
+          "jowar_shoot_bug",
+          "jowar_anthracnose",
+          "jowar_grain_mold",
+          "jowar_smut",
+          "jowar_downy_mildew"
+        ],
+        "title": "TargetLabel",
+        "type": "string"
+      },
+      "TimelineEntry": {
+        "description": "One dated event in the farm's case file.\n\nA flat, sorted stream rather than a nested tree: the app renders it as a\nlist and the agronomist reads it top to bottom. `payload` carries the\nevent-specific fields.",
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "problem_opened",
+              "problem_resolved",
+              "diagnosis",
+              "observation",
+              "advisory",
+              "label_check",
+              "followup_due",
+              "followup_response",
+              "alert_issued",
+              "alert_response"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "payload": {
+            "title": "Payload",
+            "type": "object"
+          },
+          "problem_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem Id"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "kind",
+          "summary"
+        ],
+        "title": "TimelineEntry",
+        "type": "object"
+      },
+      "TimelineOut": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "farm_id": {
+            "format": "uuid",
+            "title": "Farm Id",
+            "type": "string"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "farm_id",
+          "entries"
+        ],
+        "title": "TimelineOut",
+        "type": "object"
+      },
+      "TokenOut": {
+        "description": "docs/API_CONTRACT.md \u00a72 \u2014 the shape both verify and login return.",
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "user"
+        ],
+        "title": "TokenOut",
+        "type": "object"
+      },
+      "TopK": {
+        "description": "The classifier's output, and the only thing the gate is allowed to see.",
+        "properties": {
+          "is_stub": {
+            "description": "True -> the UI must show a stub banner. docs/DESIGN.md \u00a712.",
+            "title": "Is Stub",
+            "type": "boolean"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "out_of_scope": {
+            "description": "True if the crop or target lies outside the bounded set",
+            "title": "Out Of Scope",
+            "type": "boolean"
+          },
+          "predictions": {
+            "description": "Exactly 3, descending by confidence",
+            "items": {
+              "$ref": "#/components/schemas/Prediction"
+            },
+            "maxItems": 3,
+            "minItems": 3,
+            "title": "Predictions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "predictions",
+          "out_of_scope",
+          "model_version",
+          "is_stub"
+        ],
+        "title": "TopK",
+        "type": "object"
+      },
+      "TranscribeIn": {
+        "properties": {
+          "asset_id": {
+            "format": "uuid",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "context": {
+            "enum": [
+              "onboarding",
+              "doubt_doctor",
+              "query"
+            ],
+            "title": "Context",
+            "type": "string"
+          },
+          "lang": {
+            "$ref": "#/components/schemas/Lang"
+          }
+        },
+        "required": [
+          "asset_id",
+          "lang",
+          "context"
+        ],
+        "title": "TranscribeIn",
+        "type": "object"
+      },
+      "TranscribeOut": {
+        "properties": {
+          "confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omitted (via response_model_exclude_none) when the provider reports none \u2014 live Sarvam Saaras never does. Never a fabricated sentinel. docs/API_CONTRACT.md \u00a74 shows this as always-numeric; live mode is a deliberate, flagged deviation.",
+            "title": "Confidence"
+          },
+          "is_stub": {
+            "description": "True -> the client must show a stub banner. docs/DESIGN.md \u00a712.",
+            "title": "Is Stub",
+            "type": "boolean"
+          },
+          "lang": {
+            "$ref": "#/components/schemas/Lang"
+          },
+          "needs_confirmation": {
+            "title": "Needs Confirmation",
+            "type": "boolean"
+          },
+          "parsed_intent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ParsedIntentOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "lang",
+          "needs_confirmation",
+          "is_stub"
+        ],
+        "title": "TranscribeOut",
+        "type": "object"
+      },
+      "UserOut": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "name"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VerdictCode": {
+        "enum": [
+          "NO_OBJECTION_FOUND",
+          "NOT_REGISTERED_FOR_TARGET",
+          "WRONG_CROP",
+          "WRONG_CLASS",
+          "PHI_CONFLICT",
+          "NOT_IN_RECORDS"
+        ],
+        "title": "VerdictCode",
+        "type": "string"
+      },
+      "app__core__schemas__diagnose__GateOut": {
+        "description": "Mirrors contract C3's GateDecision. Not GateDecision itself: this is\nthe HTTP-facing shape, and outcome/reason_code here can differ from what\ndecide() returned \u2014 see EscalationOut's docstring for the one case where\nthat happens (clarify, no cue found).",
+        "properties": {
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/Prediction"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "is_stub": {
+            "title": "Is Stub",
+            "type": "boolean"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "reason_code": {
+            "title": "Reason Code",
+            "type": "string"
+          },
+          "threshold_applied": {
+            "title": "Threshold Applied",
+            "type": "number"
+          }
+        },
+        "required": [
+          "outcome",
+          "confidence",
+          "threshold_applied",
+          "reason_code",
+          "alternatives",
+          "is_stub"
+        ],
+        "title": "GateOut",
+        "type": "object"
+      },
+      "app__core__schemas__problems__GateOut": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/Prediction"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "is_stub": {
+            "title": "Is Stub",
+            "type": "boolean"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/GateOutcome"
+          },
+          "reason_code": {
+            "$ref": "#/components/schemas/GateReasonCode"
+          },
+          "threshold_applied": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold Applied"
+          }
+        },
+        "required": [
+          "outcome",
+          "confidence",
+          "reason_code",
+          "alternatives",
+          "is_stub"
+        ],
+        "title": "GateOut",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "SIH26131 \u2014 early detection and management of crop diseases and pest infestations. Wire format is frozen in docs/API_CONTRACT.md.",
+    "title": "Bhoomi v2",
+    "version": "2.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/agronomist/case-queue": {
+      "get": {
+        "description": "Cases for this agronomist, oldest first. docs/API_CONTRACT.md \u00a713.\n\nOldest first, not highest severity first: a queue ordered by urgency starves\nits tail, and the farmer whose case has waited longest is the one most\nlikely to have stopped trusting that anyone is coming.",
+        "operationId": "case_queue_api_v1_agronomist_case_queue_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CaseStatus",
+              "default": "assigned"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseQueueOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Case Queue",
+        "tags": [
+          "agronomist"
+        ]
+      }
+    },
+    "/api/v1/alerts/{alert_id}/respond": {
+      "post": {
+        "description": "Record what the farmer found. This is what makes the card dismissible.\n\n`found` on a diagnosable target returns `diagnose_suggested: true` \u2014 the\nfarmer has a photo of something and the next step is the gated diagnose\npath, not a treatment recommendation from this endpoint. F5 tells you\nwhere to look; it does not tell you what you found.\n\n`found` on an inspection-tier target has no diagnose path: the target's\nown definition is that a photograph cannot settle it. That case opens a\nProblem and escalates directly \u2014 `escalated: true`, `case_id` set \u2014 same\nas \u00a711's FollowUpRespondOut does for a `got_worse` answer.",
+        "operationId": "respond_to_alert_api_v1_alerts__alert_id__respond_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "alert_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Alert Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertRespondIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertRespondOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Respond To Alert",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
+    "/api/v1/assets/presign": {
+      "post": {
+        "description": "Mint an Asset row and return a presigned PUT URL.\n\nThe row is written before the bytes exist. `uploaded_at` stays null until\nsomething confirms the upload, so an asset the client abandoned is\ndistinguishable from one it completed \u2014 rather than a dangling id that looks\nidentical to a real photo.",
+        "operationId": "presign_api_v1_assets_presign_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresignIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Presign",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "Email and password, for `agronomist` and `official`. \u00a72.\n\nFarmers cannot reach this path: the app_user CHECK guarantees a farmer row\nhas no password_hash, so verify_secret has nothing to match against.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/otp/request": {
+      "post": {
+        "description": "Mint a one-time code for a phone number.\n\nReturns the same shape whether or not the phone belongs to a known farmer.\nTelling an unauthenticated caller which numbers are registered turns this\nendpoint into a user-enumeration oracle, and the farmer-facing flow does not\nneed the distinction \u2014 an unknown number simply never verifies.",
+        "operationId": "request_otp_api_v1_auth_otp_request_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Otp",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/otp/verify": {
+      "post": {
+        "description": "Exchange a code for tokens.\n\nThe code is burned on success and attempt-capped on failure, so a captured\nrequest_id is not a brute-force target.",
+        "operationId": "verify_otp_api_v1_auth_otp_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpVerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Otp",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/confirm": {
+      "post": {
+        "description": "Record the agronomist's verdict and everything that follows.\n\n`spread_alerts_issued` is the F6 fan-out count \u2014 the moment one confirmation\nbecomes a village-wide warning, and the most demonstrable thing in the\nproduct. It counts upgraded alerts as well as new ones: a farm whose\nexisting weather card was upgraded to `combined` has been warned.",
+        "operationId": "confirm_api_v1_cases__case_id__confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirm",
+        "tags": [
+          "agronomist"
+        ]
+      }
+    },
+    "/api/v1/farms": {
+      "post": {
+        "description": "Create a farm. `location` is required \u2014 see FarmCreate.",
+        "operationId": "create_farm_api_v1_farms_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FarmCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmSummaryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Farm",
+        "tags": [
+          "farms"
+        ]
+      }
+    },
+    "/api/v1/farms/{farm_id}": {
+      "get": {
+        "operationId": "get_farm_api_v1_farms__farm_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Farm Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Farm",
+        "tags": [
+          "farms"
+        ]
+      },
+      "patch": {
+        "description": "Update onboarding fields. Location is not one of them \u2014 see FarmUpdate.\n\n`input_source` / `confirmed` are validated by the schema (voice input must\nbe confirmed or the request never reaches this body) and travel no\nfurther \u2014 excluded here so they are never passed to `setattr` against a\nmodel with no such columns. See VOICE_CONFIRMATION_FIELDS.",
+        "operationId": "update_farm_api_v1_farms__farm_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Farm Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FarmUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Farm",
+        "tags": [
+          "farms"
+        ]
+      }
+    },
+    "/api/v1/farms/{farm_id}/alerts": {
+      "get": {
+        "description": "Alerts for a farm, newest first.\n\nClients keep an alert card non-dismissible until `/respond` is called\n(docs/API_CONTRACT.md \u00a710), so `?unanswered=true` is what the home screen\nasks for.",
+        "operationId": "list_alerts_api_v1_farms__farm_id__alerts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Farm Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AlertOutcome"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Outcome"
+            }
+          },
+          {
+            "description": "Only alerts the farmer has not responded to yet",
+            "in": "query",
+            "name": "unanswered",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Only alerts the farmer has not responded to yet",
+              "title": "Unanswered",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Alerts",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
+    "/api/v1/farms/{farm_id}/diagnose": {
+      "post": {
+        "description": "The gated diagnose path. docs/API_CONTRACT.md \u00a76, docs/DESIGN.md \u00a76, \u00a77.\n\nescalate and clarify-with-no-cue-found are the only branches this build\nproduces a full response for. advise, and clarify-with-a-cue-found, are\nreal reachable gate outcomes this build refuses rather than fabricates a\nresponse for -- 501 NOT_IMPLEMENTED. See the module docstring.\n\nThe Problem and Diagnosis rows are written regardless of which branch is\nreached, including the two 501 branches: a real classification event\nhappened and is recorded before the response is decided, not only when\nthis build knows how to finish answering it.",
+        "operationId": "diagnose_farm_api_v1_farms__farm_id__diagnose_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Farm Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-vision-fixture",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Vision-Fixture"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiagnoseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiagnoseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Diagnose Farm",
+        "tags": [
+          "diagnose"
+        ]
+      }
+    },
+    "/api/v1/farms/{farm_id}/followups/pending": {
+      "get": {
+        "description": "Unanswered check-ins for this farm, soonest first.\n\nReturns everything unanswered, not only what is already due. A farmer opening\nthe app the day before a check-in should see it coming; hiding it until the\ndue date makes the app look empty on the day something is happening.\n`overdue` is the flag the client renders differently.",
+        "operationId": "pending_followups_api_v1_farms__farm_id__followups_pending_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Farm Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingFollowUpListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Pending Followups",
+        "tags": [
+          "follow-up"
+        ]
+      }
+    },
+    "/api/v1/farms/{farm_id}/problems": {
+      "get": {
+        "description": "Filtered, paginated problem list. Newest first.",
+        "operationId": "list_problems_api_v1_farms__farm_id__problems_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Farm Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ProblemStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ProblemType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Problems",
+        "tags": [
+          "case file"
+        ]
+      }
+    },
+    "/api/v1/farms/{farm_id}/summary": {
+      "get": {
+        "description": "The home screen in one call. docs/API_CONTRACT.md \u00a75.\n\nThe three counts are real queries. `health` and `spoken_summary` are null,\nnot invented \u2014 see HomeSummaryOut for who owns them.",
+        "operationId": "farm_summary_api_v1_farms__farm_id__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Farm Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSummaryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Farm Summary",
+        "tags": [
+          "farms"
+        ]
+      }
+    },
+    "/api/v1/farms/{farm_id}/timeline": {
+      "get": {
+        "description": "Chronological case file, newest first.\n\nAssembled in Python from six tables rather than as a UNION: the row shapes\nhave almost nothing in common, and a UNION would need every column widened\nto text. The volume is one farm's history, which is small by construction.",
+        "operationId": "farm_timeline_api_v1_farms__farm_id__timeline_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Farm Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Farm Timeline",
+        "tags": [
+          "case file"
+        ]
+      }
+    },
+    "/api/v1/followups/{followup_id}/respond": {
+      "post": {
+        "description": "Answer a check-in.\n\n`got_worse` promotes severity one step and auto-escalates to an agronomist.\nThe created Case carries status, queue_position and eta_minutes, and its\n`bundle` is NULL \u2014 compiling that is Thaariha's F12, and a placeholder\nbundle on a live case is the failure docs/API_CONTRACT.md \u00a712 names.",
+        "operationId": "respond_to_followup_api_v1_followups__followup_id__respond_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "followup_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Followup Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FollowUpRespondIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowUpRespondOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Respond To Followup",
+        "tags": [
+          "follow-up"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "description": "Liveness plus the flag values.\n\nThe flags are in the body on purpose. docs/DESIGN.md \u00a712: \"Silent stubs are\nhow a demo dies.\" Anyone can read off this endpoint whether they are looking\nat a real classifier or a stub, without reading a config file on a laptop\nthat may not be the one serving the port.",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Health Api V1 Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/officials/accuracy": {
+      "get": {
+        "description": "Confirmed versus corrected by label over the window.",
+        "operationId": "accuracy_api_v1_officials_accuracy_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccuracyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Accuracy",
+        "tags": [
+          "officials"
+        ]
+      }
+    },
+    "/api/v1/officials/hotspots": {
+      "get": {
+        "description": "Confirmed outbreaks as map points. Model output never appears here.",
+        "operationId": "hotspots_api_v1_officials_hotspots_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Region"
+            }
+          },
+          {
+            "in": "query",
+            "name": "crop",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Crop"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotspotsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Hotspots",
+        "tags": [
+          "officials"
+        ]
+      }
+    },
+    "/api/v1/officials/queue": {
+      "get": {
+        "description": "How deep the agronomist queue is, by status.",
+        "operationId": "queue_api_v1_officials_queue_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Queue",
+        "tags": [
+          "officials"
+        ]
+      }
+    },
+    "/api/v1/problems/{problem_id}": {
+      "get": {
+        "description": "Detail with photos, observations and advisory.\n\nReturns whatever exists and omits what does not. No section is emitted\nempty-but-present, and nothing is invented to fill a shape.",
+        "operationId": "get_problem_api_v1_problems__problem_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "problem_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Problem Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Problem",
+        "tags": [
+          "case file"
+        ]
+      }
+    },
+    "/api/v1/vision/classify": {
+      "post": {
+        "description": "Phase 1 vision fixture / test mode. See _resolve_topk().",
+        "operationId": "classify_vision_fixture_api_v1_vision_classify_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-vision-fixture",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Vision-Fixture"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopK"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Classify Vision Fixture",
+        "tags": [
+          "diagnose"
+        ]
+      }
+    },
+    "/api/v1/voice/synthesize": {
+      "post": {
+        "description": "Render text to audio and return a presigned URL. docs/API_CONTRACT.md \u00a74.",
+        "operationId": "synthesize_voice_api_v1_voice_synthesize_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SynthesizeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SynthesizeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Synthesize Voice",
+        "tags": [
+          "voice"
+        ]
+      }
+    },
+    "/api/v1/voice/transcribe": {
+      "post": {
+        "description": "Transcribe an uploaded audio asset. docs/API_CONTRACT.md \u00a74.\n\nBelow `config.ASR_FLOOR`, `parsed_intent` is omitted from the response\nentirely (not `null`) \u2014 `response_model_exclude_none` renders that;\napp.voice.asr.transcribe() decides it. `confidence` is omitted the same\nway when the provider reports none (live Sarvam Saaras never does).",
+        "operationId": "transcribe_voice_api_v1_voice_transcribe_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscribeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscribeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Transcribe Voice",
+        "tags": [
+          "voice"
+        ]
+      }
+    }
+  }
+}
