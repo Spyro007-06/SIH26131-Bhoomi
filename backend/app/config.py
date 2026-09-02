@@ -182,7 +182,16 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    app_env: str = "local"
+    app_env: Literal["local", "production"] = "local"
+    """Two security gates branch on this: core/security.py's fixed-OTP
+    allowlist (`== "local"`, fails closed on anything unrecognised) and
+    core/routers/auth.py's demo-login denylist (`!= "production"`, used to
+    fail OPEN on anything unrecognised -- APP_ENV=prod, a typo, anything not
+    exactly the literal string "production" passed the old bare-str check).
+    Constrained to the two values this project actually sets anywhere
+    (grepped: .env.example, every app_env comparison in app/) so a third
+    value is a Pydantic ValidationError at Settings() construction --
+    silently picking a branch is not a value this field can hold."""
     log_level: str = "INFO"
     api_prefix: str = "/api/v1"
 

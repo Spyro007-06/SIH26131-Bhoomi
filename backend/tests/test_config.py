@@ -10,6 +10,9 @@ from __future__ import annotations
 import ast
 import pathlib
 
+import pytest
+from pydantic import ValidationError
+
 from app import config
 
 
@@ -37,6 +40,28 @@ def test_threshold_ordering_holds() -> None:
 def test_perception_floors_are_probabilities() -> None:
     assert 0.0 < config.OCR_FLOOR <= 1.0
     assert 0.0 < config.ASR_FLOOR <= 1.0
+
+
+def test_unrecognised_app_env_fails_at_settings_construction() -> None:
+    """app_env used to be a bare str behind two security gates that read it in
+    opposite directions -- core/security.py's fixed-OTP path allowlists
+    "local" (fails closed on a typo), core/routers/auth.py's demo-login path
+    denylists "production" (used to fail OPEN on one: APP_ENV=prod or
+    APP_ENV=Production both passed `!= "production"`). Constraining the field
+    to Literal["local", "production"] makes a third value a construction-time
+    ValidationError for both gates alike, rather than a value that silently
+    picks a branch depending on which comparison direction happens to read
+    it.
+    """
+    with pytest.raises(ValidationError):
+        config.Settings(app_env="Production")
+
+    with pytest.raises(ValidationError):
+        config.Settings(app_env="staging")
+
+    # The two real values still construct.
+    assert config.Settings(app_env="local").app_env == "local"
+    assert config.Settings(app_env="production").app_env == "production"
 
 
 def test_thresholds_are_declared_only_in_config() -> None:
