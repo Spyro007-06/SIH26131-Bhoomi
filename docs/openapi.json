@@ -4418,15 +4418,25 @@
             },
             "description": "Successful Response"
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "An X-Vision-Fixture header was sent while VISION_MODEL=real -- fixtures are not served against the real classifier."
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "X-Vision-Fixture named an unrecognised fixture."
           }
         },
         "summary": "Classify Vision Fixture",
