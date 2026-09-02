@@ -86,11 +86,12 @@ async def lifespan(_: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Bhoomi v2",
-        version="2.0.0",
+        title="Bhoomi v3",
+        version="3.0.0",
         description=(
             "SIH26131 — early detection and management of crop diseases and pest "
-            "infestations. Wire format is frozen in docs/API_CONTRACT.md."
+            "infestations. Four crops, 26 crop-namespaced targets. Wire format is "
+            "frozen in docs/API_CONTRACT.md."
         ),
         lifespan=lifespan,
     )
