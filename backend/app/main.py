@@ -29,6 +29,7 @@ from app.core.routers import (
 from app.db import dispose_engine
 from app.errors import register_exception_handlers
 from app.scheduler import shutdown_scheduler, start_scheduler
+from app.voice import router as voice_router
 
 logging.basicConfig(level=settings.log_level)
 log = logging.getLogger("bhoomi")
@@ -107,6 +108,7 @@ def create_app() -> FastAPI:
     api.include_router(cases.router)
     api.include_router(officials.router)
     api.include_router(diagnose.router)
+    api.include_router(voice_router.router)
     # Phase 2+: problems, timeline. Phase 3+: alerts, followups. Each router
     # module is included here as its owner implements it.
     app.include_router(api)
