@@ -287,6 +287,17 @@ Docker Compose users: create a second local Postgres database the same way
 (`createdb bhoomi_test`) and run `alembic upgrade head` against it with
 `ALEMBIC_DATABASE_URL` pointed there for that one run.
 
+**`alembic upgrade head` is not the whole setup.** A migration seeds
+`growth_stage`'s canonical rows, but three of the four crops land
+`UNSOURCED-PENDING-REVIEW` there — the real citations are a separate,
+idempotent data step, `python -m seed.growth_stages`, applied to the main
+database at some point outside any migration. A freshly migrated-only
+database fails
+`tests/test_growth_stages.py::test_no_growth_stage_row_is_unsourced` until
+that script is also run against it (temporarily point `DATABASE_URL` at the
+new database for that one run, same as `ALEMBIC_DATABASE_URL` above — found
+live, setting up `bhoomi_test`, not assumed).
+
 `app/` and `portal/` are scaffolded by their owners with their own tools. See
 `app/README.md` and `portal/README.md`.
 
