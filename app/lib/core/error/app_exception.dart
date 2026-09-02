@@ -114,6 +114,15 @@ class CameraServiceException extends AppException {
   });
 }
 
+/// Device Microphone or Audio recording/playback exception
+class AudioServiceException extends AppException {
+  const AudioServiceException({
+    super.message = 'Unable to record or play audio. Please ensure microphone permissions are enabled.',
+    super.code = 'AUDIO_ERROR',
+    super.details,
+  });
+}
+
 /// Generic API error containing structured error envelope from backend (API_CONTRACT §0)
 class ApiException extends AppException {
   final int? statusCode;

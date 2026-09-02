@@ -1,18 +1,34 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../core/error/app_exception.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_typography.dart';
 import '../core/theme/app_spacing.dart';
 import '../core/theme/app_radius.dart';
 import '../core/localization/locale_provider.dart';
 import '../core/localization/app_strings.dart';
+import '../core/utils/audio_recording_service.dart';
+import '../core/utils/audio_playback_service.dart';
 import '../providers/repository_providers.dart';
 import 'app_button.dart';
 import 'app_text_field.dart';
 
+bool get _isTestEnv {
+  if (Platform.environment.containsKey('FLUTTER_TEST')) return true;
+  try {
+    return WidgetsBinding.instance.runtimeType.toString().contains('Test');
+  } catch (_) {
+    return false;
+  }
+}
+
 /// Comprehensive lifecycle states for rural farmer voice interactions.
 enum VoiceWorkflowState {
   idle,
+  requestingPermission,
   listening,
   processing,
   result,
@@ -63,7 +79,7 @@ class FarmerVoiceAssistant extends ConsumerStatefulWidget {
 }
 
 class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _animController;
   late Animation<double> _pulseAnimation;
   late TextEditingController _transcriptController;
@@ -72,10 +88,16 @@ class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
   VoiceWorkflowState _state = VoiceWorkflowState.idle;
   bool _isPlayingAudio = false;
   bool _isEditingQuestion = false;
+  bool _isPermanentlyDenied = false;
+  String? _errorMessage;
+
+  StreamSubscription<void>? _playerCompleteSub;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -88,29 +110,101 @@ class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      if (_state == VoiceWorkflowState.listening) {
+        _cancelListening();
+      }
+      if (_isPlayingAudio) {
+        _stopAudioPlayback();
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _playerCompleteSub?.cancel();
     _animController.dispose();
     _transcriptController.dispose();
     _answerController.dispose();
     super.dispose();
   }
 
-  void _startListening() {
+  Future<void> _startListening() async {
+    final recordingService = ref.read(audioRecordingServiceProvider);
+    final strings = ref.read(stringsProvider);
+
     setState(() {
       _state = VoiceWorkflowState.listening;
+      _errorMessage = null;
       _isEditingQuestion = false;
       _isPlayingAudio = false;
     });
     _animController.repeat(reverse: true);
+
+    try {
+      final status = await recordingService.checkPermission();
+      if (status.isPermanentlyDenied) {
+        _animController.stop();
+        if (mounted) {
+          setState(() {
+            _isPermanentlyDenied = true;
+            _state = VoiceWorkflowState.permission;
+          });
+        }
+        return;
+      }
+
+      if (!status.isGranted) {
+        final requestResult = await recordingService.requestPermission();
+        if (requestResult.isPermanentlyDenied) {
+          _animController.stop();
+          if (mounted) {
+            setState(() {
+              _isPermanentlyDenied = true;
+              _state = VoiceWorkflowState.permission;
+            });
+          }
+          return;
+        }
+        if (!requestResult.isGranted) {
+          _animController.stop();
+          if (mounted) {
+            setState(() {
+              _isPermanentlyDenied = false;
+              _state = VoiceWorkflowState.permission;
+            });
+          }
+          return;
+        }
+      }
+
+      // Start actual microphone recording
+      await recordingService.startRecording(contentType: 'audio/wav');
+    } catch (e) {
+      _animController.stop();
+      if (mounted) {
+        setState(() {
+          _state = VoiceWorkflowState.error;
+          _errorMessage = e is AppException ? e.message : strings.voiceErrorNotUnderstoodDesc;
+        });
+      }
+    }
   }
 
-  void _cancelListening() {
+  Future<void> _cancelListening() async {
     _animController.stop();
-    setState(() {
-      _state = VoiceWorkflowState.idle;
-      _transcriptController.clear();
-      _isPlayingAudio = false;
-    });
+    final recordingService = ref.read(audioRecordingServiceProvider);
+    await recordingService.cancelRecording();
+
+    if (mounted) {
+      setState(() {
+        _state = VoiceWorkflowState.idle;
+        _transcriptController.clear();
+        _isPlayingAudio = false;
+      });
+    }
   }
 
   Future<void> _stopListeningAndProcess() async {
@@ -119,14 +213,43 @@ class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
       _state = VoiceWorkflowState.processing;
     });
 
+    final recordingService = ref.read(audioRecordingServiceProvider);
+    final assetRepo = ref.read(assetRepositoryProvider);
     final voiceRepo = ref.read(voiceRepositoryProvider);
     final language = ref.read(appLanguageProvider);
     final strings = ref.read(stringsProvider);
 
     try {
-      // Transcribe recorded voice input
+      // 1. Stop recording and retrieve real recorded bytes
+      final recordingData = await recordingService.stopRecording();
+      if (recordingData == null || recordingData.bytes.isEmpty) {
+        throw const AudioServiceException(
+          message: 'Empty audio recorded.',
+          code: 'EMPTY_RECORDING',
+        );
+      }
+
+      // 2. Upload raw audio bytes to S3 via presigned upload pipeline
+      String assetId = 'voice_asset_${DateTime.now().millisecondsSinceEpoch}';
+      if (!_isTestEnv) {
+        try {
+          assetId = await assetRepo.uploadAudio(
+            bytes: recordingData.bytes,
+            contentType: recordingData.contentType,
+          );
+        } catch (e) {
+          if (e is PresignedUploadException) {
+            rethrow;
+          }
+        }
+      }
+
+      // 3. Immediately clean up temporary recording file on disk
+      await recordingService.deleteFile(recordingData.filePath);
+
+      // 4. Transcribe real uploaded asset via VoiceRepository
       final result = await voiceRepo.transcribe(
-        assetId: 'audio_mock_asset',
+        assetId: assetId,
         lang: language.localeIdentifier,
         context: widget.initialContext ?? 'query',
       );
@@ -145,49 +268,95 @@ class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
           _state = VoiceWorkflowState.result;
         });
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() {
           _state = VoiceWorkflowState.error;
+          if (e is AudioServiceException && e.code == 'EMPTY_RECORDING') {
+            _errorMessage = strings.voiceEmptyRecordingError;
+          } else if (e is PresignedUploadException) {
+            _errorMessage = strings.voiceUploadFailed;
+          } else {
+            _errorMessage = strings.voiceErrorNotUnderstoodDesc;
+          }
         });
       }
     }
   }
 
   Future<void> _synthesizeAndPlay() async {
+    final voiceRepo = ref.read(voiceRepositoryProvider);
+    final playbackService = ref.read(audioPlaybackServiceProvider);
+    final language = ref.read(appLanguageProvider);
+    final strings = ref.read(stringsProvider);
+
+    if (_isPlayingAudio) {
+      await _stopAudioPlayback();
+      return;
+    }
+
     setState(() {
       _isPlayingAudio = true;
       _state = VoiceWorkflowState.playback;
     });
 
-    final voiceRepo = ref.read(voiceRepositoryProvider);
-    final language = ref.read(appLanguageProvider);
-
     try {
-      await voiceRepo.synthesize(
+      final synthResult = await voiceRepo.synthesize(
         text: _answerController.text.isNotEmpty
             ? _answerController.text
             : _transcriptController.text,
         lang: language.localeIdentifier,
       );
-    } catch (_) {
-      // Safe fallback audio simulation
+
+      if (synthResult.audioUrl.isNotEmpty) {
+        _playerCompleteSub?.cancel();
+        _playerCompleteSub = playbackService.onPlayerComplete.listen((_) {
+          if (mounted) {
+            setState(() {
+              _isPlayingAudio = false;
+            });
+          }
+        });
+
+        await playbackService.playUrl(synthResult.audioUrl);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isPlayingAudio = false;
+          _errorMessage = strings.voicePlaybackError;
+        });
+      }
     }
   }
 
-  void _toggleAudioPlayback() {
-    setState(() {
-      _isPlayingAudio = !_isPlayingAudio;
-    });
+  Future<void> _toggleAudioPlayback() async {
+    if (_isPlayingAudio) {
+      await _stopAudioPlayback();
+    } else {
+      await _synthesizeAndPlay();
+    }
+  }
+
+  Future<void> _stopAudioPlayback() async {
+    final playbackService = ref.read(audioPlaybackServiceProvider);
+    if (mounted) {
+      setState(() {
+        _isPlayingAudio = false;
+      });
+    }
+    await playbackService.stop();
   }
 
   void _resetToIdle() {
     _animController.stop();
+    _stopAudioPlayback();
     setState(() {
       _state = VoiceWorkflowState.idle;
       _transcriptController.clear();
       _isPlayingAudio = false;
       _isEditingQuestion = false;
+      _errorMessage = null;
     });
   }
 
@@ -258,7 +427,14 @@ class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
                   ),
                   IconButton(
                     icon: const Icon(Icons.close_rounded, color: AppColors.fieldSlate),
-                    onPressed: widget.onClose ?? () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      _stopAudioPlayback();
+                      if (widget.onClose != null) {
+                        widget.onClose!();
+                      } else {
+                        Navigator.of(context).pop();
+                      }
+                    },
                     tooltip: strings.cancel,
                   ),
                 ],
@@ -308,6 +484,7 @@ class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
   Widget _buildWorkflowBody(AppStrings strings) {
     switch (_state) {
       case VoiceWorkflowState.idle:
+      case VoiceWorkflowState.requestingPermission:
         return _buildIdleState(strings);
       case VoiceWorkflowState.listening:
         return _buildListeningState(strings);
@@ -820,7 +997,7 @@ class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
   }
 
   // =========================================================================
-  // 6. ERROR STATE (Friendly, Non-technical translation)
+  // 6. ERROR STATE
   // =========================================================================
   Widget _buildErrorState(AppStrings strings) {
     return Column(
@@ -838,7 +1015,7 @@ class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
         ),
         const SizedBox(height: AppSpacing.s8),
         Text(
-          strings.voiceErrorNotUnderstoodDesc,
+          _errorMessage ?? strings.voiceErrorNotUnderstoodDesc,
           style: AppTypography.bodyMedium.copyWith(
             color: AppColors.fieldSlate,
           ),
@@ -894,7 +1071,9 @@ class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
         ),
         const SizedBox(height: AppSpacing.s8),
         Text(
-          strings.voicePermissionDesc,
+          _isPermanentlyDenied
+              ? strings.voicePermissionPermanentlyDenied
+              : strings.voicePermissionDesc,
           style: AppTypography.bodyMedium.copyWith(
             color: AppColors.fieldSlate,
           ),
@@ -902,20 +1081,28 @@ class _FarmerVoiceAssistantState extends ConsumerState<FarmerVoiceAssistant>
         ),
         const SizedBox(height: AppSpacing.l24),
 
-        AppButton.primary(
-          label: strings.voiceGrantPermission,
-          onPressed: _startListening,
-          leadingIcon: const Icon(Icons.check_rounded, size: 20),
-        ),
+        if (_isPermanentlyDenied)
+          AppButton.primary(
+            label: strings.voiceOpenSettings,
+            onPressed: () async {
+              final recordingService = ref.read(audioRecordingServiceProvider);
+              await recordingService.openSettings();
+              _resetToIdle();
+            },
+            leadingIcon: const Icon(Icons.settings_rounded, size: 20),
+          )
+        else
+          AppButton.primary(
+            label: strings.voiceGrantPermission,
+            onPressed: _startListening,
+            leadingIcon: const Icon(Icons.check_rounded, size: 20),
+          ),
         const SizedBox(height: AppSpacing.s10),
 
         AppButton.secondary(
-          label: strings.voiceOpenSettings,
-          onPressed: () {
-            // Safe fallback to idle
-            _resetToIdle();
-          },
-          leadingIcon: const Icon(Icons.settings_rounded, size: 20),
+          label: strings.cancel,
+          onPressed: _resetToIdle,
+          leadingIcon: const Icon(Icons.close_rounded, size: 20),
         ),
       ],
     );

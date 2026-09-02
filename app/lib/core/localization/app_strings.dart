@@ -1067,6 +1067,48 @@ class AppStrings {
       ? 'सेटिंग्ज उघडा'
       : (language == AppLanguage.hindi ? 'सेटिंग्स खोलें' : 'Open Settings');
 
+  String get voicePermissionPermanentlyDenied => language == AppLanguage.marathi
+      ? 'मायक्रोफोनची परवानगी बंद आहे. बोलण्यासाठी कृपया सेटिंग्जमध्ये जाऊन परवानगी चालू करा.'
+      : (language == AppLanguage.hindi
+          ? 'माइक्रोफ़ोन की अनुमति बंद है। बोलने के लिए कृपया सेटिंग्स में जाकर अनुमति दें।'
+          : 'Microphone permission is disabled. Please enable it in Settings to speak.');
+
+  String get voiceRecordingReady => language == AppLanguage.marathi
+      ? 'बोलण्यासाठी तयार'
+      : (language == AppLanguage.hindi ? 'बोलने के लिए तैयार' : 'Ready to Speak');
+
+  String get voiceRecordingInProgress => language == AppLanguage.marathi
+      ? 'आवाज नोंदवत आहे... (Recording)'
+      : (language == AppLanguage.hindi ? 'आवाज़ रिकॉर्ड हो रही है...' : 'Recording voice note...');
+
+  String get voiceStoppingRecording => language == AppLanguage.marathi
+      ? 'नोंदणी पूर्ण करत आहे...'
+      : (language == AppLanguage.hindi ? 'रिकॉर्डिंग पूरी हो रही है...' : 'Finalizing recording...');
+
+  String get voiceEmptyRecordingError => language == AppLanguage.marathi
+      ? 'आवाज ऐकू आला नाही. कृपया फोनच्या मायक्रोफोनजवळ स्पष्ट बोला.'
+      : (language == AppLanguage.hindi
+          ? 'आवाज़ सुनाई नहीं दी। कृपया फ़ोन के माइक के पास साफ़ बोलें।'
+          : 'No voice was detected. Please speak clearly into the microphone.');
+
+  String get voiceUploadFailed => language == AppLanguage.marathi
+      ? 'आवाज पाठवणे शक्य झाले नाही. कृपया इंटरनेट तपासून पुन्हा प्रयत्न करा.'
+      : (language == AppLanguage.hindi
+          ? 'ऑडियो अपलोड नहीं हो सका। कृपया इंटरनेट जांचकर पुनः प्रयास करें।'
+          : 'Failed to upload voice note. Please check your connection and retry.');
+
+  String get voicePlaybackError => language == AppLanguage.marathi
+      ? 'सल्ला प्ले करताना अडचण आली.'
+      : (language == AppLanguage.hindi ? 'ऑडियो प्ले करने में समस्या आई।' : 'Unable to play audio advisory.');
+
+  String get voiceAudioRecorded => language == AppLanguage.marathi
+      ? 'आवाज नोंदवला गेला'
+      : (language == AppLanguage.hindi ? 'आवाज़ रिकॉर्ड हो गई' : 'Voice note recorded');
+
+  String get voiceUploading => language == AppLanguage.marathi
+      ? 'आवाज पाठवत आहे...'
+      : (language == AppLanguage.hindi ? 'ऑडियो भेजा जा रहा है...' : 'Uploading voice note...');
+
   String get voiceServiceUnavailable => language == AppLanguage.marathi
       ? 'आत्ता आवाजाची सेवा उपलब्ध नाही.'
       : (language == AppLanguage.hindi ? 'अभी आवाज़ सेवा उपलब्ध नहीं है।' : 'Voice service is currently unavailable.');

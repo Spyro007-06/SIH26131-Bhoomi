@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_colors.dart';
@@ -5,12 +7,13 @@ import '../core/theme/app_typography.dart';
 import '../core/theme/app_spacing.dart';
 import '../core/theme/app_radius.dart';
 import '../core/localization/locale_provider.dart';
+import '../core/utils/audio_playback_service.dart';
 import '../providers/repository_providers.dart';
 
 /// SpokenSummaryPlayer: Standardized voice summary playback widget for farmers.
 /// - Requires explicit user tap (no auto-start)
 /// - Provides playing/pause/replay tactile controls
-/// - Displays animated waveform indicators during active playback
+/// - Displays animated waveform indicators driven by real audio playback
 class SpokenSummaryPlayer extends ConsumerStatefulWidget {
   final String text;
   final String? audioUrl;
@@ -30,51 +33,126 @@ class SpokenSummaryPlayer extends ConsumerStatefulWidget {
 }
 
 class _SpokenSummaryPlayerState extends ConsumerState<SpokenSummaryPlayer>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   bool _isPlaying = false;
   bool _hasPlayed = false;
   late AnimationController _waveController;
 
+  StreamSubscription<PlayerState>? _stateSub;
+  StreamSubscription<void>? _completeSub;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _listenToPlayerStreams();
+    });
+  }
+
+  void _listenToPlayerStreams() {
+    final playbackService = ref.read(audioPlaybackServiceProvider);
+
+    _stateSub?.cancel();
+    _stateSub = playbackService.onPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = state == PlayerState.playing;
+          if (_isPlaying) {
+            _hasPlayed = true;
+            if (!_waveController.isAnimating) {
+              _waveController.repeat(reverse: true);
+            }
+          } else {
+            _waveController.stop();
+          }
+        });
+      }
+    });
+
+    _completeSub?.cancel();
+    _completeSub = playbackService.onPlayerComplete.listen((_) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _waveController.stop();
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      if (_isPlaying) {
+        final playbackService = ref.read(audioPlaybackServiceProvider);
+        playbackService.pause();
+      }
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stateSub?.cancel();
+    _completeSub?.cancel();
     _waveController.dispose();
     super.dispose();
   }
 
   Future<void> _handleTogglePlayback() async {
+    final playbackService = ref.read(audioPlaybackServiceProvider);
+
     if (_isPlaying) {
       _waveController.stop();
-      setState(() {
-        _isPlaying = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+        });
+      }
+      await playbackService.pause();
     } else {
-      _waveController.repeat(reverse: true);
-      setState(() {
-        _isPlaying = true;
-        _hasPlayed = true;
-      });
-
       widget.onPlayAudio?.call();
 
-      // Synthesize via voice repository if needed
+      if (mounted) {
+        setState(() {
+          _isPlaying = true;
+          _hasPlayed = true;
+          _waveController.repeat(reverse: true);
+        });
+      }
+
       try {
+        // If audioUrl is provided, play directly
+        if (widget.audioUrl != null && widget.audioUrl!.isNotEmpty) {
+          await playbackService.playUrl(widget.audioUrl!);
+          return;
+        }
+
+        // Synthesize via voice repository
         final voiceRepo = ref.read(voiceRepositoryProvider);
         final lang = ref.read(appLanguageProvider);
-        await voiceRepo.synthesize(
+        final synthResult = await voiceRepo.synthesize(
           text: widget.text,
           lang: lang.localeIdentifier,
         );
+
+        if (synthResult.audioUrl.isNotEmpty) {
+          await playbackService.playUrl(synthResult.audioUrl);
+        }
       } catch (_) {
-        // Safe fallback
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            _waveController.stop();
+          });
+        }
       }
     }
   }
