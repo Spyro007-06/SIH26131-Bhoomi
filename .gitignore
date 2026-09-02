@@ -18,6 +18,9 @@ htmlcov/
 minio-data/
 pgdata/
 
+# Test run logs (see CLAUDE.md "Running it" -- full-suite output redirected to a file)
+*.log
+
 # Editors / OS
 .vscode/
 .idea/

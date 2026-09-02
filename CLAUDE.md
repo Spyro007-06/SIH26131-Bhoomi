@@ -239,6 +239,15 @@ python -m scripts.export_openapi   # regenerate docs/openapi.json after any rout
 `docker compose up -d` leaves `bhoomi-minio-bucket` in state `exited (0)`. That
 is the bucket sidecar finishing successfully, not a crash.
 
+A full-suite run against the Supabase pooler takes 15-20 minutes, and a
+background-captured log keeps only its tail — long enough to lose the
+traceback of any failure that isn't among the last few. Redirect a full run to
+a file instead of relying on captured stdout: `pytest --tb=long -rA >
+pytest_full.log 2>&1` (PowerShell: add `-Encoding utf8` if using `Out-File`
+instead of `>`). This is what makes a `docs/POOLER_LATENCY.md`-shaped failure
+(ERROR, not FAILED, on a DB-backed fixture) verifiable after the fact instead
+of merely inferred from the fixture it used.
+
 ### Machine note — techpark-9 has no Docker
 
 **The compose stack above is the canonical setup and stays that way.** If you
