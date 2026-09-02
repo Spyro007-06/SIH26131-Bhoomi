@@ -50,6 +50,7 @@ from app.errors import (
     Forbidden,
     NotFound,
     ValidationFailed,
+    error_response,
 )
 from app.intelligence.gate import decide
 
@@ -263,7 +264,45 @@ async def _escalation_out(session: AsyncSession, case: Case) -> EscalationOut:
 
 
 @router.post(
-    "/farms/{farm_id}/diagnose", response_model=DiagnoseOut, response_model_exclude_none=True
+    "/farms/{farm_id}/diagnose",
+    response_model=DiagnoseOut,
+    response_model_exclude_none=True,
+    responses={
+        **error_response(401, "No, or an invalid, bearer token."),
+        **error_response(404, "That farm does not exist."),
+        **error_response(
+            403, "The caller is a farmer and that farm belongs to a different account."
+        ),
+        **error_response(
+            409,
+            "An X-Vision-Fixture header was sent while VISION_MODEL=real -- "
+            "fixtures are not served against the real classifier.",
+        ),
+        **error_response(
+            422,
+            "The request body did not parse, or X-Vision-Fixture named an "
+            "unrecognised fixture.",
+        ),
+        # THE important one. Both are real, reachable gate outcomes today,
+        # not hypothetical future states: `advise` is reached by every
+        # confident, in-scope, unambiguous prediction (gate.decide() is
+        # still the Phase 2 implementation and does not consult
+        # retrieval_score, so a corpus existing would not currently change
+        # this); `clarify` reaches it the moment DistinguishingCue holds a
+        # cue for the predicted pair. Composing the advisory (F7) and
+        # rendering the Doubt Doctor question (F4) are Thaariha's and are
+        # not built in this orchestration.
+        **error_response(
+            501,
+            "The gate reached an outcome this orchestration does not compose "
+            "a response for: 'advise' (F7's advisory composer is not built -- "
+            "details.reason_code names the gate reason, e.g. ABOVE_GATE), or "
+            "'clarify' with a matching DistinguishingCue found (F4's Doubt "
+            "Doctor question rendering is not built -- details.cue_id names "
+            "the matched cue). The two are distinguishable by which details "
+            "key is present.",
+        ),
+    },
 )
 async def diagnose_farm(
     farm_id: uuid.UUID,
