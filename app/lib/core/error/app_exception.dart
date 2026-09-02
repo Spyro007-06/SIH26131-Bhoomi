@@ -96,6 +96,24 @@ class PresignedUploadException extends AppException {
   });
 }
 
+/// Device GPS or Location service exception
+class LocationException extends AppException {
+  const LocationException({
+    super.message = 'Unable to acquire GPS location. Please ensure location services and permissions are enabled.',
+    super.code = 'LOCATION_ERROR',
+    super.details,
+  });
+}
+
+/// Device Camera or Image capture exception
+class CameraServiceException extends AppException {
+  const CameraServiceException({
+    super.message = 'Unable to capture photograph. Please ensure camera permissions are enabled.',
+    super.code = 'CAMERA_ERROR',
+    super.details,
+  });
+}
+
 /// Generic API error containing structured error envelope from backend (API_CONTRACT §0)
 class ApiException extends AppException {
   final int? statusCode;

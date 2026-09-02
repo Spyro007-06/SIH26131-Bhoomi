@@ -10,6 +10,18 @@ import 'package:bhoomi/repositories/farm_repository.dart';
 import 'package:bhoomi/providers/repository_providers.dart';
 import 'package:bhoomi/providers/storage_providers.dart';
 import 'package:bhoomi/features/onboarding/presentation/farm_setup_screen.dart';
+import 'package:bhoomi/core/utils/location_service.dart';
+import 'package:bhoomi/models/farm_models.dart';
+
+class FakeLocationService extends LocationService {
+  @override
+  Future<LocationResult> getCurrentLocation({Duration timeout = const Duration(seconds: 10)}) async {
+    return const LocationResult(
+      location: GeoPoint(lat: 19.8765, lng: 73.1234),
+      status: LocationServiceStatus.acquired,
+    );
+  }
+}
 
 class MockInMemoryStorage extends SecureStorage {
   final Map<String, String> _map = {};
@@ -67,7 +79,11 @@ void main() {
             farmRepositoryProvider.overrideWithValue(farmRepository),
             tokenStorageProvider.overrideWithValue(tokenStorage),
           ],
-          child: const BhoomiApp(homeOverride: FarmSetupScreen()),
+          child: BhoomiApp(
+            homeOverride: FarmSetupScreen(
+              locationService: FakeLocationService(),
+            ),
+          ),
         ),
       );
       await tester.pumpAndSettle();

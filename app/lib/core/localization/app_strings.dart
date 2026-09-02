@@ -533,6 +533,40 @@ class AppStrings {
           ? 'क्या रोग या कीट साफ दिख रहा है? नहीं तो दोबारा फोटो लें।'
           : 'Is the affected area clearly visible? If not, retake.');
 
+  String get cameraInitializing => language == AppLanguage.marathi
+      ? 'कॅमेरा सुरू होत आहे...'
+      : (language == AppLanguage.hindi ? 'कैमरा शुरू हो रहा है...' : 'Starting camera...');
+
+  String get cameraPermissionRequired => language == AppLanguage.marathi
+      ? 'पिकाचा फोटो घेण्यासाठी कॅमेरा परवानगी आवश्यक आहे.'
+      : (language == AppLanguage.hindi
+          ? 'फसल की तस्वीर लेने के लिए कैमरा की अनुमति आवश्यक है।'
+          : 'Camera permission is required to capture crop photographs.');
+
+  String get cameraPermissionDeniedForever => language == AppLanguage.marathi
+      ? 'कॅमेरा परवानगी कायमची नाकारली आहे. कृपया ॲप सेटिंग्जमधून परवानगी द्या.'
+      : (language == AppLanguage.hindi
+          ? 'कैमरा अनुमति स्थायी रूप से अस्वीकृत है। कृपया ऐप सेटिंग से अनुमति दें।'
+          : 'Camera permission is permanently denied. Please enable in App Settings.');
+
+  String get cameraUnavailable => language == AppLanguage.marathi
+      ? 'डिव्हाइसवर कॅमेरा उपलब्ध नाही.'
+      : (language == AppLanguage.hindi ? 'डिवाइस पर कैमरा उपलब्ध नहीं है।' : 'No camera found on this device.');
+
+  String get cameraError => language == AppLanguage.marathi
+      ? 'कॅमेरा सुरू करताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा.'
+      : (language == AppLanguage.hindi
+          ? 'कैमरा शुरू करने में त्रुटि आई। कृपया पुनः प्रयास करें।'
+          : 'Failed to initialize camera. Please try again.');
+
+  String get grantPermissionButton => language == AppLanguage.marathi
+      ? 'परवानगी द्या'
+      : (language == AppLanguage.hindi ? 'अनुमति दें' : 'Grant Permission');
+
+  String get capturingPhoto => language == AppLanguage.marathi
+      ? 'फोटो काढत आहे...'
+      : (language == AppLanguage.hindi ? 'फोटो लिया जा रहा है...' : 'Capturing photo...');
+
   // Diagnosis Loading (Step 4)
   String get checkingPhotoTitle => language == AppLanguage.marathi
       ? 'फोटो तपासत आहोत...'
@@ -678,9 +712,31 @@ class AppStrings {
           ? 'स्थान की अनुमति अस्वीकृत। कृपया सेटिंग से लोकेशन चालू करें।'
           : 'Location permission denied. Please enable location services.');
 
+  String get locationServicesDisabled => language == AppLanguage.marathi
+      ? 'फोनचे GPS / स्थान बंद आहे. कृपया डिव्हाइस सेटिंग्जमधून लोकेशन चालू करा.'
+      : (language == AppLanguage.hindi
+          ? 'फ़ोन की GPS / लोकेशन सेवा बंद है। कृपया डिवाइस सेटिंग से चालू करें।'
+          : 'Location services are disabled. Please enable GPS on your device.');
+
+  String get locationDeniedForever => language == AppLanguage.marathi
+      ? 'स्थान परवानगी कायमची नाकारली आहे. कृपया ॲप सेटिंग्जमधून परवानगी द्या.'
+      : (language == AppLanguage.hindi
+          ? 'स्थान की अनुमति स्थायी रूप से अस्वीकृत है। कृपया ऐप सेटिंग से अनुमति दें।'
+          : 'Location permission permanently denied. Please enable in App Settings.');
+
+  String get locationTimeoutError => language == AppLanguage.marathi
+      ? 'GPS स्थान शोधण्यात वेळ संपला. कृपया पुन्हा प्रयत्न करा.'
+      : (language == AppLanguage.hindi
+          ? 'GPS स्थान खोजने का समय समाप्त हो गया। कृपया पुनः प्रयास करें।'
+          : 'GPS location request timed out. Please try again.');
+
   String get retryLocation => language == AppLanguage.marathi
       ? 'स्थान पुन्हा शोधा'
       : (language == AppLanguage.hindi ? 'स्थान पुनः खोजें' : 'Retry Location');
+
+  String get openSettingsButton => language == AppLanguage.marathi
+      ? 'सेटिंग्ज उघडा'
+      : (language == AppLanguage.hindi ? 'सेटिंग्स खोलें' : 'Open Settings');
 
   // Step 5: Alerts
   String get alertsTitle => language == AppLanguage.marathi

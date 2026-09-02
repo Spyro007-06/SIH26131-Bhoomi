@@ -355,12 +355,19 @@ class _FarmSetupScreenState extends ConsumerState<FarmSetupScreen> {
                       )
                     else ...[
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(Icons.warning_amber_rounded, color: AppColors.turmeric, size: 20),
                           const SizedBox(width: AppSpacing.s8),
                           Expanded(
                             child: Text(
-                              strings.locationPermissionRequired,
+                              _locationResult?.isDeniedForever == true
+                                  ? strings.locationDeniedForever
+                                  : (_locationResult?.isDisabled == true
+                                      ? strings.locationServicesDisabled
+                                      : (_locationResult?.isTimeout == true
+                                          ? strings.locationTimeoutError
+                                          : strings.locationPermissionRequired)),
                               style: AppTypography.bodySmall.copyWith(
                                 color: AppColors.soilCharcoal,
                               ),
@@ -369,16 +376,46 @@ class _FarmSetupScreenState extends ConsumerState<FarmSetupScreen> {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.s10),
-                      TextButton.icon(
-                        onPressed: _detectLocation,
-                        icon: const Icon(Icons.refresh_rounded, size: 18, color: AppColors.forest),
-                        label: Text(
-                          strings.retryLocation,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.forest,
-                            fontWeight: FontWeight.w700,
+                      Wrap(
+                        spacing: AppSpacing.s8,
+                        runSpacing: AppSpacing.s6,
+                        children: [
+                          TextButton.icon(
+                            onPressed: _detectLocation,
+                            icon: const Icon(Icons.refresh_rounded, size: 18, color: AppColors.forest),
+                            label: Text(
+                              strings.retryLocation,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.forest,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
-                        ),
+                          if (_locationResult?.isDeniedForever == true)
+                            TextButton.icon(
+                              onPressed: () => _locationService.openAppSettings(),
+                              icon: const Icon(Icons.settings_outlined, size: 18, color: AppColors.forest),
+                              label: Text(
+                                strings.openSettingsButton,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.forest,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            )
+                          else if (_locationResult?.isDisabled == true)
+                            TextButton.icon(
+                              onPressed: () => _locationService.openLocationSettings(),
+                              icon: const Icon(Icons.settings_outlined, size: 18, color: AppColors.forest),
+                              label: Text(
+                                strings.openSettingsButton,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.forest,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ],
