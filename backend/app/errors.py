@@ -23,6 +23,7 @@ from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.contracts.enums import StrEnum
@@ -120,6 +121,50 @@ def envelope(
     if details is not None:
         body["details"] = details
     return {"error": body}
+
+
+# ---------------------------------------------------------------------------
+# The envelope as an OpenAPI schema component.
+#
+# envelope()/register_exception_handlers() below build and render this shape
+# by hand, from an exception handler — a real, live wire shape (verified
+# against a running server, not assumed from reading the handler: see the
+# task's pasted 404/422/501 responses) that FastAPI's automatic schema
+# generation has no way to see, because no route declares it. A client
+# generated from docs/openapi.json before this model existed believed every
+# route returned either its 2xx model or FastAPI's default 422 — every other
+# error this API actually sends was invisible to it.
+#
+# ErrorDetail.code is typed ErrorCode, not str, specifically so the OpenAPI
+# schema carries the full enum: a generated client can switch on `code`
+# rather than string-match it.
+# ---------------------------------------------------------------------------
+
+
+class ErrorDetail(BaseModel):
+    code: ErrorCode
+    message: str
+    details: dict[str, Any] | None = None
+
+
+class ErrorEnvelope(BaseModel):
+    """docs/API_CONTRACT.md §0. The body of every error response, no
+    exceptions — including FastAPI's own framework-generated ones (404 on an
+    unrouted path, 422 on a request body pydantic cannot parse), which the
+    handlers below also render into this same shape rather than letting
+    Starlette's default plain-text/JSON-detail bodies escape."""
+
+    error: ErrorDetail
+
+
+def error_response(status_code: int, description: str) -> dict[int, dict[str, Any]]:
+    """One `responses=` entry for a route: ErrorEnvelope at `status_code`,
+    with a description of the specific, route-true reason that route can
+    return it — not a generic restatement of what the status code means.
+
+    Usage: `responses={**error_response(401, "..."), **error_response(404, "...")}`.
+    """
+    return {status_code: {"model": ErrorEnvelope, "description": description}}
 
 
 class Unauthenticated(BhoomiError):
