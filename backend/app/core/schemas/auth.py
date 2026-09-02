@@ -31,10 +31,6 @@ class LoginIn(BaseModel):
     password: str = Field(min_length=1, max_length=256)
 
 
-class DemoLoginIn(BaseModel):
-    demo_code: str = Field(default="SIH2026", description="Demo authentication code")
-
-
 class UserOut(BaseModel):
     id: uuid.UUID
     role: Role

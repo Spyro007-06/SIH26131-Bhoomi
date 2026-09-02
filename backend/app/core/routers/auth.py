@@ -19,11 +19,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import OTP_MAX_ATTEMPTS, settings
-from app.contracts.enums import Crop, Role
+from app.contracts.enums import Role
 from app.core import security
-from app.core.models import Farm, OtpRequest, User
+from app.core.models import OtpRequest, User
 from app.core.schemas.auth import (
-    DemoLoginIn,
     LoginIn,
     OtpRequestIn,
     OtpRequestOut,
@@ -32,9 +31,14 @@ from app.core.schemas.auth import (
     UserOut,
 )
 from app.db import get_session
-from app.errors import BhoomiError, ErrorCode, Unauthenticated, error_response
+from app.errors import BhoomiError, ErrorCode, NotFound, Unauthenticated, error_response
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# Separate from `router` so app/main.py can choose not to mount it at all when
+# settings.demo_mode is false -- see demo_login's docstring below for why a
+# disabled route should not exist rather than exist and refuse.
+demo_router = APIRouter(prefix="/auth", tags=["auth"])
 
 # None of these three routes carry auth (they are how a caller GETS a
 # token), so 401/403 below mean "your code/credentials were wrong", never
@@ -178,51 +182,52 @@ async def login(payload: LoginIn, session: AsyncSession = Depends(get_session)) 
     return _tokens_for(user)
 
 
-@router.post("/demo", response_model=TokenOut)
-async def demo_login(
-    payload: DemoLoginIn | None = None,
-    session: AsyncSession = Depends(get_session),
-) -> TokenOut:
-    """Dedicated demo authentication endpoint for SIH demonstrations.
+DEMO_FARMER_PHONE = "+919999999999"
 
-    Gated by `settings.demo_mode` (or app_env == 'local').
-    Mints valid tokens for the pre-seeded demo farmer (Ramesh Patil / +919999999999).
+
+@demo_router.post(
+    "/demo",
+    response_model=TokenOut,
+    responses={
+        **error_response(
+            403,
+            "Demo mode is disabled in this environment: DEMO_MODE is not set, "
+            "or app_env is production.",
+        ),
+        **error_response(
+            404,
+            "The demo farmer has not been seeded in this environment. Run "
+            "`python -m seed.farms`.",
+        ),
+    },
+)
+async def demo_login(session: AsyncSession = Depends(get_session)) -> TokenOut:
+    """Mint tokens for the fixed, pre-seeded demo farmer. SIH judging only.
+
+    No request body: there used to be a `demo_code` field defaulting to the
+    same literal the handler fell back to when the body was absent, which is
+    not a credential -- removed rather than tightened, since a hardcoded
+    string in a public repo cannot be one. The only gate left is
+    settings.demo_mode (whether this route is mounted at all -- see
+    app/main.py) and settings.app_env, checked again here even though
+    mounting already implies demo_mode is true, so this function's own
+    invariant does not depend on how it was reached.
+
+    Does not create the demo farmer or farm -- an unauthenticated write path
+    was the least defensible part of the original endpoint. Both are seed
+    data (seed/farms.py); absence here is a clear, unauthenticated-safe
+    error telling the caller to run the seed, not a silent row creation.
     """
-    if not settings.demo_mode and settings.app_env != "local":
+    if not (settings.demo_mode and settings.app_env != "production"):
         raise BhoomiError(ErrorCode.FORBIDDEN, "Demo mode is disabled in this environment.")
 
-    demo_code = payload.demo_code if payload else "SIH2026"
-    if demo_code != "SIH2026":
-        raise Unauthenticated("Invalid demo authorization code.")
-
-    demo_phone = "+919999999999"
     user = (
-        await session.execute(select(User).where(User.phone == demo_phone))
+        await session.execute(select(User).where(User.phone == DEMO_FARMER_PHONE))
     ).scalar_one_or_none()
-
     if user is None:
-        # Create standard demo farmer
-        user = User(
-            role=Role.FARMER,
-            phone=demo_phone,
-            name="Ramesh Patil",
+        raise NotFound(
+            "The demo farmer has not been seeded in this environment. "
+            "Run `python -m seed.farms`."
         )
-        session.add(user)
-        await session.flush()
-
-        # Seed pre-populated demo farm
-        wkt = "SRID=4326;POINT(73.74140 19.99730)"
-        farm = Farm(
-            farmer_id=user.id,
-            crop=Crop.PADDY,
-            variety="Indrayani",
-            growth_stage="tillering",
-            region="Nashik",
-            location=wkt,
-            sowing_date=(datetime.now(UTC) - timedelta(days=50)).date(),
-        )
-        session.add(farm)
-        await session.commit()
-        await session.refresh(user)
 
     return _tokens_for(user)

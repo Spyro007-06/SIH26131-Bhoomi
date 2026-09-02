@@ -101,6 +101,13 @@ def create_app() -> FastAPI:
     api = APIRouter(prefix=settings.api_prefix)
     api.include_router(health_router)
     api.include_router(auth.router)
+    if settings.demo_mode:
+        # Not gated inside the handler alone: when demo mode is off, the route
+        # does not exist on this app object at all, so there is nothing to
+        # probe and nothing in the generated client. See auth.demo_login's
+        # docstring for the belt-and-suspenders app_env check that still
+        # applies when this condition is true.
+        api.include_router(auth.demo_router)
     api.include_router(assets.router)
     api.include_router(farms.router)
     api.include_router(problems.router)

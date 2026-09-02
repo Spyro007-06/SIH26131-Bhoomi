@@ -150,6 +150,24 @@ STAFF = [
 
 STAFF_PASSWORD = "bhoomi-dev-password"
 
+# --- Demo account -------------------------------------------------------
+#
+# core/routers/auth.py's POST /auth/demo (off by default; DEMO_MODE=true
+# only) looks this identity up rather than creating it -- an unauthenticated
+# write path was the bug being fixed. Deliberately kept OUT of FARMS/the
+# pairwise distance table above: it sits at the exact point the old handler
+# used to create on the fly, which happens to be farm A's (Gangapur)
+# coordinates. Folding it into the combinatorial spread-radius proof would
+# silently give A a second, zero-distance same-crop neighbour nobody
+# intended, on top of its real B neighbour at ~1_530 m -- breaking the "A-B
+# is the only in-radius same-crop pair" invariant the module docstring
+# documents. A recognisably-fake phone number (repeating 9s) on purpose, so
+# this row is never mistaken for a real farmer's in an export or a demo.
+DEMO_FARMER_PHONE = "+919999999999"
+DEMO_FARMER_NAME = "Ramesh Patil"
+DEMO_FARM = (Crop.PADDY, "Indrayani", "tillering", "Nashik", 19.99730, 73.74140)
+DEMO_SOWING_DAYS = 50
+
 
 async def _upsert_farmer(session, phone: str, name: str) -> User:
     user = (
@@ -182,12 +200,37 @@ async def _upsert_staff(session, role: Role, email: str, name: str) -> User:
     return user
 
 
+async def _seed_demo_account(session) -> None:
+    farmer = await _upsert_farmer(session, DEMO_FARMER_PHONE, DEMO_FARMER_NAME)
+    await session.flush()
+
+    crop, variety, stage, region, lat, lng = DEMO_FARM
+    wkt = f"SRID=4326;POINT({lng} {lat})"
+    sowing_date = (datetime.now(UTC) - timedelta(days=DEMO_SOWING_DAYS)).date()
+
+    farm = (
+        await session.execute(select(Farm).where(Farm.farmer_id == farmer.id))
+    ).scalars().first()
+    if farm is None:
+        farm = Farm(
+            farmer_id=farmer.id, crop=crop, variety=variety, growth_stage=stage,
+            region=region, location=wkt, sowing_date=sowing_date,
+        )
+        session.add(farm)
+    else:
+        farm.crop, farm.variety, farm.growth_stage, farm.region = crop, variety, stage, region
+        farm.location = wkt
+        farm.sowing_date = sowing_date
+    await session.flush()
+
+
 async def seed() -> None:
     async with SessionLocal() as session:
         for phone, name in FARMERS:
             await _upsert_farmer(session, phone, name)
         for role, email, name in STAFF:
             await _upsert_staff(session, role, email, name)
+        await _seed_demo_account(session)
         await session.flush()
 
         created: list[tuple[str, Farm]] = []

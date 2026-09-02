@@ -215,9 +215,15 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 30
     otp_expire_seconds: int = 300
 
-    demo_mode: bool = True
-    """Enable dedicated demo account endpoint for SIH demonstrations.
-    Defaults to True in local/dev; can be set to False via DEMO_MODE=false in production."""
+    demo_mode: bool = False
+    """Fail closed. POST /auth/demo (core/routers/auth.py) mints tokens for a
+    fixed, seeded farmer identity with no credential beyond this flag -- it
+    used to default True with the app_env check dead by construction (an AND
+    inside a negation), so the endpoint was reachable in every deployment,
+    unauthenticated, by default. A demo deployment opts in explicitly with
+    DEMO_MODE=true; nothing is open by not asking. The route is also not
+    mounted at all when this is false (app/main.py) -- there is nothing to
+    probe, not just nothing to pass."""
 
     dev_fixed_otp: str | None = None
     """Local-only escape hatch so the demo does not need an SMS provider.
