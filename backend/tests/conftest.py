@@ -41,10 +41,18 @@ _ACQUISITION_TIMEOUT_SECONDS = 15
 async def db_session():
     """A session whose writes are always rolled back.
 
-    Runs against whatever DATABASE_URL points at — on techpark-9 that is the
-    Supabase instance, per CLAUDE.md. Every test body runs inside an outer
-    transaction rolled back on teardown, and the session joins it as a
-    savepoint, so a test may commit without leaking rows into shared data.
+    Runs against TEST_DATABASE_URL -- a database separate from DATABASE_URL,
+    so a live-verification curl and the pytest suite cannot collide on the
+    same seed rows (LabelPrior, the demo Problem/Diagnosis case,
+    registered_use). Falls back to DATABASE_URL when TEST_DATABASE_URL is
+    unset, so nobody's local setup breaks silently -- see README's "Test
+    database" section. Logged at "bhoomi.tests" level INFO on first use per
+    test (host + database name only, never credentials) so a run's actual
+    target is provable rather than assumed.
+
+    Every test body runs inside an outer transaction rolled back on
+    teardown, and the session joins it as a savepoint, so a test may commit
+    without leaking rows into shared data.
 
     A fresh engine per test, with NullPool. pytest-asyncio gives each test its
     own event loop, and asyncpg connections are bound to the loop that opened
@@ -71,12 +79,24 @@ async def db_session():
     since retrying there would mask a real outage behind added latency
     instead of surfacing the 503 it should.
     """
+    import logging
+
     from asyncpg.exceptions import ConnectionDoesNotExistError
-    from sqlalchemy import NullPool
+    from sqlalchemy import NullPool, make_url
     from sqlalchemy.exc import DBAPIError
     from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
     from app.config import settings
+
+    target_url = settings.test_database_url or settings.database_url
+    _parsed = make_url(target_url)
+    logging.getLogger("bhoomi.tests").info(
+        "db_session -> %s%s/%s (TEST_DATABASE_URL %s)",
+        _parsed.host or "",
+        f":{_parsed.port}" if _parsed.port else "",
+        _parsed.database or "",
+        "set" if settings.test_database_url else "unset, falling back to DATABASE_URL",
+    )
 
     def _is_dropped_connection(exc: BaseException) -> bool:
         if isinstance(exc, TimeoutError):
@@ -102,7 +122,7 @@ async def db_session():
         _progress.append(session)
         return session
 
-    engine = create_async_engine(settings.database_url, poolclass=NullPool)
+    engine = create_async_engine(target_url, poolclass=NullPool)
 
     connection = transaction = session = None
     for attempt in range(1, _ACQUISITION_RETRY_ATTEMPTS + 1):

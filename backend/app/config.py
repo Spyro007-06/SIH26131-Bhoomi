@@ -189,6 +189,14 @@ class Settings(BaseSettings):
     # --- Database ---
     database_url: str = "postgresql+asyncpg://bhoomi:bhoomi@localhost:5432/bhoomi"
     alembic_database_url: str = "postgresql+psycopg://bhoomi:bhoomi@localhost:5432/bhoomi"
+    test_database_url: str | None = None
+    """backend/tests/conftest.py's db_session fixture reads this, not
+    database_url. Unset means the test suite runs against database_url, same
+    as before this setting existed -- nobody's local setup breaks silently.
+    Set it to a genuinely separate database (a second Supabase database, or a
+    local Postgres) so a live-verification curl and the pytest suite cannot
+    collide on the same seed rows. See README's "Test database" section for
+    why a database rather than a schema, and how to point this at one."""
     db_echo: bool = False
 
     # --- Object storage ---

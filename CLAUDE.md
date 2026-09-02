@@ -260,6 +260,32 @@ machine verifies against a **Supabase** Postgres instead, configured entirely in
 - Supabase installs `postgis` and `vector` into `public`, not `extensions`, so
   `alembic/env.py` filters PostGIS's catalog tables out of autogenerate.
 
+### Test database
+
+`backend/tests/conftest.py`'s `db_session` fixture reads `TEST_DATABASE_URL`,
+not `DATABASE_URL` — set it in `backend/.env` (gitignored) to a database
+separate from the one `DATABASE_URL` points at, so a live-verification curl
+and the pytest suite can never collide on the same seed rows (`LabelPrior`,
+the demo `Problem`/`Diagnosis` case, `registered_use`). Unset falls back to
+`DATABASE_URL`, so nobody's local `docker-compose` setup needs to change.
+
+**A second database, not a second schema.** A schema can't be selected from
+a bare connection URL on the asyncpg driver this project pins — SQLAlchemy's
+asyncpg dialect does not forward the `options=-csearch_path=...` query
+parameter psycopg accepts, and `conftest.py`'s engine creation is
+URL-only by design (`docs/POOLER_LATENCY.md`'s stopgap already touches that
+function; this phase deliberately doesn't touch it further). A second
+database needs nothing beyond a different path segment in the URL, works
+with the engine-creation code exactly as it stands, and is genuinely
+isolated at the Postgres level rather than sharing a `search_path`.
+
+On the Supabase Session pooler specifically: `CREATE DATABASE` from the
+project's own `postgres` role works, and the pooler happily routes to the
+new database by name in the connection path — confirmed live, not assumed.
+Docker Compose users: create a second local Postgres database the same way
+(`createdb bhoomi_test`) and run `alembic upgrade head` against it with
+`ALEMBIC_DATABASE_URL` pointed there for that one run.
+
 `app/` and `portal/` are scaffolded by their owners with their own tools. See
 `app/README.md` and `portal/README.md`.
 
