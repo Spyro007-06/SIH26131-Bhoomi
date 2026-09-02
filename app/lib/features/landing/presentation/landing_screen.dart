@@ -7,8 +7,8 @@ import '../../../widgets/language_selector_button.dart';
 import '../../onboarding/presentation/phone_auth_screen.dart';
 
 /// Launch Landing & Welcome Screen for Bhoomi.
-/// Faithfully reproduces the reference design with full-bleed agricultural artwork,
-/// top branding, 3 core pillars (Talk, Show, Listen), and primary Start CTA.
+/// Features a compact floating dark-green action panel over the full-bleed
+/// agricultural hero artwork, giving maximum visibility to the farmer and landscape.
 class LandingScreen extends ConsumerStatefulWidget {
   const LandingScreen({super.key});
 
@@ -27,7 +27,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 450),
     );
     _fadeAnimation = CurvedAnimation(
       parent: _animController,
@@ -66,7 +66,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. FULL-BLEED BACKGROUND ARTWORK
+          // 1. FULL-BLEED BACKGROUND ARTWORK (MAXIMUM VISIBILITY)
           _buildBackgroundArtwork(),
 
           // 2. MAIN RESPONSIVE FOREGROUND CONTENT
@@ -90,11 +90,23 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
                               // TOP BRANDING SECTION (OVER SKY)
                               _buildTopBranding(strings),
 
-                              // SPACER / MIDDLE FARMER VISUAL AREA
-                              const Spacer(flex: 2),
+                              // EXPANSIVE SPACER ALLOWING MAXIMUM FARMER & LANDSCAPE VISIBILITY
+                              const Spacer(flex: 3),
 
-                              // BOTTOM DARK GREEN ACTION CARD
-                              _buildBottomCard(strings),
+                              // COMPACT FLOATING GREEN ACTION PANEL
+                              _buildCompactActionPanel(strings),
+
+                              const SizedBox(height: AppSpacing.m12),
+
+                              // LANGUAGE SELECTOR POSITIONED BELOW THE FLOATING CARD
+                              _buildLanguageSelectorRow(),
+
+                              const SizedBox(height: 4),
+
+                              // DECORATIVE WAVES AT BASE
+                              _buildBottomDecorativeWaves(),
+
+                              const SizedBox(height: 4),
                             ],
                           ),
                         ),
@@ -144,7 +156,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
   Widget _buildTopBranding(AppStrings strings) {
     return Padding(
       padding: const EdgeInsets.only(
-        top: AppSpacing.m16,
+        top: AppSpacing.m12,
         left: AppSpacing.l20,
         right: AppSpacing.l20,
       ),
@@ -154,8 +166,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
         children: [
           // Circular Logo Emblem
           Container(
-            width: 58,
-            height: 58,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
@@ -176,13 +188,13 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
                   child: Icon(
                     Icons.eco_rounded,
                     color: Color(0xFF1B5E20),
-                    size: 34,
+                    size: 30,
                   ),
                 );
               },
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
 
           // "Bhoomi" Wordmark
           Text(
@@ -190,14 +202,14 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFF114216),
-              fontSize: 34,
+              fontSize: 32,
               fontWeight: FontWeight.w900,
               letterSpacing: -0.5,
               height: 1.1,
               fontFamily: 'serif',
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
 
           // Tagline with decorative lines: "— तुमचा शेतकरी साथी —"
           FittedBox(
@@ -207,7 +219,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 24,
+                  width: 22,
                   height: 1.5,
                   color: const Color(0xFF2E7D32),
                 ),
@@ -217,14 +229,14 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Color(0xFF1B5E20),
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),
                 Container(
-                  width: 24,
+                  width: 22,
                   height: 1.5,
                   color: const Color(0xFF2E7D32),
                 ),
@@ -239,7 +251,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFF235528),
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.1,
             ),
@@ -250,25 +262,18 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
   }
 
   // ===========================================================================
-  // 3. BOTTOM DARK GREEN ACTION CARD
+  // 3. COMPACT FLOATING GREEN ACTION PANEL (~220dp Height)
   // ===========================================================================
-  Widget _buildBottomCard(AppStrings strings) {
+  Widget _buildCompactActionPanel(AppStrings strings) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
-      padding: const EdgeInsets.only(
-        top: AppSpacing.l20,
-        left: AppSpacing.m16,
-        right: AppSpacing.m16,
-        bottom: AppSpacing.m16,
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.l20),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.m16,
+        vertical: AppSpacing.m12,
       ),
       decoration: BoxDecoration(
         color: const Color(0xFF0B2E15).withValues(alpha: 0.95),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
-        ),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: const Color(0xFF2E7D32).withValues(alpha: 0.5),
           width: 1.2,
@@ -276,8 +281,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, -6),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -285,50 +290,42 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Value Proposition Heading
+          // 1. Value Proposition Heading (Compact)
           Text(
             strings.landingHeroMessage,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFFF7F4EB),
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: FontWeight.w800,
-              height: 1.3,
+              height: 1.25,
             ),
           ),
-          const SizedBox(height: AppSpacing.l16),
+          const SizedBox(height: AppSpacing.s10),
 
-          // 2. Three Product Pillar Columns (Talk, Show, Listen)
+          // 2. Three Product Pillar Columns (Talk, Show, Listen - Compact)
           _buildPillarColumns(strings),
-          const SizedBox(height: AppSpacing.l20),
-
-          // 3. Primary Start CTA Button
-          _buildStartButton(strings),
           const SizedBox(height: AppSpacing.m12),
 
-          // 4. Centered Language Selector Pill
-          _buildLanguageSelectorRow(),
-          const SizedBox(height: AppSpacing.s6),
-
-          // 5. Decorative Layered Waves at Base
-          _buildBottomDecorativeWaves(),
+          // 3. Primary Start CTA Button (54dp, Full Width)
+          _buildStartButton(strings),
         ],
       ),
     );
   }
 
   // ===========================================================================
-  // THREE PILLAR COLUMNS (TALK, SHOW, LISTEN)
+  // THREE PILLAR COLUMNS (TALK, SHOW, LISTEN - COMPACT)
   // ===========================================================================
   Widget _buildPillarColumns(AppStrings strings) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s6,
-        vertical: AppSpacing.s10,
+        horizontal: AppSpacing.s4,
+        vertical: AppSpacing.s6,
       ),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.08),
         ),
@@ -383,10 +380,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Circular Icon Tile with subtle glow
+        // Circular Icon Tile (Compact 42dp)
         Container(
-          width: 52,
-          height: 52,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
             color: const Color(0xFFF9F6EE),
             shape: BoxShape.circle,
@@ -395,27 +392,27 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
                 color: hasGlow
                     ? const Color(0xFFFFD54F).withValues(alpha: 0.5)
                     : Colors.black.withValues(alpha: 0.15),
-                blurRadius: hasGlow ? 12 : 6,
-                spreadRadius: hasGlow ? 2 : 0,
-                offset: const Offset(0, 2),
+                blurRadius: hasGlow ? 10 : 4,
+                spreadRadius: hasGlow ? 1.5 : 0,
+                offset: const Offset(0, 1.5),
               ),
             ],
             border: Border.all(
               color: hasGlow
                   ? const Color(0xFFFFC107)
                   : const Color(0xFFC8E6C9),
-              width: hasGlow ? 2 : 1,
+              width: hasGlow ? 1.8 : 1,
             ),
           ),
           child: Center(
             child: Icon(
               icon,
               color: const Color(0xFF1B5E20),
-              size: 26,
+              size: 22,
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.s8),
+        const SizedBox(height: 4),
 
         // Pillar Title (बोला / दाखवा / ऐका)
         Text(
@@ -423,12 +420,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Color(0xFFFFFFFF),
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: FontWeight.w800,
             height: 1.1,
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 2),
 
         // Pillar Subtitle (शंका विचारा / पिकाचा फोटो घ्या / योग्य सल्ला ऐका)
         Text(
@@ -438,7 +435,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: Color(0xFFA5D6A7),
-            fontSize: 11,
+            fontSize: 10.5,
             fontWeight: FontWeight.w500,
             height: 1.15,
           ),
@@ -450,14 +447,14 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
   Widget _buildVerticalDivider() {
     return Container(
       width: 1,
-      height: 80,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
+      height: 62,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
       color: Colors.white.withValues(alpha: 0.12),
     );
   }
 
   // ===========================================================================
-  // PRIMARY START CTA BUTTON
+  // PRIMARY START CTA BUTTON (54dp COMPACT HEIGHT)
   // ===========================================================================
   Widget _buildStartButton(AppStrings strings) {
     return Semantics(
@@ -466,10 +463,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(28),
           onTap: _onStartPressed,
           child: Ink(
-            height: 60,
+            height: 54,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topCenter,
@@ -480,7 +477,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
                   Color(0xFF2E7D32),
                 ],
               ),
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(28),
               border: Border.all(
                 color: const Color(0xFFA5D6A7).withValues(alpha: 0.6),
                 width: 1.5,
@@ -488,13 +485,13 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF43A047).withValues(alpha: 0.45),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l20),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l16),
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Row(
@@ -502,23 +499,23 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
                   children: [
                     const Text(
                       '🌱',
-                      style: TextStyle(fontSize: 22),
+                      style: TextStyle(fontSize: 20),
                     ),
-                    const SizedBox(width: AppSpacing.s10),
+                    const SizedBox(width: AppSpacing.s8),
                     Text(
                       strings.landingStartButton,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.4,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.s10),
+                    const SizedBox(width: AppSpacing.s8),
                     const Icon(
                       Icons.arrow_forward_rounded,
                       color: Colors.white,
-                      size: 26,
+                      size: 24,
                     ),
                   ],
                 ),
@@ -531,7 +528,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
   }
 
   // ===========================================================================
-  // CENTERED LANGUAGE SELECTOR ROW
+  // CENTERED LANGUAGE SELECTOR ROW (BELOW FLOATING CARD)
   // ===========================================================================
   Widget _buildLanguageSelectorRow() {
     return const Center(
@@ -546,7 +543,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
   // ===========================================================================
   Widget _buildBottomDecorativeWaves() {
     return SizedBox(
-      height: 14,
+      height: 12,
       child: CustomPaint(
         painter: _BottomWavePainter(),
       ),
@@ -554,12 +551,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
   }
 }
 
-/// Custom painter rendering the layered wave curves at the bottom of the card.
+/// Custom painter rendering the layered wave curves at the bottom base.
 class _BottomWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint1 = Paint()
-      ..color = const Color(0xFF1B5E20).withValues(alpha: 0.4)
+      ..color = const Color(0xFF1B5E20).withValues(alpha: 0.35)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
@@ -575,7 +572,7 @@ class _BottomWavePainter extends CustomPainter {
     canvas.drawPath(path1, paint1);
 
     final paint2 = Paint()
-      ..color = const Color(0xFF43A047).withValues(alpha: 0.25)
+      ..color = const Color(0xFF43A047).withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
