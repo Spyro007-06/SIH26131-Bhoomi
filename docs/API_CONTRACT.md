@@ -112,6 +112,15 @@ POST /auth/otp/verify      { request_id, otp }          → { access_token, refr
 POST /auth/login           { email, password }          → same shape, role agronomist|official
 ```
 
+**`POST /auth/demo` is dev tooling, not client surface.** It mints tokens for
+a fixed, pre-seeded demo farmer, no request body. Off by default
+(`DEMO_MODE=false`) and, when on, still refused if `app_env` is `production`
+— a demo/judging deployment opts in explicitly. When off, the route is not
+mounted at all, so it never appears in `docs/openapi.json` and no generated
+client sees it. Not part of the stable contract and deliberately excluded
+from §16's endpoint index: no client should call this, and no client should
+be generated against it. See `app/core/routers/auth.py`'s `demo_login`.
+
 ---
 
 ## 3. Media
