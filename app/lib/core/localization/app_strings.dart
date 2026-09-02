@@ -1147,31 +1147,55 @@ class AppStrings {
   // =========================================================================
   String get landingTitle => 'Bhoomi';
 
-  String get landingSubtitle => language == AppLanguage.marathi
+  String get landingTagline => language == AppLanguage.marathi
       ? 'तुमचा शेतकरी साथी'
       : (language == AppLanguage.hindi ? 'आपका किसान साथी' : 'Your Farming Companion');
 
-  String get landingHeroTagline => language == AppLanguage.marathi
+  String get landingSubtitle => language == AppLanguage.marathi
+      ? 'AI-आधारित शेतकरी साथी'
+      : (language == AppLanguage.hindi ? 'AI आधारित किसान साथी' : 'Your AI-powered farming companion');
+
+  String get landingHeroMessage => language == AppLanguage.marathi
       ? 'बोला, दाखवा आणि योग्य सल्ला मिळवा.'
       : (language == AppLanguage.hindi
           ? 'बोलें, दिखाएँ और सही सलाह पाएँ।'
           : 'Talk, show your crop, and get the right advice.');
 
-  String get landingPillarTalk => language == AppLanguage.marathi
+  String get landingHeroTagline => landingHeroMessage;
+
+  String get landingTalkTitle => language == AppLanguage.marathi
       ? 'बोला'
       : (language == AppLanguage.hindi ? 'बोलें' : 'Talk');
 
-  String get landingPillarShow => language == AppLanguage.marathi
+  String get landingTalkSubtitle => language == AppLanguage.marathi
+      ? 'शंका विचारा'
+      : (language == AppLanguage.hindi ? 'अपना सवाल पूछें' : 'Ask your question');
+
+  String get landingShowTitle => language == AppLanguage.marathi
       ? 'दाखवा'
       : (language == AppLanguage.hindi ? 'दिखाएँ' : 'Show');
 
-  String get landingPillarListen => language == AppLanguage.marathi
+  String get landingShowSubtitle => language == AppLanguage.marathi
+      ? 'पिकाचा फोटो घ्या'
+      : (language == AppLanguage.hindi ? 'फसल की फोटो लें' : 'Take a crop photo');
+
+  String get landingListenTitle => language == AppLanguage.marathi
       ? 'ऐका'
       : (language == AppLanguage.hindi ? 'सुनें' : 'Listen');
 
-  String get landingGetStarted => language == AppLanguage.marathi
+  String get landingListenSubtitle => language == AppLanguage.marathi
+      ? 'योग्य सल्ला ऐका'
+      : (language == AppLanguage.hindi ? 'सही सलाह सुनें' : 'Hear the advice');
+
+  String get landingPillarTalk => landingTalkTitle;
+  String get landingPillarShow => landingShowTitle;
+  String get landingPillarListen => landingListenTitle;
+
+  String get landingStartButton => language == AppLanguage.marathi
       ? 'सुरू करा'
       : (language == AppLanguage.hindi ? 'शुरू करें' : 'Get Started');
+
+  String get landingGetStarted => landingStartButton;
 
   String get landingSemanticsStart => language == AppLanguage.marathi
       ? 'Bhoomi सोबत सुरुवात करा'

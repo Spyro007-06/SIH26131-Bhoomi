@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_radius.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../widgets/language_selector_button.dart';
 import '../../onboarding/presentation/phone_auth_screen.dart';
 
 /// Launch Landing & Welcome Screen for Bhoomi.
-/// Establishes the agricultural brand identity and the "Talk, Show, Listen"
-/// core product pillars before entering authentication.
+/// Faithfully reproduces the reference design with full-bleed agricultural artwork,
+/// top branding, 3 core pillars (Talk, Show, Listen), and primary Start CTA.
 class LandingScreen extends ConsumerStatefulWidget {
   const LandingScreen({super.key});
 
@@ -30,14 +27,14 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 450),
+      duration: const Duration(milliseconds: 500),
     );
     _fadeAnimation = CurvedAnimation(
       parent: _animController,
       curve: Curves.easeOut,
     );
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.05),
+      begin: const Offset(0, 0.04),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animController,
@@ -65,241 +62,47 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
     final strings = ref.watch(stringsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.ricePaper,
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: IntrinsicHeight(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.l20,
-                          vertical: AppSpacing.m12,
+      backgroundColor: const Color(0xFF0C2B14),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. FULL-BLEED BACKGROUND ARTWORK
+          _buildBackgroundArtwork(),
+
+          // 2. MAIN RESPONSIVE FOREGROUND CONTENT
+          SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // 1. TOP BRANDING & LANGUAGE HEADER
-                            _buildTopHeader(strings),
-                            const SizedBox(height: AppSpacing.m12),
+                        child: IntrinsicHeight(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // TOP BRANDING SECTION (OVER SKY)
+                              _buildTopBranding(strings),
 
-                            // 2. HERO AGRICULTURAL ILLUSTRATION
-                            Expanded(
-                              flex: 6,
-                              child: _buildHeroIllustration(constraints),
-                            ),
-                            const SizedBox(height: AppSpacing.m16),
+                              // SPACER / MIDDLE FARMER VISUAL AREA
+                              const Spacer(flex: 2),
 
-                            // 3. PRODUCT PILLARS (TALK, SHOW, LISTEN)
-                            _buildProductPillars(strings),
-                            const SizedBox(height: AppSpacing.m12),
-
-                            // 4. VALUE PROPOSITION MESSAGE
-                            Text(
-                              strings.landingHeroTagline,
-                              textAlign: TextAlign.center,
-                              style: AppTypography.subheading.copyWith(
-                                color: AppColors.primaryDark,
-                                fontWeight: FontWeight.w700,
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.l20),
-
-                            // 5. PRIMARY "START" CTA
-                            _buildStartCtaButton(strings),
-                            const SizedBox(height: AppSpacing.m12),
-
-                            // 6. BOTTOM SUBTLE BRANDING & LANGUAGE ACCESS
-                            _buildFooter(strings),
-                          ],
+                              // BOTTOM DARK GREEN ACTION CARD
+                              _buildBottomCard(strings),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // TOP BRANDING & LANGUAGE HEADER
-  // ===========================================================================
-  Widget _buildTopHeader(AppStrings strings) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Brand Mark + Title + Tagline
-        Expanded(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Circular Logo Mark
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.forest, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.forest.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Image.asset(
-                  'assets/images/bhoomi_logo_mark.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(
-                        Icons.eco_rounded,
-                        color: AppColors.forest,
-                        size: 26,
                       ),
                     );
                   },
                 ),
               ),
-              const SizedBox(width: AppSpacing.s10),
-
-              // Wordmark + Companion Subtitle
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      strings.landingTitle,
-                      style: AppTypography.sectionTitle.copyWith(
-                        color: AppColors.primaryDark,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                        letterSpacing: -0.5,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      strings.landingSubtitle,
-                      style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.forest,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s8),
-
-        // Global Language Switcher Pill
-        const LanguageSelectorButton(),
-      ],
-    );
-  }
-
-  // ===========================================================================
-  // HERO AGRICULTURAL ILLUSTRATION
-  // ===========================================================================
-  Widget _buildHeroIllustration(BoxConstraints constraints) {
-    return Container(
-      constraints: const BoxConstraints(
-        minHeight: 160,
-        maxHeight: 320,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.warmSurface,
-        borderRadius: AppRadius.card,
-        border: Border.all(color: AppColors.border, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.soilCharcoal.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Farmer Artwork
-          Image.asset(
-            'assets/images/bhoomi_farmer_hero.png',
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.primaryLight,
-                      AppColors.warmSurface,
-                    ],
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.agriculture_rounded,
-                      size: 72,
-                      color: AppColors.forest.withValues(alpha: 0.8),
-                    ),
-                    const SizedBox(height: AppSpacing.s8),
-                    Text(
-                      'Bhoomi Farmer Companion',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.forest,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-
-          // Subtle Bottom Gradient to seamlessly ground the illustration
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 48,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.25),
-                  ],
-                ),
-              ),
             ),
           ),
         ],
@@ -308,145 +111,486 @@ class _LandingScreenState extends ConsumerState<LandingScreen>
   }
 
   // ===========================================================================
-  // PRODUCT PILLARS (TALK, SHOW, LISTEN)
+  // 1. FULL-BLEED BACKGROUND ARTWORK
   // ===========================================================================
-  Widget _buildProductPillars(AppStrings strings) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildPillarChip(
-            icon: Icons.mic_rounded,
-            label: strings.landingPillarTalk,
-            color: AppColors.forest,
-            bgColor: AppColors.primaryLight,
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          _buildPillarDivider(),
-          const SizedBox(width: AppSpacing.s8),
-          _buildPillarChip(
-            icon: Icons.photo_camera_rounded,
-            label: strings.landingPillarShow,
-            color: AppColors.primaryDark,
-            bgColor: AppColors.primaryLight,
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          _buildPillarDivider(),
-          const SizedBox(width: AppSpacing.s8),
-          _buildPillarChip(
-            icon: Icons.volume_up_rounded,
-            label: strings.landingPillarListen,
-            color: AppColors.forest,
-            bgColor: AppColors.primaryLight,
-          ),
-        ],
+  Widget _buildBackgroundArtwork() {
+    return Positioned.fill(
+      child: Image.asset(
+        'assets/images/bhoomi_farmer_hero.png',
+        fit: BoxFit.cover,
+        alignment: Alignment.topCenter,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFFBE8C8),
+                  Color(0xFFE2EED8),
+                  Color(0xFF0F3819),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildPillarChip({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required Color bgColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.m12,
-        vertical: AppSpacing.s6,
+  // ===========================================================================
+  // 2. TOP BRANDING SECTION (EMBLEM, TITLE, TAGLINE, SUBTITLE)
+  // ===========================================================================
+  Widget _buildTopBranding(AppStrings strings) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: AppSpacing.m16,
+        left: AppSpacing.l20,
+        right: AppSpacing.l20,
       ),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: AppSpacing.s6),
-          Text(
-            label,
-            style: AppTypography.bodySmall.copyWith(
-              color: color,
-              fontWeight: FontWeight.w800,
+          // Circular Logo Emblem
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Image.asset(
+              'assets/images/bhoomi_logo_mark.png',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return const Center(
+                  child: Icon(
+                    Icons.eco_rounded,
+                    color: Color(0xFF1B5E20),
+                    size: 34,
+                  ),
+                );
+              },
             ),
           ),
-        ],
-      ),
-    );
-  }
+          const SizedBox(height: 6),
 
-  Widget _buildPillarDivider() {
-    return const Icon(
-      Icons.arrow_forward_ios_rounded,
-      size: 12,
-      color: AppColors.border,
-    );
-  }
+          // "Bhoomi" Wordmark
+          Text(
+            strings.landingTitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF114216),
+              fontSize: 34,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+              height: 1.1,
+              fontFamily: 'serif',
+            ),
+          ),
+          const SizedBox(height: 4),
 
-  // ===========================================================================
-  // PRIMARY "START" CTA BUTTON
-  // ===========================================================================
-  Widget _buildStartCtaButton(AppStrings strings) {
-    return Semantics(
-      button: true,
-      label: strings.landingSemanticsStart,
-      child: Material(
-        color: AppColors.forest,
-        borderRadius: BorderRadius.circular(16),
-        elevation: 4,
-        shadowColor: AppColors.forest.withValues(alpha: 0.4),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: _onStartPressed,
-          child: Container(
-            height: 60,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l24),
+          // Tagline with decorative lines: "— तुमचा शेतकरी साथी —"
+          FittedBox(
+            fit: BoxFit.scaleDown,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  '🌱',
-                  style: TextStyle(fontSize: 22),
+                Container(
+                  width: 24,
+                  height: 1.5,
+                  color: const Color(0xFF2E7D32),
                 ),
-                const SizedBox(width: AppSpacing.s10),
+                const SizedBox(width: AppSpacing.s8),
                 Text(
-                  strings.landingGetStarted,
-                  style: AppTypography.button.copyWith(
-                    color: AppColors.pureWhite,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
+                  strings.landingTagline,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF1B5E20),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.s10),
-                const Icon(
-                  Icons.arrow_forward_rounded,
-                  color: AppColors.pureWhite,
-                  size: 24,
+                const SizedBox(width: AppSpacing.s8),
+                Container(
+                  width: 24,
+                  height: 1.5,
+                  color: const Color(0xFF2E7D32),
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 2),
+
+          // Subtitle: "AI-आधारित शेतकरी साथी"
+          Text(
+            strings.landingSubtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF235528),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // 3. BOTTOM DARK GREEN ACTION CARD
+  // ===========================================================================
+  Widget _buildBottomCard(AppStrings strings) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
+      padding: const EdgeInsets.only(
+        top: AppSpacing.l20,
+        left: AppSpacing.m16,
+        right: AppSpacing.m16,
+        bottom: AppSpacing.m16,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B2E15).withValues(alpha: 0.95),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+        border: Border.all(
+          color: const Color(0xFF2E7D32).withValues(alpha: 0.5),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 20,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. Value Proposition Heading
+          Text(
+            strings.landingHeroMessage,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFFF7F4EB),
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.l16),
+
+          // 2. Three Product Pillar Columns (Talk, Show, Listen)
+          _buildPillarColumns(strings),
+          const SizedBox(height: AppSpacing.l20),
+
+          // 3. Primary Start CTA Button
+          _buildStartButton(strings),
+          const SizedBox(height: AppSpacing.m12),
+
+          // 4. Centered Language Selector Pill
+          _buildLanguageSelectorRow(),
+          const SizedBox(height: AppSpacing.s6),
+
+          // 5. Decorative Layered Waves at Base
+          _buildBottomDecorativeWaves(),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // THREE PILLAR COLUMNS (TALK, SHOW, LISTEN)
+  // ===========================================================================
+  Widget _buildPillarColumns(AppStrings strings) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s6,
+        vertical: AppSpacing.s10,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. TALK / BOLO
+          Expanded(
+            child: _buildPillarItem(
+              icon: Icons.mic_rounded,
+              title: strings.landingTalkTitle,
+              subtitle: strings.landingTalkSubtitle,
+              hasGlow: true,
+            ),
+          ),
+          _buildVerticalDivider(),
+
+          // 2. SHOW / DAKHVA
+          Expanded(
+            child: _buildPillarItem(
+              icon: Icons.photo_camera_rounded,
+              title: strings.landingShowTitle,
+              subtitle: strings.landingShowSubtitle,
+              hasGlow: false,
+            ),
+          ),
+          _buildVerticalDivider(),
+
+          // 3. LISTEN / AIKA
+          Expanded(
+            child: _buildPillarItem(
+              icon: Icons.volume_up_rounded,
+              title: strings.landingListenTitle,
+              subtitle: strings.landingListenSubtitle,
+              hasGlow: false,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPillarItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool hasGlow,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Circular Icon Tile with subtle glow
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9F6EE),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: hasGlow
+                    ? const Color(0xFFFFD54F).withValues(alpha: 0.5)
+                    : Colors.black.withValues(alpha: 0.15),
+                blurRadius: hasGlow ? 12 : 6,
+                spreadRadius: hasGlow ? 2 : 0,
+                offset: const Offset(0, 2),
+              ),
+            ],
+            border: Border.all(
+              color: hasGlow
+                  ? const Color(0xFFFFC107)
+                  : const Color(0xFFC8E6C9),
+              width: hasGlow ? 2 : 1,
+            ),
+          ),
+          child: Center(
+            child: Icon(
+              icon,
+              color: const Color(0xFF1B5E20),
+              size: 26,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s8),
+
+        // Pillar Title (बोला / दाखवा / ऐका)
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xFFFFFFFF),
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            height: 1.1,
+          ),
+        ),
+        const SizedBox(height: 3),
+
+        // Pillar Subtitle (शंका विचारा / पिकाचा फोटो घ्या / योग्य सल्ला ऐका)
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Color(0xFFA5D6A7),
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            height: 1.15,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerticalDivider() {
+    return Container(
+      width: 1,
+      height: 80,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      color: Colors.white.withValues(alpha: 0.12),
+    );
+  }
+
+  // ===========================================================================
+  // PRIMARY START CTA BUTTON
+  // ===========================================================================
+  Widget _buildStartButton(AppStrings strings) {
+    return Semantics(
+      button: true,
+      label: strings.landingSemanticsStart,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: _onStartPressed,
+          child: Ink(
+            height: 60,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF66BB6A),
+                  Color(0xFF43A047),
+                  Color(0xFF2E7D32),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: const Color(0xFFA5D6A7).withValues(alpha: 0.6),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF43A047).withValues(alpha: 0.45),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l20),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      '🌱',
+                      style: TextStyle(fontSize: 22),
+                    ),
+                    const SizedBox(width: AppSpacing.s10),
+                    Text(
+                      strings.landingStartButton,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.s10),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
   // ===========================================================================
-  // FOOTER WITH SUBTLE BRANDING
+  // CENTERED LANGUAGE SELECTOR ROW
   // ===========================================================================
-  Widget _buildFooter(AppStrings strings) {
-    return Center(
-      child: Text(
-        'SIH26131 • ICAR Grounded • Marathi & Hindi',
-        style: AppTypography.captionSmall.copyWith(
-          color: AppColors.fieldSlate,
-          fontWeight: FontWeight.w500,
-        ),
+  Widget _buildLanguageSelectorRow() {
+    return const Center(
+      child: LanguageSelectorButton(
+        isDarkBackground: true,
       ),
     );
   }
+
+  // ===========================================================================
+  // BOTTOM DECORATIVE CURVED WAVES
+  // ===========================================================================
+  Widget _buildBottomDecorativeWaves() {
+    return SizedBox(
+      height: 14,
+      child: CustomPaint(
+        painter: _BottomWavePainter(),
+      ),
+    );
+  }
+}
+
+/// Custom painter rendering the layered wave curves at the bottom of the card.
+class _BottomWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint1 = Paint()
+      ..color = const Color(0xFF1B5E20).withValues(alpha: 0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final path1 = Path()
+      ..moveTo(0, size.height * 0.8)
+      ..quadraticBezierTo(
+        size.width * 0.5,
+        size.height * 0.2,
+        size.width,
+        size.height * 0.6,
+      );
+
+    canvas.drawPath(path1, paint1);
+
+    final paint2 = Paint()
+      ..color = const Color(0xFF43A047).withValues(alpha: 0.25)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final path2 = Path()
+      ..moveTo(0, size.height * 0.4)
+      ..quadraticBezierTo(
+        size.width * 0.6,
+        size.height * 0.9,
+        size.width,
+        size.height * 0.3,
+      );
+
+    canvas.drawPath(path2, paint2);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
