@@ -148,6 +148,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // If on LandingScreen, tap Start to enter PhoneAuthScreen
+      if (find.text('सुरू करा').evaluate().isNotEmpty) {
+        await tester.tap(find.text('सुरू करा'));
+        await tester.pumpAndSettle();
+      }
+
       // Initially on PhoneAuthScreen
       expect(find.byType(PhoneAuthScreen), findsOneWidget);
 

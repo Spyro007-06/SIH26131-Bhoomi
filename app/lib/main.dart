@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'core/localization/locale_provider.dart';
 import 'providers/auth_providers.dart';
 import 'features/splash/presentation/splash_screen.dart';
+import 'features/landing/presentation/landing_screen.dart';
 import 'features/onboarding/presentation/phone_auth_screen.dart';
 import 'features/shell/presentation/main_app_shell.dart';
 import 'features/showcase/design_showcase_screen.dart';
@@ -45,6 +46,7 @@ class BhoomiApp extends ConsumerWidget {
       ],
       routes: {
         '/showcase': (context) => const DesignShowcaseScreen(),
+        '/login': (context) => const PhoneAuthScreen(),
       },
       home: homeOverride ?? _resolveRootScreen(authState),
     );
@@ -55,7 +57,7 @@ class BhoomiApp extends ConsumerWidget {
       return const SplashScreen();
     }
     if (authState.isUnauthenticated) {
-      return const PhoneAuthScreen();
+      return const LandingScreen();
     }
     return const MainAppShell();
   }

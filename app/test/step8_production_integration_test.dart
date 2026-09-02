@@ -542,7 +542,7 @@ void main() {
       final container = ProviderContainer(overrides: overrides);
       addTearDown(container.dispose);
 
-      // Phase 1: Launch Root Bhoomi App (starts at PhoneAuthScreen when unauthenticated)
+      // Phase 1: Launch Root Bhoomi App (starts at LandingScreen when unauthenticated)
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
@@ -550,6 +550,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+
+      // If on LandingScreen, tap Start to enter PhoneAuthScreen
+      if (find.text('सुरू करा').evaluate().isNotEmpty) {
+        await tester.tap(find.text('सुरू करा'));
+        await tester.pumpAndSettle();
+      }
 
       expect(find.text('भूमीमध्ये आपले स्वागत आहे'), findsOneWidget);
       expect(find.text('🇮🇳 +91'), findsOneWidget);

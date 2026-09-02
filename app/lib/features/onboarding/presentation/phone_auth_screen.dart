@@ -227,6 +227,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
       await ref.read(authStateProvider.notifier).loginAsDemo();
       if (!mounted) return;
       setState(() => _isLoading = false);
+      Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
       if (!mounted) return;
       setState(() {

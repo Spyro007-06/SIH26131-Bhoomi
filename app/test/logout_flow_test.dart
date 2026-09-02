@@ -20,7 +20,7 @@ import 'package:bhoomi/models/followup_models.dart';
 import 'package:bhoomi/models/timeline_models.dart';
 import 'package:bhoomi/models/referral_models.dart';
 import 'package:bhoomi/features/more/presentation/more_screen.dart';
-import 'package:bhoomi/features/onboarding/presentation/phone_auth_screen.dart';
+import 'package:bhoomi/features/landing/presentation/landing_screen.dart';
 
 class MockSecureStorage extends SecureStorage {
   final Map<String, String> _map = {};
@@ -222,8 +222,8 @@ void main() {
       expect(await tokenStorage.hasValidSession(), isFalse);
       expect(countingClient.totalRequests, 0, reason: 'Logout must make 0 HTTP network calls');
 
-      // Verify redirected back to PhoneAuthScreen
-      expect(find.byType(PhoneAuthScreen), findsOneWidget);
+      // Verify redirected back to unauthenticated LandingScreen
+      expect(find.byType(LandingScreen), findsOneWidget);
     });
   });
 }

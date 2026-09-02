@@ -1141,6 +1141,43 @@ class AppStrings {
   String get defaultFarmName => language == AppLanguage.marathi
       ? 'माझे भाताचे शेत'
       : (language == AppLanguage.hindi ? 'मेरा धान का खेत' : 'My Paddy Field');
+
+  // =========================================================================
+  // LAUNCH LANDING PAGE & BRAND IDENTITY
+  // =========================================================================
+  String get landingTitle => 'Bhoomi';
+
+  String get landingSubtitle => language == AppLanguage.marathi
+      ? 'तुमचा शेतकरी साथी'
+      : (language == AppLanguage.hindi ? 'आपका किसान साथी' : 'Your Farming Companion');
+
+  String get landingHeroTagline => language == AppLanguage.marathi
+      ? 'बोला, दाखवा आणि योग्य सल्ला मिळवा.'
+      : (language == AppLanguage.hindi
+          ? 'बोलें, दिखाएँ और सही सलाह पाएँ।'
+          : 'Talk, show your crop, and get the right advice.');
+
+  String get landingPillarTalk => language == AppLanguage.marathi
+      ? 'बोला'
+      : (language == AppLanguage.hindi ? 'बोलें' : 'Talk');
+
+  String get landingPillarShow => language == AppLanguage.marathi
+      ? 'दाखवा'
+      : (language == AppLanguage.hindi ? 'दिखाएँ' : 'Show');
+
+  String get landingPillarListen => language == AppLanguage.marathi
+      ? 'ऐका'
+      : (language == AppLanguage.hindi ? 'सुनें' : 'Listen');
+
+  String get landingGetStarted => language == AppLanguage.marathi
+      ? 'सुरू करा'
+      : (language == AppLanguage.hindi ? 'शुरू करें' : 'Get Started');
+
+  String get landingSemanticsStart => language == AppLanguage.marathi
+      ? 'Bhoomi सोबत सुरुवात करा'
+      : (language == AppLanguage.hindi
+          ? 'Bhoomi के साथ शुरुआत करें'
+          : 'Get started with Bhoomi');
 }
 
 

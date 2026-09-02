@@ -286,6 +286,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // If on LandingScreen, tap Start to enter PhoneAuthScreen
+      if (find.text('सुरू करा').evaluate().isNotEmpty) {
+        await tester.tap(find.text('सुरू करा'));
+        await tester.pumpAndSettle();
+      }
+
       // Tap demo button and enter demo
       await tester.tap(find.text('🌾 डेमो खाते वापरून पहा'));
       await tester.pumpAndSettle();
